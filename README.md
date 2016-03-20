@@ -1,11 +1,11 @@
-The keyvaltable package
+The keyvaltable Package
 =======================
 
 Copyright (C) 2016 Richard Gay
 
 Released under the [LaTeX Project Public License](http://www.latex-project.org/lppl/) version 1.2 or later
 
-# Purpose
+## Purpose
 
 The main goal of the `keyvaltable` package is to offer means for
 typesetting tables easily and yet still looking rather nicely in a way
@@ -15,13 +15,14 @@ environment `KeyValTable`, which allows one to typeset tables that have
 a previously defined column layout and whose rows can be produced in a
 key-value fashion.
 
-# Availability
+## Availability
 
-The `keyvaltable` package is currently in the process of being uploaded to CTAN,
-such that the package can become available in popular LaTeX
-distributions like TeXlive and MikTeX.
+The `keyvaltable` package is on [CTAN](http://www.ctan.org/pkg/keyvaltable),
+where you can also find the [documentation](http://mirrors.ctan.org/macros/latex/contrib/keyvaltable/keyvaltable.pdf),
+as well as on [github](https://github.com/Ri-Ga/keyvaltable).
+Presumably, the package will soon become part of TeXlive and MikTeX.
 
-# Manual Installation
+## Manual Installation
 
 The `keyvaltable` package comes with (at least) the following files
 * keyvaltable.ins
@@ -46,7 +47,7 @@ Put the resulting `keyvaltable.sty` somewhere where LaTeX can find it.
 Read the documentation of your LaTeX system to find out where this
 might be.
 
-# Building Documentation
+## Building Documentation
 
 To build the documentation of the `keyvaltable` package, you additionally
 need the following classes and packages (including their dependencies)
@@ -81,4 +82,3 @@ or the following sequence of commands
 ```
 
 Happy TeX'ing
-
