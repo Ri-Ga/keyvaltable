@@ -20,7 +20,8 @@ key-value fashion.
 The `keyvaltable` package is on [CTAN](http://www.ctan.org/pkg/keyvaltable),
 where you can also find the [documentation](http://mirrors.ctan.org/macros/latex/contrib/keyvaltable/keyvaltable.pdf),
 as well as on [github](https://github.com/Ri-Ga/keyvaltable).
-Presumably, the package will soon become part of TeXlive and MikTeX.
+Since March 2016, `keyvaltable` is part of TeX Live (package `texlive-latex-extra`) and
+is included in [MiKTeX](http://miktex.org/packages/keyvaltable).
 
 ## Manual Installation
 
