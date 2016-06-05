@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2016/05/22 v0.2 Package for filling tables using key-value lists]
+    [2016/06/05 v0.3 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -246,6 +246,22 @@
 % must then be a comma-separated list of \meta{property}|=|\meta{value}
 % pairs. The following \meta{property} names are available:
 % \begin{description}\label{page:table-options}
+% \item[|shape|:]
+%   This property specifies the table's shape. For \meta{value}, the
+%   package currently supports |multipage| (the default) and |onepage|.
+%   In case of |multipage|, the table may span multiple pages and on
+%   each page, the column header is repeated. In case of |onepage|, the
+%   table does not split into multiple pages.
+% \item[|showhead|:]
+%   This property specifies whether the head row shall be shown. The
+%   \meta{value} must be a Boolean (i.e., |true| or |false|), where
+%   |true| (the default) specifies that the head row is shown and
+%   |false| specifies that the head row is not shown.
+% \item[|headbg|:]
+%   This property specifies the background color of the head row. The
+%   \meta{value} must be a single color specification that is understood
+%   by the \textsf{xcolor} package.\footnote{The \meta{value} is passed
+%   directly to the \cs{rowcolor} macro.} The default is |black!14|.
 % \item[|rowbg|:]
 %   This property specifies the background colors of content rows. The
 %   format of the \meta{value} for this property must be
@@ -253,18 +269,26 @@
 %   passed directly to \cs{taburowcolors} of the \textsf{tabu} package.}
 %   The default is |white..black!10|, i.e., alternatingly white and light
 %   very gray.
-% \item[|headbg|:]
-%   This property specifies the background color of the head row. The
-%   \meta{value} must be a single color specification that is understood
-%   by the \textsf{xcolor} package.\footnote{The \meta{value} is passed
-%   directly to the \cs{rowcolor} macro.} The default is |black!14|.
-% \item[|shape|:]
-%   This property specifies the table's shape. For \meta{value}, the
-%   package currently supports |multipage| (the default) and |onepage|.
-%   In case of |multipage|, the table may span multiple pages and on
-%   each page, the column header is repeated. In case of |onepage|, the
-%   table does not split into multiple pages.
 % \end{description}
+% The following example shows the \meta{options} in action.
+% \begin{LTXexample}
+% \NewKeyValTable[shape=onepage,
+%     showhead=false, headbg=blue!25,
+%     rowbg=blue!10..blue!15,
+%   ]{TabOptions}{
+%     opt: align=l, format=\texttt;
+%     val: align=l, format=\texttt;}
+% \begin{table}\centering
+% \begin{KeyValTable}{TabOptions}
+% \Row{opt=shape,  val=onepage}
+% \Row{opt=showhead, val=false}
+% \Row{opt=headbg, val=blue!25}%invisible
+% \Row{opt=rowbg,  val=blue!10..blue!15}
+% \end{KeyValTable}
+% \caption{table options demo}
+% \end{table}
+% \end{LTXexample}
+%
 %
 % \NiceDescribeMacro{\Row}{\marg{content}}
 % A table row is produced by the |\Row| macro. The
@@ -568,6 +592,21 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\kvt@addbooltableprop}
+% The |\kvt@addbooltableprop|\marg{name}\marg{default}
+% macro adds a new table option, named \meta{name} and with default
+% value \meta{default} and possible values being booleans (|true|,
+% |false|).
+%    \begin{macrocode}
+\newcommand\kvt@addbooltableprop[2]{%
+  \define@boolkey[kvt]{defaults}{#1}{%
+    \kvt@lazypreset{Table}{#1=##1}}%
+  \presetkeys[kvt]{defaults}{#1=#2}{}%
+  \define@boolkey[kvt]{Table}{#1}%
+    {\csdef{cmdkvt@Table@#1}{##1}}%
+  \presetkeys[kvt]{Table}{#1=#2}{}}
+%    \end{macrocode}
+% \end{macro}
 %
 % \begin{macro}{\kvt@addcolumnprop}
 % The |\kvt@addcolumnprop|\marg{name}\marg{default} macro adds a new
@@ -626,6 +665,7 @@
 %    \begin{macrocode}
 \kvt@addtableprop{rowbg}{white..black!10}
 \kvt@addtableprop{headbg}{black!14}
+\kvt@addbooltableprop{showhead}{true}
 \kvt@addchoicetableprop{shape}{multipage}{multipage,onepage}
 \kvt@addcolumnprop{default}{}
 \kvt@addcolumnprop{format}{\kvt@struttedcell}
@@ -828,15 +868,17 @@
 %    \end{macrocode}
 % The |\kvt@@recenttable| allows the |\AfterEndEnvironment| hook for
 % |KeyValTable| to access the most recent table type.
+% \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
 %    \begin{macrocode}
   \gdef\kvt@@recenttable{#2}%
   \bgroup\edef\kvt@@do{\egroup
-    \noexpand\taburowcolors[2] 2{\cmdkvt@Table@rowbg}%
     \noexpand\begin{#1}{\csuse{kvt@alignments@#2}}%
     \noexpand\toprule
-    \noexpand\rowcolor{\cmdkvt@Table@headbg}%
+    \ifbool{kvt@Table@showhead}{%
+      \noexpand\rowcolor{\cmdkvt@Table@headbg}%
+      \unexpanded{\csuse{kvt@headings@#2}\\\midrule}}{}%
+    \noexpand\taburowcolors 2{\cmdkvt@Table@rowbg}%
   }\kvt@@do%
-  \csuse{kvt@headings@#2}\\\midrule
   \iftabu@long\expandafter\endhead\fi
   \setcounter{kvtRow}{1}%
   \setcounter{kvtTypeRow}{\csuse{kvt@rowcount@#2}}%
