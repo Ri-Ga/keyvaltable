@@ -680,8 +680,9 @@
 % the argument \meta{arg} with a |\strut|. When used for formatting
 % cell content, this makes sure that there is some vertical space
 % between the content of a cell and the top and bottom of the row.
+% \changes{v0.3}{2016/06/06}{Fix for cells with vertical material}
 %    \begin{macrocode}
-\newcommand\kvt@struttedcell[1]{\strut #1\strut}
+\newcommand\kvt@struttedcell[1]{\strut #1\ifhmode\expandafter\strut\fi}
 %    \end{macrocode}
 % \end{macro}
 %
