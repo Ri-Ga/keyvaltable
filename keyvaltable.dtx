@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2016/06/05 v0.3 Package for filling tables using key-value lists]
+    [2016/06/09 v0.3 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -54,7 +54,10 @@
 % and ref mechanism is otherwise disabled.
 \newcommand\FakeRefs{%
   \def\ref##1{\csuse{fakelabel@##1}}%
-  \def\label##1{\global\csletcs{fakelabel@##1}{@currentlabel}}%
+  \def\cref##1{\csuse{cref@\csuse{fakelname@##1}@name}\ \ref{##1}}%
+  \renewcommand\label[2][]{%
+    \csgdef{fakelname@##2}{##1}%
+    \global\csletcs{fakelabel@##2}{@currentlabel}}%
   \let\marginpar=\origmarginpar
 }
 \let\origmarginpar=\marginpar
@@ -64,6 +67,7 @@
 \CodelineIndex
 \RecordChanges
 % the following packages are for the examples
+\usepackage{cleveref}
 \usepackage{xintexpr}
 \usepackage{makecell}
 \begin{document}
@@ -410,7 +414,7 @@
 % used for this purpose.
 % \begin{LTXexample}[preset=\FakeRefs]
 % \NewKeyValTable{Labeled}{
-%   label: align=r, head=\#,
+%   label: align=r, head=\textbf{\#},
 %          format=\kvtLabel{kvtRow};
 %   text:  align=l, head=\textbf{Text}}
 % \begin{KeyValTable}{Labeled}
@@ -419,7 +423,7 @@
 % \end{KeyValTable}
 % \end{LTXexample}
 %
-% \NiceDescribeMacro{\kvtLabel}{\marg{counter}\marg{label}}
+% \NiceDescribeMacro{\kvtLabel}{\oarg{labelopts}\marg{counter}\marg{label}}
 % The |\kvtLabel| macro shows the current value of the \meta{counter} --
 % in particular |kvtRow|, |kvtTypeRow|, and |kvtTotalRow| -- and sets
 % the \meta{label} to the value of \meta{counter}. When using the macro
@@ -427,7 +431,37 @@
 % must be provided, as the above example shows. The second argument
 % (\meta{label}) is provided by the respective cell content.
 %
+% The |\kvtLabel| macro should work well with packages that change the
+% referencing, like \textsf{cleveref} or \textsf{varioref}. When using a
+% package that add an optional argument to the |\label| command (like
+% \textsf{cleveref} does), the \meta{labelopts} can be used to pass an
+% optional argument to |\label|. This feature is demonstrated in
+% \cref{sec:package-cleveref}.
+%
+%
 % \section{Use with Other Packages}
+%
+% \subsection{Named References}\label{sec:package-cleveref}
+%
+% The |\kvtLabel| feature of the \textsf{keyvaltable} package can be
+% used together with named references, as provided by the
+% \textsf{cleveref} package. A name to a row label can be given by using
+% the optional first argument to the |\kvtLabel| formatting macro and
+% specifying the name to use using |\crefname|. The following example
+% uses ``row'' for the optional argument and ``line'' for the displayed
+% name of the reference.
+% \begin{LTXexample}[preset=\FakeRefs]
+% \usepackage{cleveref}
+% \crefname{row}{line}{lines}
+% \NewKeyValTable{NamedRef}{
+%   label: align=r, head=\textbf{Line},
+%          format=\kvtLabel[row]{kvtRow};
+%   text:  align=l, head=\textbf{Text}}
+% \begin{KeyValTable}{NamedRef}
+% \Row{text=First row, label=one}
+% \Row{text=After \cref{one}}
+% \end{KeyValTable}
+% \end{LTXexample}
 %
 % \subsection{Computational Cells}
 %
@@ -790,24 +824,35 @@
 % \end{macro}
 %
 % \begin{macro}{\kvtLabel}
-% The |\kvtLabel|\marg{counter}\marg{label} macro sets a label, named
-% \meta{label}, for the current value of the \LaTeX{} counter named
-% \meta{counter}.
+% The |\kvtLabel|\oarg{labelopts}\marg{counter}\marg{label} macro sets
+% a label, named \meta{label}, for the current value of the \LaTeX{}
+% counter named \meta{counter}.
 % \changes{v0.2}{2016/05/22}{Added macro for row labeling}
+% \changes{v0.3}{2016/06/09}{Robustified for use with, e.g., \textsf{cleveref}}
 %    \begin{macrocode}
-\newcommand\kvtLabel[2]{%
+\newcommand\kvtLabel[3][]{%
 %    \end{macrocode}
 % The following imitates a |\refstepcounter| in the sense of setting the
-% current label, but it does not touch the \meta{counter}.
+% current label, but it does not touch the \meta{counter} (in case
+% someone added some custom hooks to them).
 %    \begin{macrocode}
-  \protected@edef\@currentlabel
-    {\csname p@#1\endcsname\csname the#1\endcsname}%
+  \setcounter{kvt@LabelCtr}{\csname the#2\endcsname}%
+  \addtocounter{kvt@LabelCtr}{-1}%
+  \refstepcounter{kvt@LabelCtr}%
 %    \end{macrocode}
 % Next, define the \meta{label} (if provided) and show the value of
 % \meta{counter}.
 %    \begin{macrocode}
-  \ifstrempty{#2}{}{\label{#2}}%
-  \csuse{the#1}}
+  \ifstrempty{#3}{}{%
+    \ifstrempty{#1}{\label{#3}}{\label[#1]{#3}}}%
+  \csuse{the#2}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{kvt@LabelCtr}
+% The |kvt@LabelCtr| counter is an auxiliary counter for setting labels,
+% used by |\kvtLabel|.
+%    \begin{macrocode}
+\newcounter{kvt@LabelCtr}
 %    \end{macrocode}
 % \end{macro}
 %
