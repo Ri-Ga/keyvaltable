@@ -22,52 +22,16 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2018/11/01 v0.3b Package for filling tables using key-value lists]
+    [2018/12/30 v0.9 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
 \documentclass{ltxdoc}
-\usepackage[columns=2]{idxlayout}
-\usepackage[table]{xcolor}
-\usepackage{enumitem}
-\usepackage{showexpl}
-\lstset{gobble=2,frame=trbl,backgroundcolor=\color{black!5!white}}
-\lstset{explpreset={numbers=none,columns=fixed,basicstyle=\footnotesize\ttfamily}}
-\lstset{preset={\small\sffamily},overhang=2cm,pos=r}
-\usepackage{pbox}
-\newcommand\NiceDescribeStuff[2]{% #1=margin text, #2=body text
-  \medskip\par\noindent\leavevmode%
-  \marginpar{\hfill\pbox[t]{2\marginparwidth}{\ttfamily #1}%
-    \hspace*{-\marginparsep}}%
-  \ifstrempty{#2}{}{#2\smallskip\\}}
-\newcommand\NiceDescribeEnv[2]{% #1=envname, #2=parameters
-  \NiceDescribeStuff{%
-    \textcolor{gray}{\cs{begin}}\string{#1\string}\\
-    \textcolor{gray}{\cs{end}}\string{#1\string}}{#2}}
-\newcommand\NiceDescribeMacro[2]{% #1=macro, #2=parameters
-  \NiceDescribeStuff{\hbox to 0pt{\hss\string#1}}{#2}}
-\newcommand\NiceDescribeConstant[1]{% #1=constant
-  \NiceDescribeStuff{\hbox to 0pt{\hss #1\quad}}{}\ignorespaces}
-% The following macro simulates labels and references, assuming
-% labels are only referenced after they have been defined. This
-% is used in LTXexample environments, in which the normal label
-% and ref mechanism is otherwise disabled.
-\newcommand\FakeRefs{%
-  \def\ref##1{\csuse{fakelabel@##1}}%
-  \def\cref##1{\csuse{cref@\csuse{fakelname@##1}@name}\ \ref{##1}}%
-  \renewcommand\label[2][]{%
-    \csgdef{fakelname@##2}{##1}%
-    \global\csletcs{fakelabel@##2}{@currentlabel}}%
-  \let\marginpar=\origmarginpar
-}
-\let\origmarginpar=\marginpar
-\usepackage{keyvaltable}
-\usepackage{hypdoc}
+\usepackage{rgltxdoc}
 \EnableCrossrefs
 \CodelineIndex
 \RecordChanges
-% the following packages are for the examples
-\usepackage{cleveref}
+% the following packages are additional for the examples
 \usepackage{xintexpr}
 \usepackage{makecell}
 \begin{document}
@@ -104,8 +68,8 @@
 % \DoNotIndex{\newcommand,\newenvironment,\def,\gdef,\edef}
 %
 %
-% \title{The \textsf{keyvaltable} package\thanks{This document
-%   corresponds to \textsf{keyvaltable}~\fileversion, dated \filedate.
+% \title{The \pkgname{keyvaltable} package\thanks{This document
+%   corresponds to \pkgname{keyvaltable}~\fileversion, dated \filedate.
 %   The package is available online at
 %   \url{http://www.ctan.org/pkg/keyvaltable} and
 %   \url{https://github.com/Ri-Ga/keyvaltable}.}}
@@ -115,7 +79,7 @@
 %
 % \section{Introduction}
 %
-% The main goal of the \textsf{keyvaltable} package is to offer means
+% The main goal of the \pkgname{keyvaltable} package is to offer means
 % for typesetting tables
 % \begin{enumerate}[nosep]
 % \item easily and yet still looking rather nicely,
@@ -136,9 +100,9 @@
 %   keys are column names and the corresponding values are the content
 %   of the cell in this row in the respective column.
 % \end{description}
-% The the display of the tables, the \textsf{keyvaltable} package builds
-% on the packages \textsf{tabu}, \textsf{longtable}, and
-% \textsf{booktabs}.
+% The the display of the tables, the \pkgname{keyvaltable} package builds
+% on the packages \pkgname{tabu}, \pkgname{longtable}, and
+% \pkgname{booktabs}.
 %
 % \section{Usage}
 %
@@ -153,9 +117,9 @@
 % }
 % \begin{KeyValTable}{Recipe}
 % \Row{amount=150g, ingredient=ice cream,
-%      step=put into bowl}
+%   step=put into bowl}
 % \Row{amount= 50g, ingredient=cherries,
-%      step=heat up and add to bowl}
+%   step=heat up and add to bowl}
 % \end{KeyValTable}
 % \end{LTXexample}
 % The example code first defines a new table type, |Recipe|, along with
@@ -164,7 +128,7 @@
 % with semicolons. After the separating |:|, for each column, the macro
 % configures the column alignment using the |align| key. The alignments
 % |r| (right) and |l| (left) are the standard |tabular| alignments; the
-% |X[l]| alignment is provided by the \textsf{tabu} package (see the
+% |X[l]| alignment is provided by the \pkgname{tabu} package (see the
 % documentation there).
 %
 % After the definition of the table type, the example creates a table of
@@ -178,7 +142,7 @@
 %
 % The example above already shows that producing a rather nice-looking
 % table -- including alternating row colors as well as horizontal rules
-% -- without further ado. How the \textsf{keyvaltable} package can be
+% -- without further ado. How the \pkgname{keyvaltable} package can be
 % used in the general case and how its visual appearance can be
 % customized is subject of the remainder of this section.
 %
@@ -206,36 +170,42 @@
 % column. The \meta{property}|=|\meta{value} pairs configure certain
 % properties of the column. The \meta{property} can be one of the
 % following:
-% \begin{description}
-% \item[|align|:]
-%   This property specifies the alignment of content in the column.
-%   The \meta{value} can be set to any column alignment understood by
-%   the |tabu| environment of the \textsf{tabu} package. This
-%   particularly includes |l|, |c|, |r|, |p|, and |X|. By default (i.e.,
-%   if this property is not set explicitly), this property is set
-%   to~|l|.
-% \item[|default|:]
-%   This property specifies the default value of a cell in this column,
-%   i.e., in case that a |\Row| does not provide content for the cell.
-%   By default (i.e., if unset for a column), this is an empty string.
-% \item[|format|:]
-%   This property specifies a formatting macro for content of the cell.
-%   By default, the formatting macro takes the content as is but puts a
-%   |\strut| before and after the content (to yield a better vertical
-%   spacing).
-% \item[|head|:]
-%   This property specifies the content of the column's header row. The
-%   default value for this property is the name of the column.
-% \item[|hidden|:]
-%   This property specifies whether a table column shall be displayed or
-%   not. The \meta{value} for this property can be |true| (to display
-%   the cell; the default) or |false| (to not display the cell).
-% \end{description}
+% \begin{KeyValTable}{KeyDesc}
+% \Row{key=align,
+%   desc={This property specifies the alignment of content in the
+%     column.  The \meta{value} can be set to any column alignment
+%     understood by the |tabu| environment of the \pkgname{tabu} package.
+%     This particularly includes |l|, |c|, |r|, |p|, and |X|.},
+%   default=l}
+% \Row{key=default,
+%   desc={This property specifies the default value of a cell in this
+%     column, i.e., in case that a \cmd{\Row} does not provide content
+%     for the cell.  By default (i.e., if unset for a column), this is
+%     an empty string.}}
+% \Row{key=format,
+%   desc={This property specifies a formatting macro for content of the
+%     cell.  The macro can take one argument and is provided with the
+%     content of the cell as its argument.
+%     By default, the formatting macro takes the content as is
+%     but puts a \cmd{\strut} before and after the content (to yield a
+%     better vertical spacing).},
+%   default=\cmd{\kvtStrutted}}
+% \Row{key=head,
+%   desc={This property specifies the content of the column's header
+%     row. The default value for this property is the name of the
+%     column.}}
+% \Row{key=hidden,
+%   desc={This property specifies whether a table column shall be
+%     displayed or not. The \meta{value} for this property can be |true|
+%     (to hide the cell; the default) or |false| (to display the
+%     cell).},
+%   default=false}
+% \end{KeyValTable}
 %
 % \subsection{Typesetting Tables}\label{sec:typesetting-tables}
 %
 % The first possibility for typesetting a table using the
-% \textsf{keyvaltable} package, is via the |KeyValTable| environment,
+% \pkgname{keyvaltable} package, is via the |KeyValTable| environment,
 % which the example at the beginning of this section shows.
 % The second possibility is described in
 % Section~\ref{sec:collected-tables}.
@@ -250,31 +220,37 @@
 % The \meta{options} override default configurations, if provided, and
 % must then be a comma-separated list of \meta{property}|=|\meta{value}
 % pairs. The following \meta{property} names are available:
-% \begin{description}\label{page:table-options}
-% \item[|shape|:]
-%   This property specifies the table's shape. For \meta{value}, the
-%   package currently supports |multipage| (the default) and |onepage|.
-%   In case of |multipage|, the table may span multiple pages and on
-%   each page, the column header is repeated. In case of |onepage|, the
-%   table does not split into multiple pages.
-% \item[|showhead|:]
-%   This property specifies whether the head row shall be shown. The
-%   \meta{value} must be a Boolean (i.e., |true| or |false|), where
-%   |true| (the default) specifies that the head row is shown and
-%   |false| specifies that the head row is not shown.
-% \item[|headbg|:]
-%   This property specifies the background color of the head row. The
-%   \meta{value} must be a single color specification that is understood
-%   by the \textsf{xcolor} package.\footnote{The \meta{value} is passed
-%   directly to the \cs{rowcolor} macro.} The default is |black!14|.
-% \item[|rowbg|:]
-%   This property specifies the background colors of content rows. The
-%   format of the \meta{value} for this property must be
-%   \meta{oddcolor}|..|\meta{evencolor}.\footnote{The \meta{value} is
-%   passed directly to \cs{taburowcolors} of the \textsf{tabu} package.}
-%   The default is |white..black!10|, i.e., alternatingly white and light
-%   very gray.
-% \end{description}
+% \begin{KeyValTable}{KeyDesc}\label{page:table-options}
+% \Row{key=shape,
+%   desc={This property specifies the table's shape. For \meta{value},
+%     the package currently supports |multipage| and |onepage|.  In case
+%     of |multipage|, the table may span multiple pages and on each
+%     page, the column header is repeated. In case of |onepage|, the
+%     table does not split into multiple pages.},
+%   default=multipage}
+% \Row{key=showhead,
+%   desc={This property specifies whether the head row shall be shown.
+%     The \meta{value} must be a Boolean (i.e., |true| or |false|),
+%     where |true| specifies that the head row is shown and |false|
+%     specifies that the head row is not shown.},
+%   default=true}
+% \Row{key=showrules,
+%   desc={This property specifies whether top and bottom rules as well
+%     as a rule below the head row are drawn (|true|) or not (|false|)},
+%   default=true}
+% \Row{key=headbg,
+%   desc={This property specifies the background color of the head row.
+%     The \meta{value} must be a single color specification that is
+%     understood by the \pkgname{xcolor} package. The \meta{value} is
+%     passed directly to the \cs{rowcolor} macro.},
+%   default={black!14}}
+% \Row{key=rowbg,
+%   desc={This property specifies the background colors of content rows.
+%     The format of the \meta{value} for this property must be
+%     \meta{oddcolor}|..|\meta{evencolor}. The \meta{value} is passed
+%     directly to \cs{taburowcolors} of the \pkgname{tabu} package.},
+%   default={white..black!10}}
+% \end{KeyValTable}
 % The following example shows the \meta{options} in action.
 % \begin{LTXexample}
 % \NewKeyValTable[shape=onepage,
@@ -307,7 +283,7 @@
 % \subsection{Tables of Collected Rows}\label{sec:collected-tables}
 %
 % As an alternative to producing a table within a single environment,
-% the \textsf{keyvaltable} package offers a way to scatter individual
+% the \pkgname{keyvaltable} package offers a way to scatter individual
 % rows throughout a document and display the full table later. This
 % method can be useful when table rows are strongly connected to
 % portions of text outside of the table. The method then allows
@@ -342,7 +318,7 @@
 %
 % The following example demonstrates the use, based on the previously
 % defined |Recipe| table type.
-% \begin{LTXexample}[preset=\NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X[l]}]
+% \begin{LTXexample}[morepreset=\NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X[l]}]
 % \AddKeyValRow{Recipe}{amount=3,
 %      ingredient=balls of snow,
 %      step=staple all 3 balls}
@@ -358,7 +334,7 @@
 % \subsection{Setting Global Defaults}
 %
 % \NiceDescribeMacro{\kvtSet}{\marg{options}}
-% The \textsf{keyvaltable} package allows changing the default values
+% The \pkgname{keyvaltable} package allows changing the default values
 % globally for the parameters of tables and columns. This can be done by
 % using the |\kvtSet| macro.
 %
@@ -379,7 +355,7 @@
 %
 % The mechanism of default column values enables a simple means for
 % automatic row numbering. For this, one can use one of three row
-% counters provided by the \textsf{keyvaltable} package: |kvtRow|,
+% counters provided by the \pkgname{keyvaltable} package: |kvtRow|,
 % |kvtTypeRow|, and |kvtTotalRow|. The counters are explained after the
 % following example, which demonstrates the use for the case of the
 % |kvtRow| counter.
@@ -395,25 +371,25 @@
 % \end{KeyValTable}
 % \end{LTXexample}
 %
-% \NiceDescribeConstant{kvtRow}
+% \NiceDescribeCounter{kvtRow}{}
 % The |kvtRow| counter counts the row in the \emph{current} table. The
 % row number excludes the header row of the table. If the table spans
 % multiple pages, the row number also excludes the repeated headings on
 % subsequent pages.
 %
-% \NiceDescribeConstant{kvtTypeRow}
+% \NiceDescribeCounter{kvtTypeRow}{}
 % The |kvtTypeRow| counter counts the rows in the current table and
 % includes the number of rows of all previous tables of the same type.
 %
-% \NiceDescribeConstant{kvtTotalRow}
+% \NiceDescribeCounter{kvtTotalRow}{}
 % The |kvtTotalRow| counter counts the rows in the current table and
 % includes the number of rows of all previous tables produced using the
-% \textsf{keyvaltable} package.
+% \pkgname{keyvaltable} package.
 %
 % Row numbering can easily be combined with row labeling.
 % The following example shows how the |format| column property can be
 % used for this purpose.
-% \begin{LTXexample}[preset=\FakeRefs]
+% \begin{LTXexample}
 % \NewKeyValTable{Labeled}{
 %   label: align=r, head=\textbf{\#},
 %          format=\kvtLabel{kvtRow};
@@ -433,9 +409,9 @@
 % (\meta{label}) is provided by the respective cell content.
 %
 % The |\kvtLabel| macro should work well with packages that change the
-% referencing, like \textsf{cleveref} or \textsf{varioref}. When using a
+% referencing, like \pkgname{cleveref} or \pkgname{varioref}. When using a
 % package that add an optional argument to the |\label| command (like
-% \textsf{cleveref} does), the \meta{labelopts} can be used to pass an
+% \pkgname{cleveref} does), the \meta{labelopts} can be used to pass an
 % optional argument to |\label|. This feature is demonstrated in
 % \cref{sec:package-cleveref}.
 %
@@ -444,14 +420,14 @@
 %
 % \subsection{Named References}\label{sec:package-cleveref}
 %
-% The |\kvtLabel| feature of the \textsf{keyvaltable} package can be
+% The |\kvtLabel| feature of the \pkgname{keyvaltable} package can be
 % used together with named references, as provided by the
-% \textsf{cleveref} package. A name to a row label can be given by using
+% \pkgname{cleveref} package. A name to a row label can be given by using
 % the optional first argument to the |\kvtLabel| formatting macro and
 % specifying the name to use using |\crefname|. The following example
 % uses ``row'' for the optional argument and ``line'' for the displayed
 % name of the reference.
-% \begin{LTXexample}[preset=\FakeRefs]
+% \begin{LTXexample}
 % \usepackage{cleveref}
 % \crefname{row}{line}{lines}
 % \NewKeyValTable{NamedRef}{
@@ -468,7 +444,7 @@
 %
 % The mechanism of cell formatting macros enables a simple means for
 % automatically computing formulas contained in a column. This can be
-% done, for instance using the \textsf{xint} package and defining a
+% done, for instance using the \pkgname{xint} package and defining a
 % custom format macro (here |\Math|) that takes over the computation.
 % \begin{LTXexample}
 % \usepackage{xintexpr}
@@ -484,8 +460,8 @@
 %
 % \subsection{Cell Formatting}
 %
-% The \textsf{keyvaltable} package can be used together with the
-% \textsf{makecell} package in at least two ways:
+% The \pkgname{keyvaltable} package can be used together with the
+% \pkgname{makecell} package in at least two ways:
 % \begin{enumerate}[noitemsep]
 % \item formatting header cells using the |head| property of columns;
 % \item formatting content cells using the |format| property of columns.
@@ -507,22 +483,22 @@
 %
 % I'm not aware of any \LaTeX{} packages that pursue similar goals or
 % provide similar functionality. The following \LaTeX{} packages provide
-% loosely related functionalities to the \textsf{keyvaltable} package.
+% loosely related functionalities to the \pkgname{keyvaltable} package.
 %
 % \begin{description}
-% \item[\textsf{ctable}:]
+% \item[\pkgname{ctable}:]
 %   This package focuses on typesetting tables with captions and notes.
 %   With this package, the specification of table content is quite
 %   close to normal |tabular| environments, except that the package's
 %   table creation is done via a macro, |\ctable|.
-% \item[\textsf{easytable}:]
+% \item[\pkgname{easytable}:]
 %   This package provides an environment |TAB| which simplifies the
 %   creation of tables with particular horizontal and vertical cell
 %   alignments, rules around cells, and cell width distributions. In
 %   that sense, the package aims at simpler table creation, like the
-%   \textsf{keyvaltable}. However, the package does not pursue
+%   \pkgname{keyvaltable}. However, the package does not pursue
 %   separation of content from presentation or re-use of table layouts.
-% \item[\textsf{tabularkv}:]
+% \item[\pkgname{tabularkv}:]
 %   Despite the similarity in the name, this package pursues a different
 %   purpose. Namely, this package provides means for specifying table
 %   options such as width and height through an optional key-value
@@ -547,16 +523,16 @@
 %
 % \section{Implementation}
 %
-% We use \textsf{etoolbox} for some convenience macros that make the
-% code more easily maintainable and use \textsf{xkeyval} for options
+% We use \pkgname{etoolbox} for some convenience macros that make the
+% code more easily maintainable and use \pkgname{xkeyval} for options
 % in key--value form.
 %    \begin{macrocode}
 \RequirePackage{etoolbox}
 \RequirePackage{xkeyval}
 %    \end{macrocode}
-% We use \textsf{tabu} for creating the tables and \textsf{longtable}
+% We use \pkgname{tabu} for creating the tables and \pkgname{longtable}
 % for tables that can span multiple pages (via |longtabu|). We use
-% \textsf{booktabs} for nice horizontal lines and \textsf{xcolor}
+% \pkgname{booktabs} for nice horizontal lines and \pkgname{xcolor}
 % for row coloring
 %    \begin{macrocode}
 \RequirePackage[table]{xcolor}
@@ -581,7 +557,7 @@
 % The |\kvt@@lazypreset|\marg{family}\marg{head keys} macro collects a
 % request collects a request for pre-setting \meta{head keys} in family
 % key \meta{family}. Using this macro, one can avoid causing problems
-% with using \textsf{xkeyval}'s |\presetkeys| inside the \meta{function}
+% with using \pkgname{xkeyval}'s |\presetkeys| inside the \meta{function}
 % defined for a key (e.g., via |\define@key|). The collected requests
 % can be performed by expanding the |\kvt@@presetqueue| macro.
 %    \begin{macrocode}
@@ -669,17 +645,18 @@
 % \end{macro}
 %
 % \begin{macro}{\kvt@addchoicecolumnprop}
-% The |\kvt@addchoicecolumnprop|\marg{name}\marg{default}\marg{choice}
-% macro adds a new column option, named \meta{name} and with default
-% value \meta{default} and possible values from the comma-separated
-% list provided by \meta{choice}.
+% The |\kvt@addchoicecolumnprop|\marg{name}\marg{initial}\marg{default}\marg{choice}
+% macro adds a new column option, named \meta{name}, with initial value
+% \meta{initial}, with default argument value \meta{default}, and
+% possible values from the comma-separated list provided by
+% \meta{choice}.
 %    \begin{macrocode}
-\newcommand\kvt@addchoicecolumnprop[3]{%
+\newcommand\kvt@addchoicecolumnprop[4]{%
 %    \end{macrocode}
 % The following makes the \meta{name} available as an option for
 % |\kvtSet| for setting a global default value to this column option.
 %    \begin{macrocode}
-  \define@choicekey[kvt]{defaults}{#1}{#3}{%
+  \define@choicekey[kvt]{defaults}{#1}{#4}[#3]{%
     \kvt@lazypreset{Column}{#1=##1}}%
   \presetkeys[kvt]{defaults}{#1=#2}{}%
 %    \end{macrocode}
@@ -687,7 +664,7 @@
 % the \meta{colspecs} of |\NewKeyValTable| for setting a default value
 % to the particular column.
 %    \begin{macrocode}
-  \define@choicekey[kvt]{Column}{#1}{#3}%
+  \define@choicekey[kvt]{Column}{#1}{#4}[#3]%
     {\csdef{kvt@col@#1@\kvt@@column}{##1}}%
   \presetkeys[kvt]{Column}{#1=#2}{}%
 }
@@ -697,27 +674,29 @@
 % The following are the known column properties and their defaults as
 % well as the known table properties and their defaults.
 % \changes{v0.2}{2016/05/21}{Added ``shape'' table option}
+% \changes{v1.0}{2018/12/30}{Enabled default ``true'' for ``hidden''}
 %    \begin{macrocode}
 \kvt@addtableprop{rowbg}{white..black!10}
 \kvt@addtableprop{headbg}{black!14}
 \kvt@addbooltableprop{showhead}{true}
+\kvt@addbooltableprop{showrules}{true}
 \kvt@addchoicetableprop{shape}{multipage}{multipage,onepage}
 \kvt@addcolumnprop{default}{}
-\kvt@addcolumnprop{format}{\kvt@struttedcell}
+\kvt@addcolumnprop{format}{\kvtStrutted}
 \kvt@addcolumnprop{align}{l}
 \kvt@addcolumnprop{head}{}
-\kvt@addchoicecolumnprop{hidden}{false}{false,true}
+\kvt@addchoicecolumnprop{hidden}{false}{true}{false,true}
 \kvtSet{}
 %    \end{macrocode}
 %
-% \begin{macro}{\kvt@struttedcell}
-% The |\kvt@struttedcell|\marg{arg} macro prefixes and suffixes
+% \begin{macro}{\kvtStrutted}
+% The |\kvtStrutted|\marg{arg} macro prefixes and suffixes
 % the argument \meta{arg} with a |\strut|. When used for formatting
 % cell content, this makes sure that there is some vertical space
 % between the content of a cell and the top and bottom of the row.
 % \changes{v0.3}{2016/06/06}{Fix for cells with vertical material}
 %    \begin{macrocode}
-\newcommand\kvt@struttedcell[1]{\strut #1\ifhmode\expandafter\strut\fi}
+\newcommand\kvtStrutted[1]{\strut #1\ifhmode\expandafter\strut\fi}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -782,7 +761,7 @@
 %    \end{macrocode}
 % \end{macro}
 % \begin{macro}{\kvt@alltables}
-% The |\kvt@alltables| is an \textsf{etoolbox} list containing the names
+% The |\kvt@alltables| is an \pkgname{etoolbox} list containing the names
 % of all tables declared by |\NewKeyValTable|.
 %    \begin{macrocode}
 \newcommand\kvt@alltables{}
@@ -829,7 +808,7 @@
 % a label, named \meta{label}, for the current value of the \LaTeX{}
 % counter named \meta{counter}.
 % \changes{v0.2}{2016/05/22}{Added macro for row labeling}
-% \changes{v0.3}{2016/06/09}{Robustified for use with, e.g., \textsf{cleveref}}
+% \changes{v0.3}{2016/06/09}{Robustified for use with, e.g., \pkgname{cleveref}}
 %    \begin{macrocode}
 \newcommand\kvtLabel[3][]{%
 %    \end{macrocode}
@@ -903,7 +882,7 @@
 % The |\kvt@StartTable@multipage|\marg{tname} does the same for a table
 % environment of shape |multipage|.
 % These macros internally use |\kvt@StartTabu|\marg{env}\marg{tname} for
-% beginning a table environment of the \textsf{tabu} package. The
+% beginning a table environment of the \pkgname{tabu} package. The
 % \meta{env} specifies the concrete environment, either |tabu| or
 % |longtabu|.
 %    \begin{macrocode}
@@ -915,15 +894,23 @@
 %    \end{macrocode}
 % The |\kvt@@recenttable| allows the |\AfterEndEnvironment| hook for
 % |KeyValTable| to access the most recent table type.
-% \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
 %    \begin{macrocode}
   \gdef\kvt@@recenttable{#2}%
+%    \end{macrocode}
+% TODO: document change
+%    \begin{macrocode}
+  \ifbool{kvt@Table@showrules}
+    {\def\kvt@@rule##1{\csuse{##1rule}}}
+    {\def\kvt@@rule##1{}}%
   \bgroup\edef\kvt@@do{\egroup
     \noexpand\begin{#1}{\csuse{kvt@alignments@#2}}%
-    \noexpand\toprule
+    \noexpand\kvt@@rule{top}
+%    \end{macrocode}
+% \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
+%    \begin{macrocode}
     \ifbool{kvt@Table@showhead}{%
       \noexpand\rowcolor{\cmdkvt@Table@headbg}%
-      \unexpanded{\csuse{kvt@headings@#2}\\\midrule}}{}%
+      \unexpanded{\csuse{kvt@headings@#2}\\\kvt@@rule{mid}}}{}%
     \noexpand\taburowcolors 2{\cmdkvt@Table@rowbg}%
   }\kvt@@do%
   \iftabu@long\expandafter\endhead\fi
@@ -947,10 +934,10 @@
 % shape.
 %    \begin{macrocode}
 \newcommand\kvt@EndTable@onepage{%
-  \bottomrule%
+  \kvt@@rule{bottom}%
   \end{tabu}}
 \newcommand\kvt@EndTable@multipage{%
-  \bottomrule%
+  \kvt@@rule{bottom}%
   \end{longtabu}}
 %    \end{macrocode}
 % \end{macro}
