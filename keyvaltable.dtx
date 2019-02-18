@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2016-2018 by Richard Grewe <r-g+tex@posteo.net>
+% Copyright (C) 2016-2019 by Richard Grewe <r-g+tex@posteo.net>
 % -------------------------------------------------------
 % 
 % This file may be distributed and/or modified under the
@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2018/12/30 v0.9 Package for filling tables using key-value lists]
+    [2019/02/18 v0.9 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -148,7 +148,7 @@
 %
 % \subsection{Table Type Definition}
 %
-% \NiceDescribeMacro{\NewKeyValTable}{\oarg{options}\marg{tname}\marg{colspecs}}
+% \NiceDescribeMacro{\NewKeyValTable}{\oarg{options}\marg{tname}\marg{colspecs}\oarg{headers}}
 % Table types are defined via the |\NewKeyValTable| macro, where
 % \begin{itemize}[noitemsep]
 % \item \meta{tname} is the name of the table type,
@@ -160,6 +160,11 @@
 %   comma-separated list of \meta{property}|=|\meta{value} pairs;
 %   the list of table options can be found at the introduction of the
 %   |KeyValTable| environment on page~\pageref{page:table-options}.
+% \item \meta{headers}, if provided, specifies custom table header rows.
+%   This argument is further described in \cref{sec:colspan}.
+%   If this argument is omitted, a single header row is produced
+%   (unless |showhead=false| is provided as an option) and the
+%   individual headers in this row are determined by \meta{colspec}.
 % \end{itemize}
 % Each column specification is of the form
 % \begin{center}
@@ -251,10 +256,12 @@
 %     directly to \cs{taburowcolors} of the \pkgname{tabu} package.},
 %   default={white..black!10}}
 % \end{KeyValTable}
-% The following example shows the \meta{options} in action.
+% \cref{fig:TableOptionExamples} demonstrates the \meta{options} in
+% examples.
+% \begin{figure}
 % \begin{LTXexample}
 % \NewKeyValTable[shape=onepage,
-%     showhead=false, headbg=blue!25,
+%     showhead=false,
 %     rowbg=blue!10..blue!15,
 %   ]{TabOptions}{
 %     opt: align=l, format=\texttt;
@@ -263,12 +270,14 @@
 % \begin{KeyValTable}{TabOptions}
 % \Row{opt=shape,  val=onepage}
 % \Row{opt=showhead, val=false}
-% \Row{opt=headbg, val=blue!25}%invisible
 % \Row{opt=rowbg,  val=blue!10..blue!15}
 % \end{KeyValTable}
 % \caption{table options demo}
 % \end{table}
 % \end{LTXexample}
+% \caption{Example for table options}
+% \label{fig:TableOptionExamples}
+% \end{figure}
 %
 %
 % \NiceDescribeMacro{\Row}{\marg{content}}
@@ -410,11 +419,134 @@
 %
 % The |\kvtLabel| macro should work well with packages that change the
 % referencing, like \pkgname{cleveref} or \pkgname{varioref}. When using a
-% package that add an optional argument to the |\label| command (like
+% package that adds an optional argument to the |\label| command (like
 % \pkgname{cleveref} does), the \meta{labelopts} can be used to pass an
 % optional argument to |\label|. This feature is demonstrated in
 % \cref{sec:package-cleveref}.
 %
+%
+% \subsection{Column Spanning}
+% \label{sec:colspan}
+%
+% Combining multiple consecutive cells in a row to a single cell (aka
+% column spanning) can serve several purposes.
+% The \pkgname{keyvaltable} package supports the following purposes:
+%
+% \begin{enumerate}[noitemsep]
+% \item grouping of columns through cells in the table's header that
+%   span all cells in the group and assign a ... title to the group;
+% \item individual combinations of cells in the table data.
+% \end{enumerate}
+%
+% The remainder of this section describes how each of the purposes can
+% be addressed in |KeyValTable| environments.
+%
+% \paragraph{Column groups in table headers}
+%
+% Column groups in table headers can be specified by the \meta{headers}
+% parameter of |\NewKeyValTable|. The syntax for \meta{headers} is as
+% follows:
+% \begin{itemize}[noitemsep]
+% \item \meta{headers} is a list, separated by "|\\|", where each
+%   element in the list specifies the columns of a single header
+%   \meta{row}.
+% \item Each \meta{row}, in turn, is also a
+%   list. The elements of this list are separated by "|;|" (as in the
+%   columns specification of |\NewKeyValTable|) and each element
+%   specifies a header \meta{cell}.
+% \item Each \meta{cell} is of the form
+%   \begin{center}
+%     \meta{col}|+|\ldots|+|\meta{col}|:| \meta{property}|=|\meta{value}|,|
+%     \meta{property}|=|\meta{value}|,|\ldots
+%   \end{center}
+%   where each \meta{col} is the name of a column.
+%   The specified header cell then spans each of the listed columns.
+%   The columns must be displayed consecutively, though not necessarily
+%   in the same order in which they are specified in \meta{cell}.
+% \item The \meta{property}|=|\meta{value} pairs configure certain
+%   properties of the header cell. The \meta{property} can be one of the
+%   following:
+%   \begin{KeyValTable}{KeyDesc}
+%   \Row{key=align,
+%     desc={This property specifies the alignment of content in the
+%       column.  The \meta{value} can be set to any column alignment
+%       understood by the |tabu| environment of the \pkgname{tabu} package.
+%       This particularly includes |l|, |c|, |r|, |p|, and |X|.},
+%     default=c}
+%   \Row{key=head,
+%     desc={This property specifies the content of the column's header
+%       row. The default value for this property is the name of the
+%       column.}}
+%   \end{KeyValTable}
+% \end{itemize}
+%
+% The following provides a simple example with a single header row, in
+% which two columns are grouped with a single header, one column has a
+% normal header, and one column is not provided with a header.
+% \begin{LTXexample}
+% \NewKeyValTable{ColGroup}{
+%   id:     align=r, default=\thekvtRow.;
+%   amount: align=r; ingredient: align=l;
+%   step:   align=X[l];
+% }[
+%   amount+ingredient: head=\textbf{ingredient};
+%   step: head=\textbf{step}, align=l;
+% ]
+% \begin{KeyValTable}{ColGroup}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% The following example shows how multiple header rows can be specified
+% and, particularly, how the normal column headers can be displayed
+% through the use of "|::|".
+% \begin{LTXexample}[width=0.475\hsize]
+% \NewKeyValTable{ColGroup2}{
+%   date:   align=r, head=\textbf{date};
+%   min/Berlin: align=r, head=min;
+%   max/Berlin: align=r, head=max;
+%   min/Paris:  align=r, head=min;
+%   max/Paris:  align=r, head=max;
+% }[
+%   min/Berlin+max/Berlin+min/Paris+max/Paris:
+%     head=\textbf{temperature}\\
+%   min/Paris+max/Paris:   head=\textbf{Paris};
+%   min/Berlin+max/Berlin: head=\textbf{Berlin}\\
+%   ::
+% ]
+% \begin{KeyValTable}{ColGroup2}
+% \Row{date=01.01.1970, min/Berlin=0°C, max/Berlin=...}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% \paragraph{Manual column spanning with \cmd{\multicolumn}}
+% The |\multicolumn| macro can be used for the content of a cell.
+% The effect of this is that a number of subsequent cells are spanned
+% over with the content of the cell. The following example demonstrates
+% the use.
+% \begin{LTXexample}[width=0.475\hsize]
+% \NewKeyValTable{MultiCol}{
+%   col1: align=l;
+%   col2: align=l;
+%   col3: align=l;}
+% \begin{KeyValTable}{MultiCol}
+%   \Row{col1=1, col2=\multicolumn{1}{r}{2}, col3=3}
+%   \Row{col1=1, col2=\multicolumn{2}{c}{2+3}}
+%   \Row{col1=\multicolumn{2}{c}{1+2}, col3=3}
+%   \Row{col1=\multicolumn{3}{c}{1+2+3}}
+% \end{KeyValTable}
+% \end{LTXexample}
+% A word of warning:
+% The |\multicolumn| macro implicitly constrains the ordering of
+% columns. For instance, in the above example, switching columns 2 and 3
+% would lead to an error in the second row (because |col2| is the
+% rightmost column and therefore cannot span two columns) and also in
+% the third row (because |col1| spans two columns but the second, |col3|
+% is not empty). Thus, column spanning via |\multicolumn| should be used
+% with care.
 %
 % \section{Use with Other Packages}
 %
@@ -525,10 +657,12 @@
 %
 % We use \pkgname{etoolbox} for some convenience macros that make the
 % code more easily maintainable and use \pkgname{xkeyval} for options
-% in key--value form.
+% in key--value form. The \pkgname{trimspaces} package is used once for
+% trimming spaces before a string comparison.
 %    \begin{macrocode}
 \RequirePackage{etoolbox}
 \RequirePackage{xkeyval}
+\RequirePackage{trimspaces}
 %    \end{macrocode}
 % We use \pkgname{tabu} for creating the tables and \pkgname{longtable}
 % for tables that can span multiple pages (via |longtabu|). We use
@@ -563,14 +697,6 @@
 %    \begin{macrocode}
 \newcommand\kvt@lazypreset[2]{%
   \appto\kvt@@presetqueue{\presetkeys[kvt]{#1}{#2}{}}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\mkv@dossvlist}
-% The |\mkv@dossvlist|\marg{list} macro parses a semicolon-separated
-% list and runs |\do|\meta{item} for every element of the list.
-%    \begin{macrocode}
-\DeclareListParser{\mkv@dossvlist}{;}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -703,20 +829,42 @@
 % \subsection{Declaring Key-Value Tables}
 %
 % \begin{macro}{\NewKeyValTable}
-% The |\NewKeyValTable|\oarg{options}\marg{tname}\marg{colspecs}
+% The
+% |\NewKeyValTable|\oarg{options}\marg{tname}\marg{colspecs}\oarg{headers}
 % declares a new key-value table type, identified by the given
 % \meta{tname}. The columns of the table type are specified by
 % \meta{colspecs}. The optional \meta{options}, if given, override the
 % default table options for tables of type \meta{tname}.
 % \changes{v0.2}{2016/05/21}{Added table-type options}
+% \changes{v1.0}{2019/02/03}{Added optional headers argument}
 %    \begin{macrocode}
 \newcommand\NewKeyValTable[3][]{%
+  \@ifnextchar[%]
+    {\kvt@NewKeyValTable{#1}{#2}{#3}}%
+    {\kvt@NewKeyValTable{#1}{#2}{#3}[]}}
+%    \end{macrocode}
+% The
+% |\kvt@NewKeyValTable|\marg{options}\marg{tname}\marg{colspecs}\oarg{headers}
+% macro is an auxiliary macro used for parsing the fourth, optional
+% argument of |\NewKeyValTable|.
+%    \begin{macrocode}
+\def\kvt@NewKeyValTable#1#2#3[#4]{%
 %    \end{macrocode}
 % First initialize the ``variables''.
 %    \begin{macrocode}
   \csdef{kvt@options@#2}{#1}%
   \csdef{kvt@headings@#2}{}%
-  \csdef{kvt@alignments@#2}{}%
+%    \end{macrocode}
+% The following adds a zero-width column to the left of every table.
+% This column serves the purpose of "holding" the code that
+% \pkgname{keyvaltable} uses for formatting a row (e.g., parsing |\Row|
+% arguments). This code is partly not expandable.
+% The reason for not putting this code into the first actual colum of
+% tables is that this code would prevent |\multicolumn| to be used in
+% the first column.
+% \changes{v1.0}{2019/02/03}{Added zero-width column for \cs{multicolumn}}
+%    \begin{macrocode}
+  \csedef{kvt@alignments@#2}{p{0pt}\expandonce\kvt@HackIntercolSpace}%
   \csdef{kvt@colkeys@#2}{}%
   \csdef{kvt@rowcount@#2}{1}%
   \csdef{kvt@rows@#2}{}%
@@ -728,7 +876,16 @@
 %    \begin{macrocode}
   \def\do##1{%
     \kvt@parsecolspec{#2}##1::\@undefined}%
-  \mkv@dossvlist{#3}%
+  \kvt@dossvlist{#3}%
+%    \end{macrocode}
+% Finally, parse \meta{headers}, also a semicolon-separated list of
+% individual column groups, where |\\| marks a new row of column groups.
+% If \meta{headers} is omitted (or empty), then simply take the result
+% of |\kvt@parsecolspec| as the header row.
+%    \begin{macrocode}
+  \ifstrempty{#4}
+    {\csappto{kvt@headings@#2}{\\}}
+    {\kvt@parseheadrows{#2}{#4}}%
 }
 %    \end{macrocode}
 % The
@@ -745,7 +902,7 @@
 %    \begin{macrocode}
   \ifcsstring{kvt@col@hidden@#1@#2}{true}{}{%
     \cseappto{kvt@alignments@#1}{\csexpandonce{kvt@col@align@#1@#2}}%
-    \ifcsvoid{kvt@headings@#1}{}{\csappto{kvt@headings@#1}{&}}%
+    \csappto{kvt@headings@#1}{&}%
     \ifcsstring{kvt@col@head@#1@#2}{}%
       {\cseappto{kvt@headings@#1}{#2}}%
       {\cseappto{kvt@headings@#1}{\csexpandonce{kvt@col@head@#1@#2}}}%
@@ -760,6 +917,17 @@
 }
 %    \end{macrocode}
 % \end{macro}
+%
+% \begin{macro}{\kvt@HackIntercolSpace}
+% The |\kvt@HackIntercolSpace| macro captures the negative space that
+% cancels out the spacing otherwise caused by the extra column that the
+% package adds.
+%    \begin{macrocode}
+\newcommand\kvt@HackIntercolSpace{%
+  @{\protect\hspace{-.5\arrayrulewidth}}}
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{\kvt@alltables}
 % The |\kvt@alltables| is an \pkgname{etoolbox} list containing the names
 % of all tables declared by |\NewKeyValTable|.
@@ -767,6 +935,181 @@
 \newcommand\kvt@alltables{}
 %    \end{macrocode}
 % \end{macro}
+%
+%
+% \subsection{Column Headers}
+%
+% \begin{macro}{\kvt@parseheadrows}
+% The |\kvt@parseheadrows|\marg{tname}\marg{headers}
+% macro parses the \meta{headers} argument of |\NewKeyValTable|.
+%    \begin{macrocode}
+\newcommand\kvt@parseheadrows[2]{%
+  \csdef{kvt@@colgroups@#1}{}%
+  \bgroup
+  \def\kvt@@parseheadrows{}%
+%    \end{macrocode}
+% Now loop over \meta{headers} to split \meta{headers} by |\\|.
+% Append each item, which specifies a single header row, to
+% |\kvt@@parseheadrows| for subsequent parsing by |\kvt@parseheadrow|.
+% If an item equals the special sequence "|::|", then the original
+% header for the columns is added as header row.
+%    \begin{macrocode}
+  \def\do##1{%
+    \def\kvt@@tmp{##1}\trim@post@space@in\kvt@@tmp%
+    \expandafter\ifstrequal\expandafter{\kvt@@tmp}{::}
+      {\appto\kvt@@parseheadrows{%
+         \cseappto{kvt@@colgroups@#1}{%
+           \csexpandonce{kvt@headings@#1}\noexpand\\}}}
+      {\appto\kvt@@parseheadrows{\kvt@parseheadrow{#1}{##1}}}%
+  }\kvt@dobrklist{#2}%
+%    \end{macrocode}
+% Finally, escape the inner group and overwrite the headings
+% with the result of the parsing.
+%    \begin{macrocode}
+  \expandafter\egroup\kvt@@parseheadrows
+  \csletcs{kvt@headings@#1}{kvt@@colgroups@#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@parseheadrow}
+% The |\kvt@parseheadrow|\marg{tname}\marg{colspec} macro parses a
+% single header row and appends the resulting table code to
+% \cs{kvt@@colgroups@\meta{tname}}.
+%    \begin{macrocode}
+\newcommand\kvt@parseheadrow[2]{%
+  \bgroup
+%    \end{macrocode}
+% First parse \meta{colspec}, populating the
+% \cs{kvt@@colgrpof@\meta{colname}} macros that associate each column
+% with the column group to which the column belongs.
+%    \begin{macrocode}
+  \def\do##1{\kvt@parsehdcolspec##1::\@undefined}%
+  \kvt@dossvlist{#2}%
+%    \end{macrocode}
+% Initialize variables for the subsequent loop.
+% The |\kvt@@tmpgrphd| macro collects the code for the cells of the
+% current header row. The |\kvt@@span| counter specifies how many
+% columns the current cell shall span.
+% Finally, |\kvt@@curgrp| and |\kvt@@lastgrp| hold the name of the group
+% in which the current column and, respectively, previous column are in.
+% Each of the two macros is undefined if there is no such column group.
+%    \begin{macrocode}
+  \let\kvt@@tmpgrphd\@empty
+  \kvt@@span\z@
+  \undef\kvt@@curgrp \undef\kvt@@lastgrp
+%    \end{macrocode}
+% Next, loop over all displayed (non-hidden) columns, as stored in
+% \cs{kvt@colkeys@\meta{tname}}. The following |\do|\marg{colname}
+% collects (spanned) columns as specified in \meta{colspec}, in the
+% ordering in which the table's columns are displayed. The spanned
+% columns are stored in |\kvt@@tmpgrphd|.
+%    \begin{macrocode}
+  \def\do##1{\letcs\kvt@@curgrp{kvt@@colgrpof@##1}%
+    \ifdefequal\kvt@@curgrp\kvt@@lastgrp
+%    \end{macrocode}
+% If the column group has not changed, simply increase the spanning
+% counter.
+%    \begin{macrocode}
+      {\advance\kvt@@span\@ne}%
+%    \end{macrocode}
+% Otherwise, i.e., if the column group has changed, then conclude the
+% previous column (if there was one) and reset the span to 1 (to count
+% for the column in |\kvt@@curgrp|) and set |\kvt@@lastgrp| to the
+% current one.
+%    \begin{macrocode}
+      {\ifnum\kvt@@span>\z@ \expandafter\kvt@concludecolumn\fi
+       \ifdefvoid\kvt@@curgrp{}{\ifcsdef{kvt@@colgrpdone@\kvt@@curgrp}{%
+         \kvt@error{Column group `\kvt@@curgrp' must consist of only
+            consecutive columns, but it is not}%
+           {Compare `|\kvt@@curgrp|' to the column ordering as specified
+            in `\string\NewKeyValTable{#1}'}}{}}%
+       \kvt@@span\@ne \let\kvt@@lastgrp\kvt@@curgrp}%
+  }\dolistcsloop{kvt@colkeys@#1}%
+  \kvt@concludecolumn
+%    \end{macrocode}
+% Finally, conclude the whole header row and append the row to the
+% overall list of rows, stored in \cs{kvt@@colgroups@\meta{tname}},
+% while ending the current \hologo{TeX} group.
+%    \begin{macrocode}
+  \appto\kvt@@tmpgrphd{\\}%
+  \edef\do{\noexpand\csappto{kvt@@colgroups@#1}{\expandonce{\kvt@@tmpgrphd}}}%
+  \expandafter\egroup\do}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@@span}
+% The counter |\kvt@@span| is used temporarily in macros for counting
+% how many columns are spanned by column groups.
+%    \begin{macrocode}
+\newcount\kvt@@span
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@concludecolumn}
+% The |\kvt@concludecolumn| macro appends a cell, potentially spanning
+% multiple columns, to the row under construction (which is in
+% |\kvt@@tmpgrphd|).
+%    \begin{macrocode}
+\newcommand\kvt@concludecolumn{%
+%    \end{macrocode}
+% The following conditional checks whether this is the first column
+% group in the header row. If this is the case, then the
+% |\kvt@@extraalign| macro is set to |\kvt@HackIntercolSpace|, such that
+% the |\multicolumn| below does not throw away this spacing.
+%    \begin{macrocode}
+  \ifdefequal\kvt@@tmpgrphd\@empty
+    {\let\kvt@@extraalign\kvt@HackIntercolSpace}
+    {\let\kvt@@extraalign\@empty}%
+  \appto\kvt@@tmpgrphd{&}%
+  \ifdefvoid\kvt@@lastgrp{}{%
+    \eappto\kvt@@tmpgrphd{\noexpand\multicolumn
+      {\the\kvt@@span}
+      {\expandonce\kvt@@extraalign
+       \csexpandonce{kvt@@colgrp@align@\kvt@@lastgrp}}
+      {\csexpandonce{kvt@@colgrp@head@\kvt@@lastgrp}}}%
+%    \end{macrocode}
+% Mark the column group as already used and concluded, such that another
+% use of the same column group can be detected and raise an error.
+%    \begin{macrocode}
+    \cslet{kvt@@colgrpdone@\kvt@@lastgrp}{\@ne}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@parsehdcolspec}
+% The |\kvt@parsehdcolspec|\meta{cname}|:|\meta{config}|:|\meta{empty}|\@undefined|
+% macro parses a single header column (resp. column group), \meta{cname}.
+% For a column group, \meta{cname} can consist of multiple,
+% "+"-separated column names.
+%    \begin{macrocode}
+\def\kvt@parsehdcolspec#1:#2:#3\@undefined{%
+%    \end{macrocode}
+% First link the individual columns of a column group to the group.
+% In this, ensure that no column is contained in more than one column
+% group.
+%    \begin{macrocode}
+  \def\kvt@@colreg##1{%
+    \ifcsmacro{kvt@@colgrpof@##1}
+      {\kvt@error{Column `##1' used in more than one column group}
+         {Check the fourth, optional argument of \string\NewKeyValTable
+         and eliminate multiple occurrences of column `##1'.}}
+      {\csdef{kvt@@colgrpof@##1}{#1}}%
+  }\kvt@forpsvlist{\kvt@@colreg}{#1}%
+%    \end{macrocode}
+% Now parse the \meta{config} of the column, resp. column group.
+%    \begin{macrocode}
+  \def\kvt@@colgrp{#1}%
+  \setkeys[kvt]{ColGroup}{#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% The following defines the options for header cells.
+%    \begin{macrocode}
+\define@key[kvt]{ColGroup}{head}{%
+  \csdef{kvt@@colgrp@head@\kvt@@colgrp}{#1}}
+\define@key[kvt]{ColGroup}{align}{%
+  \csdef{kvt@@colgrp@align@\kvt@@colgrp}{#1}}
+\presetkeys[kvt]{ColGroup}{align=c}{}%
+%    \end{macrocode}
 %
 %
 % \subsection{Row Numbering and Labeling}
@@ -897,20 +1240,21 @@
 %    \begin{macrocode}
   \gdef\kvt@@recenttable{#2}%
 %    \end{macrocode}
-% TODO: document change
+% \changes{v1.0}{2019/02/18}{Implemented \texttt{showrules} option}
 %    \begin{macrocode}
   \ifbool{kvt@Table@showrules}
     {\def\kvt@@rule##1{\csuse{##1rule}}}
     {\def\kvt@@rule##1{}}%
-  \bgroup\edef\kvt@@do{\egroup
+  \bgroup\protected@edef\kvt@@do{\egroup
     \noexpand\begin{#1}{\csuse{kvt@alignments@#2}}%
     \noexpand\kvt@@rule{top}
 %    \end{macrocode}
 % \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
 %    \begin{macrocode}
     \ifbool{kvt@Table@showhead}{%
-      \noexpand\rowcolor{\cmdkvt@Table@headbg}%
-      \unexpanded{\csuse{kvt@headings@#2}\\\kvt@@rule{mid}}}{}%
+       \noexpand\taburowcolors 1{\cmdkvt@Table@headbg..\cmdkvt@Table@headbg}%
+       \unexpanded{\csuse{kvt@headings@#2}\kvt@@rule{mid}}}
+      {}%
     \noexpand\taburowcolors 2{\cmdkvt@Table@rowbg}%
   }\kvt@@do%
   \iftabu@long\expandafter\endhead\fi
@@ -960,17 +1304,70 @@
 % \cs{cmdKeyValTable@\meta{tname}@\meta{cname}}.
 % Note that currently the default value is formatted using the given
 % format macro -- a design decision.
+% \changes{v1.0}{2019/02/03}{Added \cs{multicolumn} support}
 %    \begin{macrocode}
+  \kvt@@span=0\relax
   \def\do##1{%
-    \ifdefvoid\kvt@@row{}{\appto\kvt@@row{&}}%
-    \eappto\kvt@@row{%
-      \csexpandonce{kvt@col@format@#1@##1}{%
-      \ifcsvoid{cmdKeyValTable@#1@##1}%
-        {\csexpandonce{kvt@col@default@#1@##1}}%
-        {\csexpandonce{cmdKeyValTable@#1@##1}}}%
-    }%
-  }\dolistcsloop{kvt@colkeys@#1}%
-}
+%    \end{macrocode}
+% First recover the cell content (either the specified value for the row
+% or, if no value is specified for the row, the cell's default value)
+% without formatting.
+%    \begin{macrocode}
+    \ifcsvoid{cmdKeyValTable@#1@##1}
+      {\letcs\kvt@@cell{kvt@col@default@#1@##1}}
+      {\letcs\kvt@@cell{cmdKeyValTable@#1@##1}}%
+%    \end{macrocode}
+% Separately also already create the formatted content.
+%    \begin{macrocode}
+    \edef\kvt@@fmtcell{\csexpandonce{kvt@col@format@#1@##1}{%
+      \expandonce{\kvt@@cell}}}%
+%    \end{macrocode}
+% Next, check whether a column-spanning cell is active
+% ($\cs{kvt@@span}>0$). If this is the case, ensure that if the raw cell
+% content in the current column is empty, then formatting does not make
+% the cell non-empty and, thereby, cause errors with the active
+% column-spanning cell.
+%    \begin{macrocode}
+    \ifnumgreater\kvt@@span{0}
+      {\advance\kvt@@span\m@ne
+       \ifstrempty\kvt@@cell{\def\kvt@@fmtcell{}}{}}
+      {\appto\kvt@@row{&}}%
+%    \end{macrocode}
+% Now check whether the cell itself spans multiple columns.
+%    \begin{macrocode}
+    \expandafter\kvt@CheckMulticolumn\kvt@@cell
+      \relax\relax\relax\relax\@undefined{#1}{##1}%
+    \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@fmtcell}%
+  }\dolistcsloop{kvt@colkeys@#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@CheckMulticolumn}
+% The
+% |\kvt@CheckMulticolumn|\marg{arg1}\marg{arg2}\marg{arg3}\marg{arg4}|\@undefined|\marg{tname}\marg{colname}
+% macro checks whether a cell's initial content (captured by \meta{arg1}
+% to \meta{arg4}, starts a multi-column cell. If this is the case, the
+% macro records the arguments to |\multicolumn| for use by
+% |\kvt@AddKeyValRow|.
+% In this case, \meta{arg1}=|\multicolumn|, \meta{arg2}=\meta{n} (number
+% of columns to span), \meta{arg3}=\meta{format} (column alignment), and
+% \meta{arg4}=\meta{item} (the content of the cell).
+%    \begin{macrocode}
+\def\kvt@CheckMulticolumn#1#2#3#4\@undefined#5#6{%
+  \ifx#1\multicolumn
+%    \end{macrocode}
+% First, record \meta{n} in |\kvt@@span|. The subtraction of $-1$ is
+% already in preparation for the next column, in which one spanning has
+% already been reduced.
+%    \begin{macrocode}
+    \kvt@@span=#2\relax \advance\kvt@@span\m@ne
+%    \end{macrocode}
+% Second, move the defined cell format to inside of the \meta{item}
+% argument of |\multicolumn| rather than around the |\multicolumn|.
+%    \begin{macrocode}
+    \edef\kvt@@fmtcell{\unexpanded{\multicolumn{#2}{#3}}%
+      {\csexpandonce{kvt@col@format@#5@#6}{\expandonce{#4}}}}%
+  \fi}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1016,6 +1413,40 @@
   \def\Row{\AddKeyValRow{#1}}}{}%
 %    \end{macrocode}
 % \end{environment}
+%
+%
+% \subsection{Auxiliary Code}
+%
+% \begin{macro}{\kvt@dossvlist}
+% The |\kvt@dossvlist|\marg{list} macro parses a semicolon-separated
+% list and runs |\do|\meta{item} for every element of the list.
+%    \begin{macrocode}
+\DeclareListParser{\kvt@dossvlist}{;}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@forpsvlist}
+% The |\kvt@forpsvlist|\marg{handler}\marg{list} parses a `+'-separated list.
+%    \begin{macrocode}
+\DeclareListParser*{\kvt@forpsvlist}{+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@dobrklist}
+% The |\kvt@dobrklist|\marg{list} parses a `|\\|'-separated list.
+%    \begin{macrocode}
+\DeclareListParser{\kvt@dobrklist}{\\}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@error}
+% \begin{macro}{\kvt@warn}
+%    \begin{macrocode}
+\newcommand\kvt@error[2]{\PackageError{keyvaltable}{#1}{#2}}
+\newcommand\kvt@warn[1]{\PackageWarning{keyvaltable}{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
 %
 %\iffalse
 %</package>
