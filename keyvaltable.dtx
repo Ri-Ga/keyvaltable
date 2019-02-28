@@ -186,7 +186,8 @@
 %   desc={This property specifies the default value of a cell in this
 %     column, i.e., in case that a \cmd{\Row} does not provide content
 %     for the cell.  By default (i.e., if unset for a column), this is
-%     an empty string.}}
+%     an empty string.},
+%   default={\normalfont\itshape(empty)}}
 % \Row{key=format,
 %   desc={This property specifies a formatting macro for content of the
 %     cell.  The macro can take one argument and is provided with the
@@ -241,8 +242,19 @@
 %   default=true}
 % \Row{key=showrules,
 %   desc={This property specifies whether top and bottom rules as well
-%     as a rule below the head row are drawn (|true|) or not (|false|)},
+%     as a rule below the head row are drawn (|true|) or not (|false|).},
 %   default=true}
+% \Row{key=headalign,
+%   desc={This property specifies the alignment for header cells.
+%     If left empty, each header cell receives the same alignment as the
+%     respective column.},
+%   default={\normalfont\itshape(empty)}}
+% \Row{key=headfmt,
+%   desc={This property specifies a format to be applied to all header
+%     cells. By default, the property is empty, meaning that header
+%     cells are formatted. Otherwise, the code provided as value to this
+%     key is prepended to the text of the header cells.},
+%   default={\normalfont\itshape(empty)}}
 % \Row{key=headbg,
 %   desc={This property specifies the background color of the head row.
 %     The \meta{value} must be a single color specification that is
@@ -256,7 +268,7 @@
 %     directly to \cs{taburowcolors} of the \pkgname{tabu} package.},
 %   default={white..black!10}}
 % \end{KeyValTable}
-% \cref{fig:TableOptionExamples} demonstrates the \meta{options} in
+% \vref{fig:TableOptionExamples} demonstrates the \meta{options} in
 % examples.
 % \begin{figure}
 % \begin{LTXexample}
@@ -275,7 +287,21 @@
 % \caption{table options demo}
 % \end{table}
 % \end{LTXexample}
-% \caption{Example for table options}
+% \begin{LTXexample}
+% \NewKeyValTable[showrules=false, headbg=blue!25,
+%     headalign=c,
+%     headfmt=\bfseries,
+%   ]{TabOptions2}{
+%     opt: align=l, format=\texttt;
+%     val: align=l, format=\texttt;}
+% \begin{KeyValTable}{TabOptions2}
+% \Row{opt=showrules, val=false}
+% \Row{opt=headbg, val=blue!25}
+% \Row{opt=headalign, val=c}
+% \Row{opt=headfmt, val=\string\bfseries}
+% \end{KeyValTable}
+% \end{LTXexample}
+% \caption{Examples for table options}
 % \label{fig:TableOptionExamples}
 % \end{figure}
 %
@@ -434,7 +460,7 @@
 %
 % \begin{enumerate}[noitemsep]
 % \item grouping of columns through cells in the table's header that
-%   span all cells in the group and assign a ... title to the group;
+%   span all cells in the group and assign a joint title to the group;
 % \item individual combinations of cells in the table data.
 % \end{enumerate}
 %
@@ -641,7 +667,6 @@
 % \section{Future Work}
 %
 % \begin{itemize}
-% \item configurable default heading format
 % \item improved row coloring that makes sure that the alternation
 %   re-starts on continued pages of a table that spans several pages
 % \end{itemize}
@@ -806,6 +831,8 @@
 \kvt@addtableprop{headbg}{black!14}
 \kvt@addbooltableprop{showhead}{true}
 \kvt@addbooltableprop{showrules}{true}
+\kvt@addtableprop{headfmt}{}
+\kvt@addtableprop{headalign}{}
 \kvt@addchoicetableprop{shape}{multipage}{multipage,onepage}
 \kvt@addcolumnprop{default}{}
 \kvt@addcolumnprop{format}{\kvtStrutted}
@@ -825,6 +852,7 @@
 \newcommand\kvtStrutted[1]{\strut #1\ifhmode\expandafter\strut\fi}
 %    \end{macrocode}
 % \end{macro}
+%
 %
 % \subsection{Declaring Key-Value Tables}
 %
@@ -1250,8 +1278,12 @@
     \noexpand\kvt@@rule{top}
 %    \end{macrocode}
 % \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
+% \changes{v1.0}{2019/02/27}{Added \texttt{headalign} and \texttt{headfmt} options}
 %    \begin{macrocode}
-    \ifbool{kvt@Table@showhead}{%
+    \ifbool{kvt@Table@showhead}
+      {\noexpand\rowfont
+        [\expandonce{\cmdkvt@Table@headalign}]%
+        {\expandonce{\cmdkvt@Table@headfmt}}%
        \noexpand\taburowcolors 1{\cmdkvt@Table@headbg..\cmdkvt@Table@headbg}%
        \unexpanded{\csuse{kvt@headings@#2}\kvt@@rule{mid}}}
       {}%
