@@ -260,7 +260,7 @@
 % \Row{key=shape\label{page:table-options},
 %   desc={This property specifies the table's shape. For \meta{value},
 %     the package currently supports |multipage| and |onepage| as well
-%     as |tabular|, |tabularx|, and |longtable|.
+%     as |tabular|, |tabularx|, |longtable|, and |xltabular|.
 %     In case of |multipage|, the table may span multiple pages and on
 %     each page, the column header is repeated. In case of |onepage|,
 %     the table does not split into multiple pages.
@@ -672,9 +672,11 @@
 % \begin{KeyValTable}{ShapeProps}
 % \Row{shape=onepage,   env=tabu,      multipage=no,  Xcols=yes, width=yes, packages={tabu}*}
 % \Row{shape=multipage, env=longtabu,  multipage=yes, Xcols=yes, width=yes, packages={tabu*, longtable*}}
+% \midrule
 % \Row{shape=tabular,   env=tabular,   multipage=no,  Xcols=no,  width=no}
 % \Row{shape=tabularx,  env=tabularx,  multipage=no,  Xcols=yes, width=yes, packages={tabularx}}
 % \Row{shape=longtable, env=longtable, multipage=yes, Xcols=no,  width=no,  packages={longtable}}
+% \Row{shape=xltabular, env=xltabular, multipage=yes, Xcols=yes, width=yes, packages={xltabular}}
 % \end{KeyValTable}
 % \smallskip\par\raggedright\footnotesize
 % Packages marked with "*" only need to be loaded if automatic loading
@@ -701,7 +703,7 @@
 % \end{KeyValTable}
 % \end{LTXexample}
 % \begin{LTXexample}[width=0.475\hsize,
-%    morekeywords={tabularx,onepage,multipage}]
+%    morekeywords={tabularx,xltabular,onepage,multipage}]
 % \NewKeyValTable[showrules=false]{ShapeWithX}{
 %   id: align=l, default=\thekvtTypeRow;
 %   l: align=l; X: align=X; r: align=r;}[
@@ -710,6 +712,10 @@
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}\medskip\\
+% \begin{KeyValTable}[shape=xltabular]{ShapeWithX}
+%   \Row{l=left,   X=expandable,   r=right}
+%   \Row{l=left-2, X=expandable-2, r=2-right}
+% \end{KeyValTable}
 % \begin{KeyValTable}[shape=onepage]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
@@ -886,10 +892,6 @@
 % \section{Future Work}
 %
 % \begin{itemize}
-% \item support for further table environments, such as
-%   \pkgname{xltabular}: The existing code structure should make this
-%   not too complicated. Particularly for \pkgname{xltabular},
-%   a spurious "\verb!missing } inserted!" error occurs.
 % \item improved row coloring that makes sure that the alternation
 %   re-starts on continued pages of a table that spans several pages
 % \end{itemize}
@@ -1116,7 +1118,7 @@
 % code.
 %    \begin{macrocode}
 \kvt@addchoicetableprop{shape}{multipage}{%
-  multipage,onepage,tabular,longtable,tabularx}
+  multipage,onepage,tabular,longtable,tabularx,xltabular}
 \kvt@addcolumnprop{default}{}
 \kvt@addcolumnprop{format}{\kvtStrutted}
 \kvt@addcolumnprop{align}{l}
@@ -1575,7 +1577,6 @@
 % can be overridden by providing \meta{options}.
 %    \begin{macrocode}
 \newenvironment{KeyValTable}[2][]{%
-  \bgroup%
 %    \end{macrocode}
 % \begin{macro}{\Row}
 % The |\Row|\oarg{options}\marg{content} macro is made available locally
@@ -1589,8 +1590,7 @@
   \kvt@SetOptions{#2}{#1}%
   \csuse{kvt@StartTable@\cmdkvt@Table@shape}{#2}%
 }{%
-  \csuse{kvt@EndTable@\cmdkvt@Table@shape}%
-  \egroup}
+  \csuse{kvt@EndTable@\cmdkvt@Table@shape}}
 %    \end{macrocode}
 % The following saves the row counter value outside the table
 % environment but still in the then-local scope.
@@ -1767,8 +1767,8 @@
 \define@boolkey[kvt]{Row}{hidden}[true]{}%
 \define@cmdkey[kvt]{Row}{below}{}
 \define@cmdkey[kvt]{Row}{above}{}
-\define@cmdkey[kvt]{Row}{around}{%
-  \def\cmdkvt@Row@above{#1}\def\cmdkvt@Row@below{#1}}
+\define@key[kvt]{Row}{around}{%
+  \kvt@setkeys{below={#1},above={#1}}{Row}}
 %    \end{macrocode}
 %
 % \begin{macro}{\kvt@AddKeyValRow}
@@ -1951,7 +1951,7 @@
 % \end{macro}
 %
 % \subsubsection{Legacy Variant}
-% 
+%
 % \begin{macro}{\ShowKeyValTable}
 % The |\ShowKeyValTable|\oarg{options}\marg{tname} macro shows a table
 % of type \meta{tname} with given \meta{options}. The rows must have
@@ -1977,8 +1977,8 @@
 %    \begin{macrocode}
 \newcommand\AddKeyValRow[1]{%
   \kvt@AddKeyValRow
-    {\bgroup}
-    {\csxappto{kvt@rows@#1}{\expandonce{\kvt@@row}}\egroup}
+    {\begingroup}
+    {\csxappto{kvt@rows@#1}{\expandonce{\kvt@@row}}\endgroup}
     {#1}}
 %    \end{macrocode}
 % \end{macro}
