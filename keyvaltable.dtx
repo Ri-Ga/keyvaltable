@@ -228,6 +228,15 @@
 %   default=false}
 % \end{KeyValTable}
 %
+% \NiceDescribeMacro{\kvtStrutted}{\oarg{inner}\marg{arg}}
+% This macro places a |\strut| before \meta{arg} and a |\strut| after
+% \meta{arg}. This has the effect that the first and last row of
+% \meta{arg} obtain a "natural" height and depth even if their content
+% is smaller.
+% The second |\strut| is omitted when it would cause a new line to be
+% produced.
+% See \cref{sec:row-numbering} for an example.
+%
 % \subsection{Typesetting Tables}\label{sec:typesetting-tables}
 %
 % The first possibility for typesetting a table using the
@@ -330,7 +339,7 @@
 % \Row{opt=showrules, val=false}
 % \Row{opt=headbg, val=blue!25}
 % \Row{opt=headalign, val=c}
-% \Row{opt=headfmt, val=\string\bfseries}
+% \Row{opt=headformat, val=\string\bfseries}
 % \end{KeyValTable}
 % \end{LTXexample}
 % \caption{Examples for table options}
@@ -421,7 +430,7 @@
 % properties, including the separating |:| can be omitted completely,
 % making the definition of a table type very simple.
 %
-% \subsection{Row Numbering and Labeling}
+% \subsection{Row Numbering and Labeling}\label{sec:row-numbering}
 %
 % The mechanism of default column values enables a simple means for
 % automatic row numbering. For this, one can use one of three row
@@ -431,10 +440,11 @@
 % |kvtRow| counter.
 %
 % \begin{LTXexample}[morekeywords={thekvtRow,thekvtTypeRow}]
-% \NewKeyValTable{Numbered1}{
+% \NewKeyValTable[headformat=\textbf]{Numbered1}{
 %   line: align=r, head=\#,
+%         format=\kvtStrutted[\textbf],
 %         default=\thekvtRow;
-%   text: align=l, head=\textbf{Text}}
+%   text: align=l, head=Text}
 % \begin{KeyValTable}{Numbered1}
 % \Row{text=First row}
 % \Row{text=Second row}
@@ -1046,13 +1056,18 @@
 % \end{macro}
 %
 % \begin{macro}{\kvtStrutted}
-% The |\kvtStrutted|\marg{arg} macro prefixes and suffixes
+% The |\kvtStrutted|\oarg{inner}\marg{arg} macro prefixes and suffixes
 % the argument \meta{arg} with a |\strut|. When used for formatting
 % cell content, this makes sure that there is some vertical space
 % between the content of a cell and the top and bottom of the row.
+% The optional \oarg{inner} argument, if provided, should be a macro
+% that takes one argument. In this case, instead of \meta{arg},
+% \meta{inner}|{|\meta{arg}|}| is prefixed and sufficed with |\strut|.
 % \changes{v0.3}{2016/06/06}{Fix for cells with vertical material}
+% \changes{v1.1}{2019/03/22}{Added optional argument}
 %    \begin{macrocode}
-\newcommand\kvtStrutted[1]{\strut #1\ifhmode\expandafter\strut\fi}
+\newcommand\kvtStrutted[2][\@firstofone]{%
+  \strut#1{#2}\ifhmode\expandafter\strut\fi}
 %    \end{macrocode}
 % \end{macro}
 %
