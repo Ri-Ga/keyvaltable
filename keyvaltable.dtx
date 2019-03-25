@@ -43,7 +43,7 @@
 \newcommand\thispackage{\pkgname{keyvaltable}\xspace}
 \usepackage{keyvaltable}
 \NewKeyValTable[
-    showhead=false,headfmt={\bfseries\footnotesize},
+    showhead=false,headformat={\bfseries\footnotesize},
     rowbg=black!7!white..black!3!white,
     showrules=false,
     shape=onepage]{GoalApproach}{
@@ -276,12 +276,16 @@
 %     If left empty, each header cell receives the same alignment as the
 %     respective column.},
 %   default={\normalfont\itshape(empty)}}
-% \Row{key=headfmt,
+% \Row{key=headformat,
 %   desc={This property specifies a format to be applied to all header
-%     cells. By default, the property is empty, meaning that header
-%     cells are formatted. Otherwise, the code provided as value to this
-%     key is prepended to the text of the header cells.},
-%   default={\normalfont\itshape(empty)}}
+%     cells.
+%     The value specified for the |headformat| key is used to format
+%     each header. The value can be a macro that takes once argument,
+%     through which it is provided the header (as specified in the
+%     column's |head| property).
+%     By default, an "identity" macro is used, meaning that
+%     each |head| is taken without change.},
+%   default={\normalfont\itshape("identity")}}
 % \Row{key=headbg,
 %   desc={This property specifies the background color of the head row.
 %     The \meta{value} must be a single color specification that is
@@ -316,9 +320,9 @@
 % \caption{table options demo}
 % \end{table}
 % \end{LTXexample}
-% \begin{LTXexample}[morekeywords={showrules,headbg,headalign,headfmt}]
+% \begin{LTXexample}[morekeywords={showrules,headbg,headalign,headformat}]
 % \NewKeyValTable[showrules=false,headbg=blue!25,
-%     headalign=c,headfmt=\bfseries,
+%     headalign=c,headformat=\textbf,
 %   ]{TabOptions2}{
 %     opt: align=l, format=\texttt;
 %     val: align=l, format=\texttt;}
@@ -625,7 +629,7 @@
 % used.
 % Examples can be found in \vref{fig:TableTypes}.
 % \begin{table}[p]\centering
-% \NewKeyValTable[shape=tabular,headfmt=\bfseries]{ShapeProps}{
+% \NewKeyValTable[shape=tabular,headformat=\textbf]{ShapeProps}{
 %   shape: format=\texttt; env: format=\texttt, head=environment;
 %   multipage: align=c;
 %   Xcols: align=c, head=\texttt{X}-cols;
@@ -769,7 +773,7 @@
 % \begin{LTXexample}
 % \usepackage{cleveref}
 % \crefname{row}{line}{lines}
-% \NewKeyValTable[headfmt=\bfseries]{NamedRef}{
+% \NewKeyValTable[headformat=\textbf]{NamedRef}{
 %   label: align=r, head=Line,
 %          format=\kvtLabel[row]{kvtRow};
 %   text:  align=l, head=Text}
@@ -1015,7 +1019,7 @@
 \kvt@addtableprop{headbg}{black!14}
 \kvt@addbooltableprop{showhead}{true}
 \kvt@addbooltableprop{showrules}{true}
-\kvt@addtableprop{headfmt}{}
+\kvt@addtableprop{headformat}{\@firstofone}
 \kvt@addtableprop{headalign}{}
 \kvt@addtableprop{width}{\linewidth}
 %    \end{macrocode}
@@ -1163,7 +1167,7 @@
 % \begin{macro}{\kvt@defaultheader}
 % The |\kvt@defaultheader|\marg{head1}\ldots\marg{headn}|\@nil| macro,
 % takes $n$ header cell titles, \meta{head1} to \meta{headn} and formats
-% them based on the |headfmt| and |headalign| options.
+% them based on the |headformat| and |headalign| options.
 % More precisely, when fully expanded, |\kvt@defaultheader| yields
 % "\meta{rowcolor}|& |\meta{fmthead1}| & |\ldots| & |\meta{fmtheadn}|\tabularnewline|".
 % In the above, \meta{rowcolor}=|\rowcolor{|\meta{headbg}|}|.
@@ -1175,9 +1179,9 @@
   \kvt@ifnil{#1}{\noexpand\tabularnewline}{%
     \unexpanded{&}%
     \ifdefvoid\cmdkvt@Table@headalign
-      {\expandonce\cmdkvt@Table@headfmt\unexpanded{#1}}
+      {\expandonce\cmdkvt@Table@headformat{\unexpanded{#1}}}
       {\noexpand\multicolumn{1}{\expandonce\cmdkvt@Table@headalign}
-        {\expandonce\cmdkvt@Table@headfmt\unexpanded{#1}}}%
+        {\expandonce\cmdkvt@Table@headformat{\unexpanded{#1}}}}%
     \kvt@defaultheader@i}}
 %    \end{macrocode}
 % \begin{macro}{\kvt@ifnil}
