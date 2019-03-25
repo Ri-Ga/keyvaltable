@@ -2,7 +2,7 @@
 %
 % Copyright (C) 2016-2019 by Richard Grewe <r-g+tex@posteo.net>
 % -------------------------------------------------------
-% 
+%
 % This file may be distributed and/or modified under the
 % conditions of the LaTeX Project Public License, either version 1.2
 % of this license or (at your option) any later version.
@@ -10,7 +10,7 @@
 %
 %    http://www.latex-project.org/lppl.txt
 %
-% and version 1.2 or later is part of all distributions of LaTeX 
+% and version 1.2 or later is part of all distributions of LaTeX
 % version 1999/12/01 or later.
 %
 % \fi
@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2019/03/17 v1.0 Package for filling tables using key-value lists]
+    [2019/03/25 v1.1alpha Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -37,8 +37,8 @@
 \usepackage{xintexpr}
 \usepackage{makecell}
 \usepackage{gensymb}% for \degree
-\usepackage{tabularx}
-\usepackage{longtable}
+\usepackage{tabularx,longtable,xltabular}
+\usepackage{filecontents}
 \usepackage{xspace}
 \newcommand\thispackage{\pkgname{keyvaltable}\xspace}
 \usepackage{keyvaltable}
@@ -223,8 +223,9 @@
 % \Row{key=hidden,
 %   desc={This property specifies whether a table column shall be
 %     displayed or not. The \meta{value} for this property can be |true|
-%     (to hide the cell; the default) or |false| (to display the
-%     cell).},
+%     (to hide the cell) or |false| (to display the
+%     cell). Using |hidden| without \meta{value} is equivalent to
+%     specifying |hidden=true|.},
 %   default=false}
 % \end{KeyValTable}
 %
@@ -346,7 +347,6 @@
 % \label{fig:TableOptionExamples}
 % \end{figure}
 %
-%
 % \NiceDescribeMacro{\Row}{\oarg{options}\marg{content}}
 % A table row is produced by the |\Row| macro. The
 % \meta{content} must be a comma-separated list of
@@ -358,6 +358,30 @@
 %
 % The \meta{options} argument customizes row properties and is further
 % explained in \cref{sec:RowOptions}.
+%
+%
+% \subsection{Sourcing Rows From Files}
+%
+% Rather than specifying the rows of a table inside a |KeyValTable|
+% environment, the rows can also be sourced from a file.
+%
+% \NiceDescribeMacro{\ShowKeyValTableFile}{\oarg{options}\marg{tname}\marg{filename}}
+% This macro produces a |KeyValTable| environment of type \meta{tname}
+% whose content is taken from the file \meta{filename}.
+% The \meta{options} specify the table options, which are directly
+% passed to the options argument of the |KeyValTable| environment.
+%
+% \begin{LTXexample}[morepreset=\NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X[l]},morekeywords={AddKeyValRow,KeyValTableContent,ShowKeyValTable}]
+% \begin{filecontents}{snowman.kvt}
+% \Row{amount=3, ingredient=balls of snow,
+%      step=staple all 3 balls}
+% \Row{amount=1, ingredient=carrot,
+%      step=stick into top ball}
+% \Row{amount=2, ingredient=coffee beans,
+%      step=put diagonally above carrot}
+% \end{filecontents}
+% \ShowKeyValTableFile{Recipe}{snowman.kvt}
+% \end{LTXexample}
 %
 % \subsection{Tables of Collected Rows}\label{sec:collected-tables}
 %
@@ -378,7 +402,7 @@
 % of the cells in the row. The format of the \meta{content} is the same
 % as for the |\Row| macro described in
 % Section~\ref{sec:typesetting-tables}.
-% 
+%
 % \NiceDescribeMacro{\ShowKeyValTable}{\oarg{options}\marg{tname}}
 % A table of all the rows defined via |\AddKeyValRow| can be displayed
 % by the |\ShowKeyValTable| macro. The
@@ -897,6 +921,60 @@
 \RequirePackage{booktabs}
 %    \end{macrocode}
 %
+% \subsection{Auxiliary Code}
+%
+% \begin{macro}{\kvt@dossvlist}
+% The |\kvt@dossvlist|\marg{list} macro parses a semicolon-separated
+% list and runs |\do|\meta{item} for every element of the list.
+%    \begin{macrocode}
+\DeclareListParser{\kvt@dossvlist}{;}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@forpsvlist}
+% The |\kvt@forpsvlist|\marg{handler}\marg{list} parses a `+'-separated list.
+%    \begin{macrocode}
+\DeclareListParser*{\kvt@forpsvlist}{+}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@dobrklist}
+% The |\kvt@dobrklist|\marg{list} parses a `|\\|'-separated list.
+%    \begin{macrocode}
+\DeclareListParser{\kvt@dobrklist}{\\}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@error}
+% \begin{macro}{\kvt@warn}
+%    \begin{macrocode}
+\newcommand\kvt@error[2]{\PackageError{keyvaltable}{#1}{#2}}
+\newcommand\kvt@warn[1]{\PackageWarning{keyvaltable}{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\kvt@setkeys}
+% \begin{macro}{\kvt@setcmdkeys}
+% \begin{macro}{\kvt@setcskeys}
+% The |\kvt@setkeys|\marg{keys}\marg{fam} macro abbreviates
+% |\setkeys[kvt]|\meta{fam}\meta{keys} (note the reverse order of
+% arguments).
+% The |\kvt@setcmdkeys|\marg{keycmd}\marg{fam} and
+% |\kvt@setcskeys|\marg{keycs}\marg{fam} abbreviate the cases where
+% \meta{keys} are stored in macro \meta{keycmd} or, respectively,
+% stored in a macro with name \meta{keycs}.
+%    \begin{macrocode}
+\newcommand\kvt@setkeys[2]{\setkeys[kvt]{#2}{#1}}
+\newcommand\kvt@setcmdkeys[2]{%
+  \expandafter\kvt@setkeys\expandafter{#1}{#2}}
+\newcommand\kvt@setcskeys[2]{%
+  \expandafter\kvt@setcmdkeys\expandafter{\csname #1\endcsname}{#2}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
 % \subsection{Setting Defaults}
 %
 % \begin{macro}{\kvtSet}
@@ -905,7 +983,7 @@
 %    \begin{macrocode}
 \newcommand\kvtSet[1]{\bgroup
   \def\kvt@@presetqueue{\egroup}
-  \setkeys[kvt]{defaults}{#1}{}%
+  \kvt@setkeys{#1}{defaults}%
   \kvt@@presetqueue}
 %    \end{macrocode}
 % \end{macro}
@@ -1149,7 +1227,7 @@
 %    \begin{macrocode}
 \def\kvt@parsecolspec#1#2:#3:#4\@undefined{%
   \def\kvt@@column{#1@#2}%
-  \setkeys[kvt]{Column}{#3}%
+  \kvt@setkeys{#3}{Column}%
 %    \end{macrocode}
 % The following stores the column's properties. The column is only added
 % if the |hidden| option is not set to |true|.
@@ -1408,7 +1486,7 @@
 % Now parse the \meta{config} of the column, resp. column group.
 %    \begin{macrocode}
   \def\kvt@@colgrp{#2}%
-  \setkeys[kvt]{ColGroup}{#3}}
+  \kvt@setkeys{#3}{ColGroup}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1529,8 +1607,7 @@
 %    \begin{macrocode}
 \newcommand\kvt@SetOptions[2]{%
   \bgroup\edef\kvt@@do{\egroup\noexpand%
-    \setkeys[kvt]{Table}%
-      {\csexpandonce{kvt@options@#1},\unexpanded{#2}}%
+    \kvt@setkeys{\csexpandonce{kvt@options@#1},\unexpanded{#2}}{Table}%
   }\kvt@@do}
 %    \end{macrocode}
 % \end{macro}
@@ -1727,7 +1804,7 @@
 % macro parses \meta{options} and evaluates the |hidden| option.
 %    \begin{macrocode}
 \def\kvt@AddKeyValRow@i#1#2[#3]#4{%
-  \setkeys[kvt]{Row}{#3}%
+  \kvt@setkeys{#3}{Row}%
   \ifbool{kvt@Row@hidden}
     {\let\kvt@@row\@empty #1}
     {\kvt@AddKeyValRow@ii{#1}{#2}{#4}}}
@@ -1855,6 +1932,26 @@
 %
 % \subsection{Collecting Key-Value Table Content}
 %
+% \subsubsection{Table Content from Files}
+%
+% \begin{macro}{\ShowKeyValTableFile}
+% The |\ShowKeyValTableFile|\oarg{options}\marg{tname}\marg{filename}
+% macro typesets a |KeyValTable| environment of type \meta{tname} with
+% the given \meta{options}. The body of the environment (i.e., the rows
+% of the table) are read from the file \meta{filename}.
+% \changes{v1.1}{2019/03/25}{Added the macro}
+%    \begin{macrocode}
+\newcommand\ShowKeyValTableFile[3][]{%
+  \IfFileExists{#3}
+    {\begin{KeyValTable}[{#1}]{#2}\@@input#3 \end{KeyValTable}}%
+    {\kvt@error{No KeyValTable file '#3'}
+      {Check whether the file really exists or whether there is a
+       typo in the argument '#3'}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Legacy Variant}
+% 
 % \begin{macro}{\ShowKeyValTable}
 % The |\ShowKeyValTable|\oarg{options}\marg{tname} macro shows a table
 % of type \meta{tname} with given \meta{options}. The rows must have
@@ -1924,39 +2021,6 @@
   \RequirePackage{longtable,tabu}}
 %    \end{macrocode}
 %
-%
-% \subsection{Auxiliary Code}
-%
-% \begin{macro}{\kvt@dossvlist}
-% The |\kvt@dossvlist|\marg{list} macro parses a semicolon-separated
-% list and runs |\do|\meta{item} for every element of the list.
-%    \begin{macrocode}
-\DeclareListParser{\kvt@dossvlist}{;}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@forpsvlist}
-% The |\kvt@forpsvlist|\marg{handler}\marg{list} parses a `+'-separated list.
-%    \begin{macrocode}
-\DeclareListParser*{\kvt@forpsvlist}{+}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@dobrklist}
-% The |\kvt@dobrklist|\marg{list} parses a `|\\|'-separated list.
-%    \begin{macrocode}
-\DeclareListParser{\kvt@dobrklist}{\\}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@error}
-% \begin{macro}{\kvt@warn}
-%    \begin{macrocode}
-\newcommand\kvt@error[2]{\PackageError{keyvaltable}{#1}{#2}}
-\newcommand\kvt@warn[1]{\PackageWarning{keyvaltable}{#1}}
-%    \end{macrocode}
-% \end{macro}
-% \end{macro}
 %
 %\iffalse
 %</package>
