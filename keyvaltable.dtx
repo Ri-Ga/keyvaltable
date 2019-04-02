@@ -29,7 +29,7 @@
 \documentclass{ltxdoc}
 \usepackage{rgltxdoc}
 \usepackage{etoc}
-\setcounter{tocdepth}{2}
+\renewcommand\etoccolumnsep{1em}
 \EnableCrossrefs
 \CodelineIndex
 \RecordChanges
@@ -118,8 +118,8 @@
 % \end{KeyValTable}
 % \end{abstract}
 %
-% \etocmulticolstyle[2]{\section*{Contents}}
-% \tableofcontents
+% \etocsetnexttocdepth{1}
+% \etocmulticol[2]{\section*{Contents}}
 % \clearpage
 %
 % \section{Usage}
@@ -904,7 +904,10 @@
 %\fi
 %
 % \section{Implementation}
-% \addtocontents{toc}{\protect\setcounter{tocdepth}{0}}
+% \etocsetnexttocdepth{2}
+% \etoclocalmulticol[2]{\subsection*{Content}}
+%
+% \subsection{Package Dependencies}
 %
 % We use \pkgname{etoolbox} for some convenience macros that make the
 % code more easily maintainable and use \pkgname{xkeyval} for options
@@ -949,6 +952,7 @@
 %
 % \begin{macro}{\kvt@error}
 % \begin{macro}{\kvt@warn}
+% These macros produce error and warning messages.
 %    \begin{macrocode}
 \newcommand\kvt@error[2]{\PackageError{keyvaltable}{#1}{#2}}
 \newcommand\kvt@warn[1]{\PackageWarning{keyvaltable}{#1}}
@@ -977,164 +981,6 @@
 % \end{macro}
 % \end{macro}
 %
-% \subsection{Setting Defaults}
-%
-% \begin{macro}{\kvtSet}
-% The |\kvtSet|\marg{options} set the default options, which apply
-% to all tables typeset with the package.
-%    \begin{macrocode}
-\newcommand\kvtSet[1]{\bgroup
-  \def\kvt@@presetqueue{\egroup}
-  \kvt@setkeys{#1}{defaults}%
-  \kvt@@presetqueue}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@lazypreset}
-% The |\kvt@@lazypreset|\marg{family}\marg{head keys} macro collects a
-% request collects a request for pre-setting \meta{head keys} in family
-% key \meta{family}. Using this macro, one can avoid causing problems
-% with using \pkgname{xkeyval}'s |\presetkeys| inside the \meta{function}
-% defined for a key (e.g., via |\define@key|). The collected requests
-% can be performed by expanding the |\kvt@@presetqueue| macro.
-%    \begin{macrocode}
-\newcommand\kvt@lazypreset[2]{%
-  \appto\kvt@@presetqueue{\presetkeys[kvt]{#1}{#2}{}}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@addtableprop}
-% The |\kvt@addtableprop|\marg{name}\marg{default} macro adds a new
-% table option, named \meta{name} and with default value \meta{default}.
-%    \begin{macrocode}
-\newcommand\kvt@addtableprop[2]{%
-  \define@key[kvt]{defaults}{#1}{%
-    \kvt@lazypreset{Table}{#1=##1}}%
-  \presetkeys[kvt]{defaults}{#1=#2}{}%
-  \define@cmdkey[kvt]{Table}{#1}{}%
-  \presetkeys[kvt]{Table}{#1=#2}{}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@addchoicetableprop}
-% The |\kvt@addchoicetableprop|\marg{name}\marg{default}\marg{choice}
-% macro adds a new table option, named \meta{name} and with default
-% value \meta{default} and possible values from the comma-separated
-% list provided by \meta{choice}.
-%    \begin{macrocode}
-\newcommand\kvt@addchoicetableprop[3]{%
-  \define@choicekey[kvt]{defaults}{#1}{#3}{%
-    \kvt@lazypreset{Table}{#1=##1}}%
-  \presetkeys[kvt]{defaults}{#1=#2}{}%
-  \define@choicekey[kvt]{Table}{#1}{#3}%
-    {\csdef{cmdkvt@Table@#1}{##1}}%
-  \presetkeys[kvt]{Table}{#1=#2}{}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@addbooltableprop}
-% The |\kvt@addbooltableprop|\marg{name}\marg{default}
-% macro adds a new table option, named \meta{name} and with default
-% value \meta{default} and possible values being booleans (|true|,
-% |false|).
-%    \begin{macrocode}
-\newcommand\kvt@addbooltableprop[2]{%
-  \define@boolkey[kvt]{defaults}{#1}{%
-    \kvt@lazypreset{Table}{#1=##1}}%
-  \presetkeys[kvt]{defaults}{#1=#2}{}%
-  \define@boolkey[kvt]{Table}{#1}%
-    {\csdef{cmdkvt@Table@#1}{##1}}%
-  \presetkeys[kvt]{Table}{#1=#2}{}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@addcolumnprop}
-% The |\kvt@addcolumnprop|\marg{name}\marg{default} macro adds a new
-% column option, named \meta{name} and with default value
-% \meta{default}.
-%    \begin{macrocode}
-\newcommand\kvt@addcolumnprop[2]{%
-%    \end{macrocode}
-% The following makes the \meta{name} available as an option for
-% |\kvtSet| for setting a global default value to this column option.
-%    \begin{macrocode}
-  \define@key[kvt]{defaults}{#1}{%
-    \kvt@lazypreset{Column}{#1=##1}}%
-  \presetkeys[kvt]{defaults}{#1=#2}{}%
-%    \end{macrocode}
-% The following makes the \meta{name} available as an option for
-% the \meta{colspecs} of |\NewKeyValTable| for setting a default value
-% to the particular column.
-%    \begin{macrocode}
-  \define@key[kvt]{Column}{#1}{%
-    \csdef{kvt@col@#1@\kvt@@column}{##1}}%
-  \presetkeys[kvt]{Column}{#1=#2}{}%
-}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@addchoicecolumnprop}
-% The |\kvt@addchoicecolumnprop|\marg{name}\marg{initial}\marg{default}\marg{choice}
-% macro adds a new column option, named \meta{name}, with initial value
-% \meta{initial}, with default argument value \meta{default}, and
-% possible values from the comma-separated list provided by
-% \meta{choice}.
-%    \begin{macrocode}
-\newcommand\kvt@addchoicecolumnprop[4]{%
-%    \end{macrocode}
-% The following makes the \meta{name} available as an option for
-% |\kvtSet| for setting a global default value to this column option.
-%    \begin{macrocode}
-  \define@choicekey[kvt]{defaults}{#1}{#4}[#3]{%
-    \kvt@lazypreset{Column}{#1=##1}}%
-  \presetkeys[kvt]{defaults}{#1=#2}{}%
-%    \end{macrocode}
-% The following makes the \meta{name} available as an option for
-% the \meta{colspecs} of |\NewKeyValTable| for setting a default value
-% to the particular column.
-%    \begin{macrocode}
-  \define@choicekey[kvt]{Column}{#1}{#4}[#3]%
-    {\csdef{kvt@col@#1@\kvt@@column}{##1}}%
-  \presetkeys[kvt]{Column}{#1=#2}{}%
-}
-%    \end{macrocode}
-% \end{macro}
-%
-% The following are the known column properties and their defaults as
-% well as the known table properties and their defaults.
-% \changes{v0.2}{2016/05/21}{Added ``shape'' table option}
-% \changes{v1.0}{2018/12/30}{Enabled default ``true'' for ``hidden''}
-%    \begin{macrocode}
-\kvt@addtableprop{rowbg}{white..black!10}
-\kvt@addtableprop{headbg}{black!14}
-\kvt@addbooltableprop{showhead}{true}
-\kvt@addbooltableprop{showrules}{true}
-\kvt@addtableprop{headformat}{\@firstofone}
-\kvt@addtableprop{headalign}{}
-\kvt@addtableprop{width}{\linewidth}
-%    \end{macrocode}
-% When adding further |shape| options below, ensure to also add a
-% corresponding |\kvt@DefineStdTabEnv| counterpart further below in the
-% code.
-%    \begin{macrocode}
-\kvt@addchoicetableprop{shape}{multipage}{%
-  multipage,onepage,tabular,longtable,tabularx,xltabular}
-\kvt@addcolumnprop{default}{}
-\kvt@addcolumnprop{format}{\kvtStrutted}
-\kvt@addcolumnprop{align}{l}
-\kvt@addcolumnprop{head}{}
-\kvt@addchoicecolumnprop{hidden}{false}{true}{false,true}
-\kvtSet{}
-%    \end{macrocode}
-%
-% \begin{macro}{\kvtTableOpt}
-% The |\kvtTableOpt|\marg{optname} macro, inside a |KeyValTable|
-% environment, expands to the value of the table option \meta{optname}.
-%    \begin{macrocode}
-\newcommand\kvtTableOpt[1]{\csname cmdkvt@Table@#1\endcsname}
-%    \end{macrocode}
-% \end{macro}
-%
 % \begin{macro}{\kvtStrutted}
 % The |\kvtStrutted|\oarg{inner}\marg{arg} macro prefixes and suffixes
 % the argument \meta{arg} with a |\strut|. When used for formatting
@@ -1150,6 +996,157 @@
   \strut#1{#2}\ifhmode\expandafter\strut\fi}
 %    \end{macrocode}
 % \end{macro}
+%
+%
+% \subsection{Setting Options}
+%
+% \begin{macro}{\kvtSet}
+% The |\kvtSet|\marg{options} set the default options, which apply
+% to all tables typeset with the package.
+%    \begin{macrocode}
+\newcommand\kvtSet[1]{%
+  \kvt@setkeys{#1}{Table,Column}%
+  \ifdefvoid\kvt@@presetqueue{}
+    {\kvt@@presetqueue\undef\kvt@@presetqueue}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@lazypreset}
+% The |\kvt@@lazypreset|\marg{family}\marg{head keys} macro collects a
+% request for pre-setting \meta{head keys} in family
+% key \meta{family}. Using this macro, one can avoid causing problems
+% with using \pkgname{xkeyval}'s |\presetkeys| inside the \meta{function}
+% defined for a key (e.g., via |\define@key|). The collected requests
+% can be performed by expanding the |\kvt@@presetqueue| macro.
+%    \begin{macrocode}
+\newcommand\kvt@lazypreset[2]{%
+  \appto\kvt@@presetqueue{\presetkeys[kvt]{#1}{#2}{}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@keysetter}
+% The
+% |\kvt@keysetter|\marg{macro}\marg{fam}\marg{key}\marg{value}\marg{func}
+% macro is an auxiliary macro that can be used inside the "func"
+% argument of |\define@...key| macros.
+% If \meta{macro} is not defined, |\kvt@keysetter| expands to an
+% instance of |\kvt@lazypreset| in order to set a global default.
+% Otherwise, |\kvt@keysetter| expands to \meta{func}, which is supposed
+% to set a key for the specific context referenced by \meta{macro}.
+%    \begin{macrocode}
+\newcommand\kvt@keysetter[5]{%
+  \ifdefvoid{#1}
+    {\kvt@lazypreset{#2}{#3=#4}}
+    {#5}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtTableOpt}
+% The |\kvtTableOpt|\marg{optname} macro, inside a |KeyValTable|
+% environment, expands to the value of the table option \meta{optname}.
+%    \begin{macrocode}
+\newcommand\kvtTableOpt[1]{\csname cmdkvt@Table@#1\endcsname}
+%    \end{macrocode}
+% \end{macro}
+%
+% \subsubsection{Table Options}
+%
+% The following code defines the possible table options.
+%
+% \changes{v0.2}{2016/05/21}{Added ``shape'' table option}
+%    \begin{macrocode}
+\define@cmdkey[kvt]{Table}{rowbg}{}
+\define@cmdkey[kvt]{Table}{headbg}{}
+\define@cmdkey[kvt]{Table}{headalign}{}
+\define@cmdkey[kvt]{Table}{headformat}{}
+\define@cmdkey[kvt]{Table}{width}{}
+\define@boolkey[kvt]{Table}{showhead}{}
+\define@boolkey[kvt]{Table}{showrules}{}
+
+%    \end{macrocode}
+% When adding further |shape| options below, ensure to also add a
+% corresponding |\kvt@DefineStdTabEnv| counterpart further below in the
+% code.
+%    \begin{macrocode}
+\define@choicekey[kvt]{Table}{shape}
+  {multipage,onepage,tabular,longtable,tabularx,xltabular}
+  {\csdef{cmdkvt@Table@shape}{#1}}
+%    \end{macrocode}
+%
+% The following sets the default values for the options.
+%    \begin{macrocode}
+\kvtSet{%
+  rowbg=white..black!10,
+  headbg=black!14,
+  showhead=true,
+  showrules=true,
+  headformat=\@firstofone,
+  headalign=,
+  shape=multipage,
+  width=\linewidth,
+}
+%    \end{macrocode}
+%
+% \subsubsection{Column Options}
+%
+% The following code defines the possible column options.
+%
+% \changes{v1.0}{2018/12/30}{Enabled default ``true'' for ``hidden''}
+%    \begin{macrocode}
+\define@key[kvt]{Column}{default}{\kvt@colkeysetter{default}{#1}}
+\define@key[kvt]{Column}{format}{\kvt@colkeysetter{format}{#1}}
+\define@key[kvt]{Column}{align}{\kvt@colkeysetter{align}{#1}}
+\define@key[kvt]{Column}{head}{\kvt@colkeysetter{head}{#1}}
+\define@boolkey[kvt]{Column}{hidden}[true]{%
+  \kvt@colkeysetter{hidden}{#1}}
+%    \end{macrocode}
+%
+% \begin{macro}{\kvt@colkeysetter}
+% The |\kvt@colkeysetter|\marg{key}\marg{value} specializes
+% |\kvt@keysetter| for column options.
+%    \begin{macrocode}
+\newcommand\kvt@colkeysetter[2]{%
+  \kvt@keysetter{\kvt@@column}{Column}{#1}{#2}{%
+    \csdef{kvt@col@#1@\kvt@@column}{#2}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% The following sets the default values for the options.
+%    \begin{macrocode}
+\kvtSet{%
+  default=,
+  format=\kvtStrutted,
+  align=l,
+  head=,%TODO: setting a global default other than "" does not make sense
+  hidden=false,
+}
+%    \end{macrocode}
+%
+% \subsubsection{Column Group Options}
+% TODO: Change the following code to allow setting global defaults
+%
+% The following defines the options for header cells.
+%    \begin{macrocode}
+\define@key[kvt]{ColGroup}{head}{%
+  \csdef{kvt@@colgrp@head@\kvt@@colgrp}{#1}}
+\define@key[kvt]{ColGroup}{align}{%
+  \csdef{kvt@@colgrp@align@\kvt@@colgrp}{#1}}
+\presetkeys[kvt]{ColGroup}{align=c}{}%
+%    \end{macrocode}
+%
+%
+% \subsubsection{Row Options}
+% TODO: Change the following code to allow setting global defaults
+%
+% The following block declares the known row options.
+%    \begin{macrocode}
+\define@cmdkey[kvt]{Row}{bg}{}%
+\define@boolkey[kvt]{Row}{hidden}[true]{}%
+\define@cmdkey[kvt]{Row}{below}{}
+\define@cmdkey[kvt]{Row}{above}{}
+\define@key[kvt]{Row}{around}{%
+  \kvt@setkeys{below={#1},above={#1}}{Row}}
+%    \end{macrocode}
 %
 %
 % \subsection{Declaring Key-Value Tables}
@@ -1254,6 +1251,12 @@
 %    \begin{macrocode}
   \define@cmdkey[KeyValTable]{#1}{#2}[]{}%
   \presetkeys[KeyValTable]{#1}{#2}{}%
+%    \end{macrocode}
+% The |\kvt@parsecolspec| macro is not necessarily enclosed in a group.
+% To avoid leaking a local |\kvt@@column| value to the outer (global)
+% scope, we explicitly undefine it.
+%    \begin{macrocode}
+  \undef\kvt@@column
 }
 %    \end{macrocode}
 % \end{macro}
@@ -1491,15 +1494,6 @@
   \kvt@setkeys{#3}{ColGroup}}
 %    \end{macrocode}
 % \end{macro}
-%
-% The following defines the options for header cells.
-%    \begin{macrocode}
-\define@key[kvt]{ColGroup}{head}{%
-  \csdef{kvt@@colgrp@head@\kvt@@colgrp}{#1}}
-\define@key[kvt]{ColGroup}{align}{%
-  \csdef{kvt@@colgrp@align@\kvt@@colgrp}{#1}}
-\presetkeys[kvt]{ColGroup}{align=c}{}%
-%    \end{macrocode}
 %
 %
 % \subsection{Row Numbering and Labeling}
@@ -1760,16 +1754,6 @@
 % \end{macro}
 %
 % \subsubsection{Environment-Independent Parts}
-%
-% The following block declares the known row options.
-%    \begin{macrocode}
-\define@cmdkey[kvt]{Row}{bg}{}%
-\define@boolkey[kvt]{Row}{hidden}[true]{}%
-\define@cmdkey[kvt]{Row}{below}{}
-\define@cmdkey[kvt]{Row}{above}{}
-\define@key[kvt]{Row}{around}{%
-  \kvt@setkeys{below={#1},above={#1}}{Row}}
-%    \end{macrocode}
 %
 % \begin{macro}{\kvt@AddKeyValRow}
 % The
