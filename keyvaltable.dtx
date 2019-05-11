@@ -22,35 +22,58 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2019/03/25 v1.1alpha Package for filling tables using key-value lists]
+    [2019/05/11 v2.0 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
-\documentclass{ltxdoc}
-\usepackage{rgltxdoc}
+\documentclass[svgnames]{ltxdoc}
+\usepackage{rgltxdoc}[2019/05/04 v1.2]
 \usepackage{etoc}
-\renewcommand\etoccolumnsep{1em}
+\usepackage{amssymb}% \checkmark
 \EnableCrossrefs
 \CodelineIndex
 \RecordChanges
+\usepackage{xspace}
+\newcommand\thispackage{\pkgname{keyvaltable}\xspace}
 % the following packages are additional for the examples
 \usepackage{xintexpr}
 \usepackage{makecell}
 \usepackage{gensymb}% for \degree
-\usepackage{tabularx,longtable,xltabular}
+\usepackage{tabularx,longtable,xltabular,tabu}
 \usepackage{filecontents}
-\usepackage{xspace}
-\newcommand\thispackage{\pkgname{keyvaltable}\xspace}
 \usepackage{keyvaltable}
+\usepackage{datatool,csvsimple}
 \NewKeyValTable[
     showhead=false,headformat={\bfseries\footnotesize},
     rowbg=black!7!white..black!3!white,
     showrules=false,
-    shape=onepage]{GoalApproach}{
+    shape=tabu]{GoalApproach}{
   id: align=r, default=(\alph{kvtRow}), head=\#;
   goal: align=X[l];
   approach: align={X[2,l]};
 }
+\newcommand\RecipePreset{%
+  \NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X}}
+%
+\usepackage{fontawesome}
+\makeatletter
+\newcommand\NiceText[2]{%
+  \medskip\par\noindent
+  \rgltxdoc@inmargin{\smash{\textcolor{#1}{\Large#2}}}{\quad}}
+\newcommand\NiceNote{\NiceText{DarkBlue}{\faInfoCircle}}
+\newcommand\NiceTipp{\NiceText{Gold}{\faLightbulbO}}
+%    \end{macrocode}
+\makeatother
+%
+\begin{filecontents*}{recipes.csv}
+id,amount,ingredient,step
+snowman,3,balls of snow,staple all 3 balls
+snowman,1,carrot,stick into top ball
+snowman,2,coffee beans,put diagonally above carrot
+cherries,150g,ice cream,put into bowl
+cherries,50g,cherries,heat up and add to bowl
+\end{filecontents*}
+%
 \begin{document}
   \DocInput{keyvaltable.dtx}
   \PrintChanges
@@ -122,7 +145,7 @@
 % \etocmulticol[2]{\section*{Contents}}
 % \clearpage
 %
-% \section{Usage}
+% \section{Basic Usage}\label{sec:basic}
 %
 % We start with a basic usage example. An explanation of the involved
 % macros follows afterwards.\medskip
@@ -131,7 +154,7 @@
 % \NewKeyValTable{Recipe}{
 %   amount:     align=r;
 %   ingredient: align=l;
-%   step:       align=X[l];
+%   step:       align=X;
 % }
 % \begin{KeyValTable}{Recipe}
 % \Row{amount=150g, ingredient=ice cream,
@@ -146,45 +169,47 @@
 % with semicolons. After the separating |:|, for each column, the macro
 % configures the column alignment using the |align| key. The alignments
 % |r| (right) and |l| (left) are the standard |tabular| alignments; the
-% |X[l]| alignment is provided by the \pkgname{tabu} package (see the
-% documentation there), which is used by default for creating the
-% tables.
+% |X| alignment is provided by the \pkgname{tabularx} package (see the
+% documentation there).
 %
-% After the definition of the table type, the example creates a table of
+% After defining the table type, the example creates a table of
 % the newly defined type. For this, the example uses the |KeyValTable|
 % environment and the |\Row| macro, once for each row. The parameter
 % |Recipe| of the |KeyValTable| identifies the type of the table.
-% Most notably, each row can now produced by a single macro in which the
-% content of the individual cells can be specified by pairs such as
-% |amount=150g|, which puts ``150g'' into the |amount| column of the
-% respective row.
+% In the parameter of the |\Row| macro, the content of the individual
+% cells can be specified by key-value pairs such as |amount=150g|, which
+% puts ``150g'' into the |amount| column of the respective row.
 %
 % The example above already shows that producing a rather nice-looking
 % table -- including alternating row colors as well as horizontal rules
 % -- without further ado. How the \thispackage package can be
 % used in the general case and how its visual appearance can be
-% customized is subject of the remainder of this section.
+% customized is subject of the remainder of this documentation.
 %
-% \subsection{Table Type Definition}
+% \NiceTipp{To quickly sketch a table type, one can even omit properties
+% of columns and just list their names, separated by semicolons, as the
+% following example shows. All columns then get the default alignment:
+% |l|.}
+% \begin{LTXexample}
+% \NewKeyValTable{Recipe}{amount;ingredient;step}
+% \begin{KeyValTable}{Recipe}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \end{KeyValTable}
+% \end{LTXexample}
 %
-% \NiceDescribeMacro{\NewKeyValTable}{\oarg{options}\marg{tname}\marg{colspecs}\oarg{headers}}
-% Table types are defined via the |\NewKeyValTable| macro, where
-% \begin{itemize}[noitemsep]
-% \item \meta{tname} is the name of the table type,
-% \item \meta{colspecs} is a semicolon-separated list of individual
-%   column specifications,
-%   and
-% \item \meta{options}, if provided, specify table type options that
-%   override the default table options; they must then be a
-%   comma-separated list of \meta{property}|=|\meta{value} pairs;
-%   the list of table options can be found at the introduction of the
-%   |KeyValTable| environment on page~\pageref{page:table-options}.
-% \item \meta{headers}, if provided, specifies custom table header rows.
-%   This argument is further described in \cref{sec:colspan}.
-%   If this argument is omitted, a single header row is produced
-%   (unless |showhead=false| is provided as an option) and the
-%   individual headers in this row are determined by \meta{colspec}.
-% \end{itemize}
+%
+% \section{Defining Table Types}
+%
+% As the example in \cref{sec:basic} shows,
+% |\NewKeyValTable| defines a table type.
+%
+% \NiceDescribeMacro{\NewKeyValTable}{\oarg{options}\marg{tname}\marg{colspecs}\oarg{layout}}
+% The macro defines a table type with name \meta{tname} whose columns
+% are specified by \meta{colspecs}.
+% The \meta{colspecs} parameter must be a semicolon-separated list.
 % Each column specification is of the form
 % \begin{center}
 %   \meta{colname}|:| \meta{property}|=|\meta{value}|,|
@@ -194,57 +219,73 @@
 % column. The \meta{property}|=|\meta{value} pairs configure certain
 % properties of the column. The \meta{property} can be one of the
 % following:
-% \begin{KeyValTable}{KeyDesc}
-% \Row{key=align,
-%   desc={This property specifies the alignment of content in the
-%     column.  The \meta{value} can be set to any column alignment
-%     understood by the |tabu| environment of the \pkgname{tabu} package.
-%     This particularly includes |l|, |c|, |r|, |p|, and |X|.},
-%   default=l}
-% \Row{key=default,
-%   desc={This property specifies the default value of a cell in this
-%     column, i.e., in case that a \cmd{\Row} does not provide content
-%     for the cell.  By default (i.e., if unset for a column), this is
-%     an empty string.},
-%   default={\normalfont\itshape(empty)}}
-% \Row{key=format,
-%   desc={This property specifies a formatting macro for content of the
-%     cell.  The macro can take one argument and is provided with the
-%     content of the cell as its argument.
-%     By default, the formatting macro takes the content as is
-%     but puts a \cmd{\strut} before and after the content (to yield a
-%     better vertical spacing).},
-%   default=\cmd{\kvtStrutted}}
-% \Row{key=head,
-%   desc={This property specifies the content of the column's header
-%     row. The default value for this property is the name of the
-%     column.},
-%   default={\normalfont\meta{colname}}}
-% \Row{key=hidden,
-%   desc={This property specifies whether a table column shall be
-%     displayed or not. The \meta{value} for this property can be |true|
-%     (to hide the cell) or |false| (to display the
-%     cell). Using |hidden| without \meta{value} is equivalent to
-%     specifying |hidden=true|.},
-%   default=false}
+%
+% \NiceDescribeKey{align}{vals={l,c,r,p,X,\ldots}, init=l}
+%   This property specifies the alignment of content in the
+%   column.  The \meta{value} can be set to any column alignment
+%   understood by table environments.
+%
+% \NiceDescribeKey{default}{vals=\vmeta{content}, init=\vmeta{empty}}
+%   This property specifies the default \meta{content} of a cell in this
+%   column, i.e., in case that a \cmd{\Row} does not provide content for
+%   the cell.  Initially (i.e., if unset for a column), this is an
+%   empty string.
+%
+% \NiceDescribeKey{format}{vals=\vmeta{single argument macro}, init=\cmd{\kvtStrutted}}
+%   This property specifies a formatting macro for content of the cell.
+%   The macro can take one argument and is provided with the content of
+%   the cell as its argument. Initially, the format is defined to take
+%   the content as is but puts a \cmd{\strut} before and after the
+%   content (to yield a better vertical row spacing).
+%
+% \NiceDescribeKey{head}{vals=\vmeta{content}, init=\vmeta{colname}}
+%   This property specifies the \meta{content} of the column's header
+%   row. The initial value for this property is the name of the column.
+%
+% \NiceDescribeKey{hidden}{vals={true,false}, init=false, def=true}
+%   This property specifies whether a table column shall be displayed or
+%   not. The \meta{value} for this property can be |true| (to hide the
+%   cell) or |false| (to display the cell). Using |hidden| without
+%   \meta{value} is equivalent to specifying |hidden=true|.
+%
+% The following example shows all of the above column properties in
+% action.
+%
+% \begin{LTXexample}[morekeywords={align,default,format,head,hidden}]
+% \NewKeyValTable{ShoppingList}{
+%   what:   head=article, format=\textbf;
+%   amount: align=r, default=1;
+%   why:    hidden;
+% }
+% \begin{KeyValTable}{ShoppingList}
+% \Row{what=melon}
+% \Row{what=apples, amount=6}
+% \Row{what=bicycle, why=Bob's birthday}
 % \end{KeyValTable}
+% \end{LTXexample}
 %
-% \NiceDescribeMacro{\kvtStrutted}{\oarg{inner}\marg{arg}}
-% This macro places a |\strut| before \meta{arg} and a |\strut| after
-% \meta{arg}. This has the effect that the first and last row of
-% \meta{arg} obtain a "natural" height and depth even if their content
-% is smaller.
-% The second |\strut| is omitted when it would cause a new line to be
-% produced.
-% See \cref{sec:row-numbering} for an example.
+% The \meta{options} and \meta{layout} parameters of |\NewKeyValTable|
+% are described in \cref{sec:TableAppearance} and, respectively,
+% \cref{sec:CustomHeaders} of this documentation.
 %
-% \subsection{Typesetting Tables}\label{sec:typesetting-tables}
+%
+% \section{Typesetting Tables}\label{sec:typesetting-tables}
+%
+% The \thispackage package offers three possibilities for typesetting
+% tables.
+% The first is in the traditional \hologo{LaTeX} form, in which there is
+% an environment that encloses the individual row specifications.
+% The second possibility is to specify rows throughout the document, bind
+% them to a name, and finally typeset a table from all rows bound to
+% the particular name.
+% The third possibility is to source the row specifications from a
+% file.
+%
+% \subsection{Specifying Rows in a Table Environment}
 %
 % The first possibility for typesetting a table using the
-% \thispackage package, is via the |KeyValTable| environment,
-% which the example at the beginning of this section shows.
-% The second possibility is described in
-% Section~\ref{sec:collected-tables}.
+% \thispackage package, is via the |KeyValTable| environment.
+% \cref{sec:basic} presents an example of this possibility.
 %
 % \NiceDescribeEnv{KeyValTable}{\oarg{options}\marg{tname}}
 % The |KeyValTable| environment creates a table of type \meta{tname}.
@@ -252,100 +293,7 @@
 % before. The environment itself already produces a table with the
 % columns specified for the table type, produces a header row and some
 % horizontal lines, and sets up background colors of rows.
-%
-% The \meta{options} override default configurations, if provided, and
-% must then be a comma-separated list of \meta{property}|=|\meta{value}
-% pairs. The following \meta{property} names are available:
-% \begin{KeyValTable}{KeyDesc}
-% \Row{key=shape\label{page:table-options},
-%   desc={This property specifies the table's shape. For \meta{value},
-%     the package currently supports |multipage| and |onepage| as well
-%     as |tabular|, |tabularx|, |longtable|, and |xltabular|.
-%     In case of |multipage|, the table may span multiple pages and on
-%     each page, the column header is repeated. In case of |onepage|,
-%     the table does not split into multiple pages.
-%     The remaining three values use the respective environment for
-%     producing the table (see \cref{sec:AltTabEnv} for the effect).},
-%   default=multipage}
-% \Row{key=width,
-%   desc={This property specifies the width of the table, if the
-%     selected |shape| supports it (see \cref{sec:AltTabEnv}).},
-%   default={\string\linewidth}}
-% \Row{key=showhead,
-%   desc={This property specifies whether the head row shall be shown.
-%     The \meta{value} must be a Boolean (i.e., |true| or |false|),
-%     where |true| specifies that the head row is shown and |false|
-%     specifies that the head row is not shown.},
-%   default=true}
-% \Row{key=showrules,
-%   desc={This property specifies whether top and bottom rules as well
-%     as a rule below the head row are drawn (|true|) or not (|false|).},
-%   default=true}
-% \Row{key=headalign,
-%   desc={This property specifies the alignment for header cells.
-%     If left empty, each header cell receives the same alignment as the
-%     respective column.},
-%   default={\normalfont\itshape(empty)}}
-% \Row{key=headformat,
-%   desc={This property specifies a format to be applied to all header
-%     cells.
-%     The value specified for the |headformat| key is used to format
-%     each header. The value can be a macro that takes once argument,
-%     through which it is provided the header (as specified in the
-%     column's |head| property).
-%     By default, an "identity" macro is used, meaning that
-%     each |head| is taken without change.},
-%   default={\normalfont\itshape("identity")}}
-% \Row{key=headbg,
-%   desc={This property specifies the background color of the head row.
-%     The \meta{value} must be a single color specification that is
-%     understood by the \pkgname{xcolor} package. The \meta{value} is
-%     passed directly to the \cs{rowcolor} macro.},
-%   default={black!14}}
-% \Row{key=rowbg,
-%   desc={This property specifies the background colors of content rows.
-%     The format of the \meta{value} for this property must be
-%     \meta{oddcolor}|..|\meta{evencolor}. The first row after the
-%     header is colored with \meta{oddcolor}, the second row with
-%     \meta{evencolor}, and so forth. Both colors must be understood by
-%     the \pkgname{xcolor} package.},
-%   default={white..black!10}}
-% \end{KeyValTable}
-% \vref{fig:TableOptionExamples} demonstrates the \meta{options} in
-% examples.
-% \begin{figure}
-% \begin{LTXexample}[morekeywords={shape,showhead,rowbg}]
-% \NewKeyValTable[shape=onepage,
-%     showhead=false,
-%     rowbg=blue!10..blue!15,
-%   ]{TabOptions}{
-%     opt: align=l, format=\texttt;
-%     val: align=l, format=\texttt;}
-% \begin{table}\centering
-% \begin{KeyValTable}{TabOptions}
-% \Row{opt=shape,  val=onepage}
-% \Row{opt=showhead, val=false}
-% \Row{opt=rowbg,  val=blue!10..blue!15}
-% \end{KeyValTable}
-% \caption{table options demo}
-% \end{table}
-% \end{LTXexample}
-% \begin{LTXexample}[morekeywords={showrules,headbg,headalign,headformat}]
-% \NewKeyValTable[showrules=false,headbg=blue!25,
-%     headalign=c,headformat=\textbf,
-%   ]{TabOptions2}{
-%     opt: align=l, format=\texttt;
-%     val: align=l, format=\texttt;}
-% \begin{KeyValTable}{TabOptions2}
-% \Row{opt=showrules, val=false}
-% \Row{opt=headbg, val=blue!25}
-% \Row{opt=headalign, val=c}
-% \Row{opt=headformat, val=\string\bfseries}
-% \end{KeyValTable}
-% \end{LTXexample}
-% \caption{Examples for table options}
-% \label{fig:TableOptionExamples}
-% \end{figure}
+% The \meta{options} are described in \cref{sec:TableAppearance}.
 %
 % \NiceDescribeMacro{\Row}{\oarg{options}\marg{content}}
 % A table row is produced by the |\Row| macro. The
@@ -355,15 +303,64 @@
 % specifies the content of the cell in the respective column. Each
 % column for which no \meta{text} is provided in \meta{content}, will
 % result in a cell that is filled with the column's default value.
-%
 % The \meta{options} argument customizes row properties and is further
 % explained in \cref{sec:RowOptions}.
 %
 %
-% \subsection{Sourcing Rows From Files}
+% \subsection{Tables of Collected Rows}\label{sec:collected}
+%
+% The content of a table's rows might logically belong to locations that
+% are scattered throughout a document, e.g., to individual sections of
+% the document. In this situation, it can be convenient to have the rows
+% specified close to the locations their contents belong to, instead of
+% specified in the table environment.
+%
+% The following example illustrates the use of this feature for taking
+% and collecting notes in a document:
+% \begin{LTXexample}[width=0.475\hsize,morekeywords={NewCollectedTable,CollectRow,ShowCollectedTable}]
+% \NewKeyValTable{Notes}{type; text}
+% \NewCollectedTable{notes}{Notes}
+%
+% \subsection*{Notes}
+% \ShowCollectedTable{notes}
+%
+% \section{Introduction}
+% \CollectRow{notes}{type=remark, text=intro too long}
+% Lorem ipsum dolor sit amet, \ldots
+%
+% \section{Analysis}
+% \CollectRow{notes}{type=task, text=proofread Analysis}
+% Lorem ipsum dolor sit amet, \ldots
+% \end{LTXexample}
+% See \cref{sec:referencing} on how to (automatically) include
+% references to, e.g., section or page numbers in tables.
+% The key macros (highlighted in bold font) used in the example are the
+% following three.
+%
+% \NiceDescribeMacro{\NewCollectedTable}{\marg{cname}\marg{tname}}
+% This macro defines the name \meta{cname} for a new collection of
+% rows. The collection is associated with the table type \meta{tname}.
+% This macro must be used before |\CollectRow| for a \meta{cname}.
+%
+% \NiceDescribeMacro{\CollectRow}{\oarg{options}\marg{cname}\marg{content}}
+% This macro adds the row content \meta{content} and row options
+% \meta{options} to the row collection \meta{cname}.
+%
+% \NiceDescribeMacro{\ShowCollectedTable}{\oarg{options}\marg{cname}}
+% This macro typesets a table of the row collection \meta{cname}, with
+% the table options \meta{options}.
+% The table includes rows that are collected only afterwards in the
+% document. For this, \hologo{LaTeX} must be run at least two times.
+%
+%
+% \subsection{Sourcing Rows From a File}
 %
 % Rather than specifying the rows of a table inside a |KeyValTable|
 % environment, the rows can also be sourced from a file.
+% More concretely, this file must consist of the |\Row| macros that
+% specify the content of the rows.
+% For information on how to source rows from CSV files, see
+% \cref{sec:CSV}.
 %
 % \NiceDescribeMacro{\ShowKeyValTableFile}{\oarg{options}\marg{tname}\marg{filename}}
 % This macro produces a |KeyValTable| environment of type \meta{tname}
@@ -371,7 +368,7 @@
 % The \meta{options} specify the table options, which are directly
 % passed to the options argument of the |KeyValTable| environment.
 %
-% \begin{LTXexample}[morepreset=\NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X[l]},morekeywords={AddKeyValRow,KeyValTableContent,ShowKeyValTable}]
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={ShowKeyValTableFile}]
 % \begin{filecontents}{snowman.kvt}
 % \Row{amount=3, ingredient=balls of snow,
 %      step=staple all 3 balls}
@@ -383,19 +380,24 @@
 % \ShowKeyValTableFile{Recipe}{snowman.kvt}
 % \end{LTXexample}
 %
-% \subsection{Tables of Collected Rows}\label{sec:collected-tables}
 %
-% As an alternative to producing a table within a single environment,
-% the \thispackage package offers a way to scatter individual
-% rows throughout a document and display the full table later. This
-% method can be useful when table rows are strongly connected to
-% portions of text outside of the table. The method then allows
-% specifying the rows together with the connected text rather than
-% separately in the table environment.
-% Table types for this method are defined via |\NewKeyValTable| as
-% previously described.
+% \subsection{Tables of Collected Rows (Legacy Interface)}
 %
-% \NiceDescribeMacro{\AddKeyValRow}{\marg{tname}\marg{content}}
+% This section documents legacy functionality of \thispackage, that is
+% now superseded by the functionality described in \cref{sec:collected}.
+% The legacy functionality compares to the new functionality as follows:
+% \begin{itemize}[noitemsep]
+% \item Rows must be collected \emph{before} the place in the document
+%   where they are displayed in a table.
+% \item For each table type, there can be only one collection of rows.
+%   After the collection has been typeset in a table the collection is
+%   emptied again.
+% \item Row content is not written into the aux file. This might be
+%   relevant for very large tables.
+% \end{itemize}
+% The following macros and environments implement the functionality.
+%
+% \NiceDescribeMacro{\AddKeyValRow}{\marg{tname}\oarg{options}\marg{content}}
 % A table row is produced by the
 % |\AddKeyValRow| macro. The \meta{tname}
 % identifies the table type and the \meta{content} provides the content
@@ -421,7 +423,7 @@
 %
 % The following example demonstrates the use, based on the previously
 % defined |Recipe| table type.
-% \begin{LTXexample}[morepreset=\NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X[l]},morekeywords={AddKeyValRow,KeyValTableContent,ShowKeyValTable}]
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={AddKeyValRow,KeyValTableContent,ShowKeyValTable}]
 % \AddKeyValRow{Recipe}{amount=3,
 %      ingredient=balls of snow,
 %      step=staple all 3 balls}
@@ -434,42 +436,26 @@
 % \ShowKeyValTable{Recipe}
 % \end{LTXexample}
 %
-% \subsection{Setting Global Defaults}
 %
-% \NiceDescribeMacro{\kvtSet}{\marg{options}}
-% The \thispackage package allows changing the default values
-% globally for the parameters of tables and columns. This can be done by
-% using the |\kvtSet| macro.
-%
-% \begin{LTXexample}[morekeywords={kvtSet}]
-% \kvtSet{headbg=red,default=?,align=r}
-% \NewKeyValTable{Defaults}{x; y}
-% \begin{KeyValTable}{Defaults}
-% \Row{x=1}
-% \Row{y=4}
-% \end{KeyValTable}
-% \end{LTXexample}
-%
-% Notice the use of the |\NewKeyValTable| in the example. Column
-% properties, including the separating |:| can be omitted completely,
-% making the definition of a table type very simple.
-%
-% \subsection{Row Numbering and Labeling}\label{sec:row-numbering}
+% \section{Row Numbering\,\&\,Labeling}\label{sec:row-numbering}
 %
 % The mechanism of default column values enables a simple means for
-% automatic row numbering. For this, one can use one of three row
-% counters provided by the \thispackage package: |kvtRow|,
-% |kvtTypeRow|, and |kvtTotalRow|. The counters are explained after the
-% following example, which demonstrates the use for the case of the
-% |kvtRow| counter.
+% automatic row numbering, labeling, and referencing document entities.
+%
+% \subsection{Row Numbering}
+%
+% For row numbering, one can use one of three row counters provided by
+% the \thispackage package: |kvtRow|, |kvtTypeRow|, and |kvtTotalRow|.
+% The counters are explained after the following example, which
+% demonstrates the use for the case of the |kvtRow| counter.
 %
 % \begin{LTXexample}[morekeywords={thekvtRow,thekvtTypeRow}]
-% \NewKeyValTable[headformat=\textbf]{Numbered1}{
+% \NewKeyValTable[headformat=\textbf]{Numbered}{
 %   line: align=r, head=\#,
 %         format=\kvtStrutted[\textbf],
 %         default=\thekvtRow;
 %   text: align=l, head=Text}
-% \begin{KeyValTable}{Numbered1}
+% \begin{KeyValTable}{Numbered}
 % \Row{text=First row}
 % \Row{text=Second row}
 % \end{KeyValTable}
@@ -489,6 +475,30 @@
 % The |kvtTotalRow| counter counts the rows in the current table and
 % includes the number of rows of all previous tables produced using the
 % \thispackage package.
+%
+% By default, all rows are counted by the aforementioned counters.
+% However, this default can be changed.
+%
+% \NiceDescribeKey{uncounted}{vals={true,false}, init=false, def=true}
+%   This row option specifies whether the row shall not be counted
+%   (|true|) or shall be counted (|false|).
+%   If only |uncounted| is used without a value, this is equivalent to
+%   |uncounted=true|.
+% The following example illustrates the option.
+%
+% \begin{LTXexample}[morekeywords={uncounted},
+%   morepreset={\NewKeyValTable[headformat=\textbf]{Numbered}{
+%     line: align=r,head=\#,format=\kvtStrutted[\textbf],default=\thekvtRow;
+%     text: align=l,head=Text}}]
+% \begin{KeyValTable}{Numbered}
+% \Row{text=First row}
+% \Row[uncounted]{line={--}, text=interlude}
+% \Row{text=Second row}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+%
+% \subsection{Row Labeling}
 %
 % Row numbering can easily be combined with row labeling.
 % The following example shows how the |format| column property can be
@@ -519,42 +529,389 @@
 % optional argument to |\label|. This feature is demonstrated in
 % \cref{sec:package-cleveref}.
 %
+% \subsection{Referencing in Collected Rows}\label{sec:referencing}
 %
-% \subsection{Column Spanning}
-% \label{sec:colspan}
+% The example in \cref{sec:collected} illustrates well a situation in
+% which referencing the locations in the document at which rows are
+% collected. The following example augments the original example to
+% achieve exactly this.
 %
-% Combining multiple consecutive cells in a row to a single cell (aka
-% column spanning) can serve several purposes.
-% The \thispackage package supports the following purposes:
+% \begin{LTXexample}[width=0.5\hsize,morekeywords={NewCollectedTable,CollectRow,ShowCollectedTable}]
+% \NewKeyValTable{Notes2}{
+%   id: default=\thekvtRow.;
+%   type; text;
+%   where: default={\S\thesection\ (p.\@\thepage)};}
+% \NewCollectedTable{notes2}{Notes2}
 %
-% \begin{enumerate}[noitemsep]
-% \item grouping of columns through cells in the table's header that
-%   span all cells in the group and assign a joint title to the group;
-% \item individual combinations of cells in the table data.
-% \end{enumerate}
+% \subsection*{Notes}
+% \ShowCollectedTable{notes2}
 %
-% The remainder of this section describes how each of the purposes can
-% be addressed in |KeyValTable| environments.
+% \section{Introduction}
+% \CollectRow{notes2}{type=remark, text=intro too long}
+% Lorem ipsum dolor sit amet, \ldots
 %
-% \paragraph{Column groups in table headers}
+% \section{Analysis}
+% \CollectRow{notes2}{type=task, text=proofread!}
+% Lorem ipsum dolor sit amet, \ldots
+% \end{LTXexample}
 %
-% Column groups in table headers can be specified by the \meta{headers}
-% parameter of |\NewKeyValTable|.
-% The following two examples illustrate how this parameter can be used
-% for specifying column groups.
+% The \thispackage package is carefully designed to take the values of
+% counters such as the page counter and the section counter from the
+% point in the document where |\CollectRow| is used.
+% At the same time, the table row counters are taken from the point
+% inside the respective table. This applies to |\thekvtRow| as well as
+% to |\arabic{kvtRow}| and other counter formats.
+% For customizing this behavior, the following three macros can be used.
+%
+% \NiceDescribeMacros{2}
+%   {\kvtDeclareTableMacros}{\marg{macro-list}}
+%   {\kvtDeclareTableCounters}{\marg{counter-list}}
+% These macros take a comma-separated list of macros (respectively
+% counters) and declares these as "table macros" ("table counters").
+% A macro or counter declared this way is expanded only inside the table
+% environment and not at the point where |\CollectRow| is used.
+% The \thispackage already declares |\thekvtRow|, |\thekvtTypeRow|, and
+% |\thekvtTotalRow| as table macros and declares |kvtRow|, |kvtTypeRow|,
+% and |kvtTotalRow| as table counters.
+%
+% \NiceDescribeMacro{\kvtDeclareCtrFormatters}{\marg{macro-list}}
+% This macro takes a comma-separated list of macros and declares them as
+% macros for formatting counter values. Examples for such macros are
+% |\arabic|, |\alph|, |\Alph|, |\roman|, |\Roman|, |\fnsymbol|, which
+% \thispackage already declares.
+% When other counter-formatting macros shall be used in the |default|
+% value of a column, such as |\ordinal| of the \pkgname{fmtcount}
+% package, they have to be passed to |\kvtDeclareCtrFormatters| first.
+%
+%
+% \section{Changing the Appearance}
+%
+% The appearance (e.g., colors, rules) of a table can be changed at
+% the level of the overall table as well as for individual rows,
+% columns, and cells.
+%
+% \subsection{Table Appearance}\label{sec:TableAppearance}
+%
+% The appearance of a table can be configured through the \meta{options}
+% parameters of
+% \begin{itemize}[nosep]
+% \item |KeyValTable|, |\ShowKeyValTable|, and |\ShowKeyValTableFile|
+%   (affecting the particular table),
+% \item |\NewKeyValTable| (affecting all tables of the table type), and
+% \item |\kvtSet| (affecting all tables).
+% \end{itemize}
+% In this list, the former take precedence over the latter. That is,
+% table options override table type options and table type options
+% override global options for all tables.
+%
+% In each case, \meta{options} must be specified as a comma-separated
+% list of \meta{property}|=|\meta{value} pairs.
+% The following \meta{property} keys can be configured.
+%
+% \NiceDescribeKey{shape}
+%    {vals={multipage,onepage,tabular,tabularx,longtable,xltabular,tabu,longtabu},
+%     init=multipage}
+% This property specifies the table's shape. For \meta{value}, the
+% package currently supports |multipage| and |onepage| as well as
+% |tabular|, |tabularx|, |longtable|, |xltabular|, |tabu|, and
+% |longtabu|.  In case of |multipage|, the table may span multiple pages
+% and on each page, the column header is repeated. In case of |onepage|,
+% the table does not split into multiple pages.  The remaining values
+% use the respective environment for producing the table (see
+% \cref{sec:AltTabEnv} for the effect).
+%
+% \NiceDescribeKey{width}{vals=\vmeta{dimension}, init=\cmd\linewidth}
+% This property specifies the width of the table, if the selected
+% |shape| supports it (see \cref{sec:AltTabEnv}).
+%
+% \NiceDescribeKey{showhead}{vals={true,false}, init=true}
+% This property specifies whether the header row shall be shown.  The
+% \meta{value} must be a Boolean (i.e., |true| or |false|), where |true|
+% specifies that the header row is shown and |false| specifies that the
+% header row is not shown.
+%
+% \NiceDescribeKey{showrules}{vals={true,false}, init=true}
+% This property specifies whether top and bottom rules as well
+% as a rule below the header row are drawn (|true|) or not (|false|).
+%
+% \NiceDescribeKey{headalign}{vals={\vmeta{empty} or \vmeta{coltype}}, init=\vmeta{empty}}
+% This property specifies the alignment for header cells.  If left
+% empty, each header cell receives the same alignment as the respective
+% column.
+%
+% \NiceDescribeKey{headbg}{vals=\vmeta{color}, init={black!14}}
+% This property specifies the background color of the header rows.  The
+% \meta{color} must be a single color specification that is understood
+% by the \pkgname{xcolor} package. The \meta{color} is passed directly
+% to the \cs{rowcolor} macro. If \meta{color} is empty, then no
+% background color is produced for the header row.
+%
+% \NiceDescribeKey{headformat}{vals=\vmeta{single argument macro}, init=\vmeta{"identity"}}
+% This property specifies a format to be applied to all header cells.
+% The value specified for the |headformat| key is used to format each
+% header. The value can be a macro that takes once argument, through
+% which it is provided the header (as specified in the column's |head|
+% property).  Initially, an "identity" macro is used, meaning that each
+% |head| is taken without change.
+%
+% \NiceDescribeKey{rowbg}{vals=\vmeta{color}, init={white..black!10}}
+% This property specifies the background colors of content rows. The
+% \meta{value} for this property must be of the format
+% \meta{oddcolor}|..|\meta{evencolor}. The first row after the header is
+% colored with \meta{oddcolor}, the second row with \meta{evencolor},
+% and so forth. Both colors must be understood by the \pkgname{xcolor}
+% package. If \meta{color} is empty, then no background color is
+% produced for content rows.
+%
+% \NiceDescribeKeys{2}
+%   {norowbg}{vals={true,false}, init=false, def=true}
+%   {nobg}{vals={true,false}, init=false, def=true}
+% These properties are shorthands for |rowbg={}| (turning off
+% background colors for content rows) and, respectively, for
+% |rowbg={},headbg={}| (turning off background colors for header rows
+% and for content rows). Using these options without a value is
+% equivalent to using |true| for the value. For instance, |nobg| is
+% equivalent to |nobg=true|.
+%
+% \vref{fig:TableOptionExamples} demonstrates the \meta{options} in
+% examples.
+% \begin{figure}
+% \begin{LTXexample}[morekeywords={shape,showhead,rowbg}]
+% \NewKeyValTable[shape=onepage,
+%     showhead=false,
+%     rowbg=blue!10..blue!15,
+%   ]{TabOptions}{
+%     opt: align=l, format=\texttt;
+%     val: align=l, format=\texttt;}
+% \begin{table}\centering
+% \begin{KeyValTable}{TabOptions}
+% \Row{opt=shape,  val=onepage}
+% \Row{opt=showhead, val=false}
+% \Row{opt=rowbg,  val=blue!10..blue!15}
+% \end{KeyValTable}
+% \caption{table options demo}
+% \end{table}
+% \end{LTXexample}
+% \begin{LTXexample}[morekeywords={showrules,headbg,headalign,headformat,norowbg}]
+% \NewKeyValTable[showrules=false,headbg=blue!25,
+%     headalign=c,headformat=\textbf,norowbg
+%   ]{TabOptions2}{
+%     opt: align=l, format=\texttt;
+%     val: align=l, format=\texttt;}
+% \begin{KeyValTable}{TabOptions2}
+% \Row{opt=showrules, val=false}
+% \Row{opt=headbg, val=blue!25}
+% \Row{opt=headalign, val=c}
+% \Row{opt=headformat, val=\string\textbf}
+% \Row{opt=norowbg, val=true}
+% \end{KeyValTable}
+% \end{LTXexample}
+% \caption{Examples for table options}
+% \label{fig:TableOptionExamples}
+% \end{figure}
+%
+%
+% \subsection{Column Appearance}
+%
+% Column appearance is configured through the parameters |align|,
+% |head|, |format|, and |default| of columns in |\NewKeyValTable|.
+% For the |format|, the following macro exists to ensure proper height
+% and depth of rows even if the content itself is more narrow.
+%
+% \NiceDescribeMacro{\kvtStrutted}{\oarg{inner}\marg{arg}}
+% This macro places a |\strut| before \meta{arg} and a |\strut| after
+% \meta{arg}. This has the effect that the first and last row of
+% \meta{arg} obtain a "natural" height and depth even if their content
+% is smaller.
+% The second |\strut| is omitted when it would cause a new line to be
+% produced.
+% See \cref{sec:row-numbering} for an example.
+%
+%
+% \subsection{Row Appearance}\label{sec:RowOptions}
+%
+% Through the \meta{options} argument of the
+%   |\Row|
+% and the
+%   |\KeyValRow|
+% macros, the appearance of rows can be configured.
+% As with other option arguments of the \thispackage package, the
+% options must be a comma-separated list of key-value pairs.
+% The following options are supported.
+%
+% \NiceDescribeKey{hidden}{vals={true,false}, init=false}
+%   This property specifies whether the row shall be hidden (|true|) or
+%   not (|false|). If only |hidden| is used without a value, this is
+%   equivalent to |hidden=true|.
+%
+% \NiceDescribeKey{bg}{vals=\vmeta{color}, init=\vmeta{empty}}
+%   This property specifies the background color for the particular row.
+%   If this option is not specified (or set to an empty value
+%   explicitly), the background color is determined by the |rowbg|
+%   option of the table.
+%
+% \NiceDescribeKeys{3}
+%   {above}{vals=\vmeta{dimension}, init=\vmeta{empty}}
+%   {below}{vals=\vmeta{dimension}, init=\vmeta{empty}}
+%   {around}{vals=\vmeta{dimension}, init=\vmeta{empty}}
+%   These properties specify extra vertical space above and,
+%   respectively, below the row. The |around| property is a short-hand
+%   for setting both, |above| and |below|, to the same value.
+%     Note that the vertical space is currently not colored with the
+%     row's background color but with the page's background color.
+%     The argument, if provided, is directly passed to |\vspace|.
+%
+% \NiceNote{Initial values for all row options can be set with
+%   |\kvtSet{Row/|\meta{option}|=|\meta{value}|}| (see also
+%   \cref{sec:kvtSet}).}
+%
+% The following example demonstrates the options.
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={hidden,above,bg}]
+% \begin{KeyValTable}{Recipe}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \Row[hidden]{amount=25g, ingredient=cream,
+%   step=decorate on top}
+% \Row[above=1ex,bg=Gold]{
+%   step=serve with a smile}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% \subsubsection{Row Styles}
+%
+% Rather than specifying properties for individual rows, \thispackage
+% also supports named \emph{row styles}.
+%
+% \NiceDescribeKey{style}{vals=\vmeta{list of style names}, init=\vmeta{empty}}
+% Through this property of rows, a list of styles can be applied to the
+% row. Each style must have been defined with |\kvtNewRowStyle| before.
+%
+% \NiceDescribeMacro{\kvtNewRowStyle}{\marg{name}\marg{row-options}}
+% This macro declares a new row style with the given \meta{name} and
+% defines it to be equivalent to using the given \meta{row-options}.
+% The \meta{name} must not already be defined.
+%
+% \NiceDescribeMacro{\kvtRenewRowStyle}{\marg{name}\marg{row-options}}
+% This macro re-defines an existing row style \meta{name} with new
+% \meta{row-options}.
+%
+% The following example produces the same output as the previous
+% example, but uses row styles.
+%
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={style,kvtNewRowStyle}]
+% \kvtNewRowStyle{optional}{hidden}
+% \kvtNewRowStyle{highlight}{above=1ex,bg=Gold}
+% \begin{KeyValTable}{Recipe}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \Row[style=optional]{amount=25g,
+%   ingredient=cream, step=decorate on top}
+% \Row[style=highlight]{step=serve with a smile}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% \NiceNote{The \meta{row-options} in |\kvtNewRowStyle| can be left empty.
+% In this case, the row style does not have any effect on the appearance
+% of rows. However, the style can already be used for "tagging" rows and
+% the final options for the style can be configured at a later point in
+% time.}
+%
+%
+% \subsubsection{Rules Between Rows}
+%
+% Additional horizontal rules between rows can simply be added by
+% placing the respective rule command between |\Row| commands.
+% The following example demonstrates this possibility.
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={midrule}]
+% \begin{KeyValTable}{Recipe}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \midrule
+% \Row{step=serve with a smile}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+%
+% \subsection{Cell Appearance}
+%
+% Individual cells can be formatted by using the respective
+% \hologo{LaTeX} code directly in the value of the cell.
+% One can disabled column's configured |format| for the cell by
+% using the starred column name in |\Row|.
+% The following example demonstrates starred column names.
+%
+% \begin{LTXexample}
+% \usepackage{url}\urlstyle{sf}
+% \NewKeyValTable{Links}{
+%   service;
+%   url: format=\url }
+% \begin{KeyValTable}{Links}
+%   \Row{service=CTAN,
+%     url=ctan.org/pkg/keyvaltable}
+%   \Row{service=github,
+%     url=github.com/Ri-Ga/keyvaltable}
+%   \Row{service=Google Play, url*=none}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% \subsection{Setting Global Defaults}\label{sec:kvtSet}
+%
+% \NiceDescribeMacro{\kvtSet}{\marg{options}}
+% The \thispackage package allows changing the default values
+% globally for the parameters of tables and columns. This can be done by
+% using the |\kvtSet| macro.
+%
+% \begin{LTXexample}[morekeywords={kvtSet}]
+% \kvtSet{headbg=red,default=?,align=r}
+% \NewKeyValTable{Defaults}{x; y}
+% \begin{KeyValTable}{Defaults}
+% \Row{x=1}
+% \Row{y=4}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+%
+% \section{Customizing the Layout}
+%
+% The \thispackage package provides some means for altering tables
+% beyond those described in the previous sections.
+% Those means are described in the following.
+%
+% \subsection{Custom Table Headers}\label{sec:CustomHeaders}
+%
+% By default, a table type defined by |\NewKeyValTable| includes a
+% single header row and each column of the table type has a header cell
+% in this row.
+% Through the optional \meta{layout} parameter of |\NewKeyValTable|,
+% one can define multiple header rows and can define header cells that
+% span multiple columns.
+%
+% The following two examples illustrate how the |headers| key in the
+% \meta{layout} parameter can be used for specifying custom
+% headers.\footnote{In \thispackage v1.0, the \meta{layout}
+% parameter specified \emph{only} the headers and did not use a
+% \texttt{headers} key for this. For compatibility, this can be enabled
+% with the \texttt{compat=1.0} package option.}
 % The first example produces a single header row in which two columns
 % are grouped with a single header, one column has a normal header, and
 % in which one column is not provided with a header.
 % \begin{LTXexample}
-% \NewKeyValTable{ColGroup}{
+% \NewKeyValTable{Headers1}{
 %   id:     align=r, default=\thekvtRow.;
 %   amount: align=r; ingredient: align=l;
-%   step:   align=X[l];
-% }[
-%   amount+ingredient: head=\textbf{ingredient};
-%   step: head=\textbf{step}, align=l;
+%   step:   align=X;
+% }[headers={
+%     amount+ingredient: head=\textbf{ingredient};
+%     step: head=\textbf{step}, align=l;
+%   }
 % ]
-% \begin{KeyValTable}{ColGroup}
+% \begin{KeyValTable}{Headers1}
 % \Row{amount=150g, ingredient=ice cream,
 %   step=put into bowl}
 % \Row{amount= 50g, ingredient=cherries,
@@ -566,30 +923,29 @@
 % and, particularly, how the normal column headers can be displayed
 % through the use of "|::|".
 % \begin{LTXexample}[width=0.475\hsize]
-% \NewKeyValTable{ColGroup2}{
+% \NewKeyValTable{Headers2}{
 %   date:   align=r, head=\textbf{date};
 %   min/Berlin: align=r, head=min;
 %   max/Berlin: align=r, head=max;
 %   min/Paris:  align=r, head=min;
 %   max/Paris:  align=r, head=max;
-% }[
+% }[headers={
 %   min/Berlin+max/Berlin+min/Paris+max/Paris:
 %     head=\textbf{temperature}\\
 %   min/Paris+max/Paris:   head=\textbf{Paris};
 %   min/Berlin+max/Berlin: head=\textbf{Berlin}\\
-%   ::
+%   ::}
 % ]
-% \begin{KeyValTable}{ColGroup2}
+% \begin{KeyValTable}{Headers2}
 % \Row{date=01.01.1970,
 %      min/Berlin=0\degree C, max/Berlin=...}
 % \end{KeyValTable}
 % \end{LTXexample}
 %
-%
-% The syntax for \meta{headers} is as
-% follows:
+% The syntax for a \meta{value} of the |headers| key in the
+% \meta{layout} parameter is as follows:
 % \begin{itemize}[noitemsep]
-% \item \meta{headers} is a list, separated by "|\\|", where each
+% \item \meta{value} is a list, separated by "|\\|", where each
 %   element in the list specifies the columns of a single header
 %   \meta{row}.
 % \item Each \meta{row}, in turn, is also a
@@ -605,24 +961,81 @@
 %   The specified header cell then spans each of the listed columns.
 %   The columns must be displayed consecutively, though not necessarily
 %   in the same order in which they are specified in \meta{cell}.
-% \item The \meta{property}|=|\meta{value} pairs configure certain
-%   properties of the header cell. The \meta{property} can be one of the
-%   following:
-%   \begin{KeyValTable}{KeyDesc}
-%   \Row{key=align,
-%     desc={This property specifies the alignment of content in the
-%       column.  The \meta{value} can be set to any column alignment
-%       understood by the |tabu| environment of the \pkgname{tabu} package.
-%       This particularly includes |l|, |c|, |r|, |p|, and |X|.},
-%     default=c}
-%   \Row{key=head,
-%     desc={This property specifies the content of the column's header
-%       row. The default value for this property is the name of the
-%       column.}}
-%   \end{KeyValTable}
 % \end{itemize}
+% The \meta{property}|=|\meta{value} pairs configure properties of the
+% header cell. Supported \meta{property} keys are the following.
 %
-% \paragraph{Manual column spanning with \cmd{\multicolumn}}
+% \NiceDescribeKey{align}{vals={\vmeta{alignment-letter},\vmeta{empty}}, init=c}
+%   This property specifies the alignment of content in the header cell.
+%   The \meta{value} can be set to any column alignment understood by
+%   the underlying table environment used (see \cref{sec:AltTabEnv}).
+%   This particularly includes |l|, |c|, |r|, and |p|, as well as |X|
+%   for some of the table environments.
+%   The initial value can be modified with
+%   |\kvtSet{HeadCell/align=...}|.
+%
+% \NiceDescribeKey{head}{vals=\vmeta{text}, init=\vmeta{colspec}}
+%   This property specifies the content of the header cell.
+%   The initial value for this property is the column specification,
+%   i.e., "\meta{col}|+|\ldots|+|\meta{col}".
+%
+%
+% \subsection{Column Spanning}
+%
+% The \thispackage package supports column spanning via "column
+% groups". A column group is a collection of adjacent columns, has
+% its own name, and can be assigned a value just like "normal" columns
+% can be.
+% The following example demonstrates how column groups can be defined
+% and be used.
+%
+% \begin{LTXexample}[morekeywords={colgroups}]
+% \NewKeyValTable{AltRecipe}{
+%   amount:     align=r, format=\textbf;
+%   ingredient: align=l;
+%   step:       align=X;
+% }[colgroups={
+%   all: span=step+amount+ingredient
+% }]
+% \begin{KeyValTable}{AltRecipe}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \midrule
+% \Row{all=serve with a smile}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% As the example shows, column groups are defined through the
+% |colgroups| key of the second optional argument of |\NewKeyValTable|.
+% This key expects a semicolon-separated list of individual column
+% groups definitions.
+% Each such definition takes the same shape as a normal column
+% definition -- that is, first the name of the column group, then a
+% colon, and then a comma-separated list of column properties.
+% The properties that can be set are the following.
+%
+% \NiceDescribeKey{span}{vals=\vmeta{plus-separated columns}}
+% This property specifies which columns the column group shall span, as
+% a plus-separated list of column names. Some or all of the columns can
+% be hidden. All the displayed columns must be adjacent in the table,
+% though.
+%
+% \NiceDescribeKeys{2}
+%   {align}{vals={\vmeta{alignment-letter},\vmeta{empty}}, init=c}
+%   {format}{vals=\vmeta{single argument macro}, init=\cmd\kvtStrutted}
+% These properties are analogous to the respective properties of normal
+% columns. The only difference is that the initial column alignment of
+% column groups is "|c|" while the alignment of normal columns is "|l|".
+%
+% \NiceNote{Initial values for all the |align| and |format| options can be
+%   set with |\kvtSet|, via the |ColGroup/align| and, respectively
+%   |ColGroup/format| keys (see also \cref{sec:kvtSet}).}
+%
+%
+% \subsubsection{Manual Column Spanning}
+%
 % The |\multicolumn| macro can be used for the content of a cell.
 % The effect of this is that a number of subsequent cells are spanned
 % over with the content of the cell. The following example demonstrates
@@ -648,6 +1061,54 @@
 % is not empty). Thus, column spanning via |\multicolumn| should be used
 % with care.
 %
+%
+% \subsection{Captions}
+%
+% There are two ways to add captions to (\pkgname{keyvaltable}-) tables:
+% The first way is to enclose the table in a |table| environment. This
+% is particularly suit for tables that do not span multiple pages, such
+% as those produced through the |onepage| shape (or |tabular|,
+% |tabularx|, and |tabu| -- see \cref{sec:AltTabEnv}).
+%
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={caption,label,ref}]
+% \begin{table}
+%   \begin{KeyValTable}[shape=onepage]{Recipe}
+%   \Row{amount=150g, ingredient=ice cream,
+%     step=put into bowl}
+%   \Row{amount= 50g, ingredient=cherries,
+%     step=heat up and add to bowl}
+%   \end{KeyValTable}
+%   \caption{Cherries++}
+%   \label{Cherries}
+% \end{table}
+% Table~\ref{Cherries} shows the recipe.
+% \end{LTXexample}
+%
+% The second way to add captions is through the |caption| option of
+% \pkgname{keyvaltable} tables. This is particularly suit for tables
+% that can span multiple pages, such as those produced through the
+% |multipage| shape (or |longtable|, |xltabular|, and |longtabu| -- see
+% \cref{sec:AltTabEnv}).
+%
+% \NiceDescribeKeys{2}
+%    {caption}{vals=\vmeta{text}, init=\vmeta{none}}
+%    {label}{vals=\vmeta{name}, init=\vmeta{none}}
+% These options set the caption and, respectively, label of a table.
+% The caption is added to the end of the table.
+% The following example shows the options in action.
+%
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={caption,label,ref}]
+% \begin{KeyValTable}[shape=multipage,
+%   caption=Cherries++, label=Cherries2]{Recipe}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \end{KeyValTable}
+% Table~\ref{Cherries2} shows the recipe.
+% \end{LTXexample}
+%
+%
 % \subsection{Alternative Table Environments}
 % \label{sec:AltTabEnv}
 %
@@ -662,26 +1123,32 @@
 % package(s) that must be loaded manually when the respective shapes are
 % used.
 % Examples can be found in \vref{fig:TableTypes}.
-% \begin{table}[p]\centering
-% \NewKeyValTable[shape=tabular,headformat=\textbf]{ShapeProps}{
-%   shape: format=\texttt; env: format=\texttt, head=environment;
-%   multipage: align=c;
-%   Xcols: align=c, head=\texttt{X}-cols;
-%   width: align=c;
-%   packages: align=l;}
+% \begin{table}\centering
+%   \newcommand\RHead[1]{\rotatebox{90}{\small\varwidth{\linewidth}#1\endvarwidth}}%
+%   \newcommand\YesNo[1]{\ifstrequal{#1}{yes}{\checkmark}{}}%
+% \NewKeyValTable[shape=tabular,headformat=\sffamily\textbf]{ShapeProps}{
+%   shape: format=\small\texttt;
+%   env: format=\small\texttt, head=environment;
+%   multipage: align=c, head=\RHead{multi-\\[-3pt] page}, format=\YesNo;
+%   caption:   align=c, head=\RHead{caption}, format=\YesNo;
+%   Xcols:     align=c, head=\RHead{\texttt{X} columns}, format=\YesNo;
+%   width:     align=c, head=\RHead{width}, format=\YesNo;
+%   packages: align=l,  format=\pkgnames}%
 % \begin{KeyValTable}{ShapeProps}
-% \Row{shape=onepage,   env=tabu,      multipage=no,  Xcols=yes, width=yes, packages={tabu}*}
-% \Row{shape=multipage, env=longtabu,  multipage=yes, Xcols=yes, width=yes, packages={tabu*, longtable*}}
+% \Row{shape=onepage,   env=tabular/tabularx,   multipage=no,  caption=no,  Xcols=yes, width=yes, packages=tabularx}
+% \Row{shape=multipage, env=longtabu/xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, packages={longtable, xltabular}}
 % \midrule
-% \Row{shape=tabular,   env=tabular,   multipage=no,  Xcols=no,  width=no}
-% \Row{shape=tabularx,  env=tabularx,  multipage=no,  Xcols=yes, width=yes, packages={tabularx}}
-% \Row{shape=longtable, env=longtable, multipage=yes, Xcols=no,  width=no,  packages={longtable}}
-% \Row{shape=xltabular, env=xltabular, multipage=yes, Xcols=yes, width=yes, packages={xltabular}}
+% \noalign{\footnotesize with package option |compat=1.0|:}
+% \Row{shape=onepage,   env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, packages=tabu}
+% \Row{shape=multipage, env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, packages={tabu, longtable}}
+% \midrule
+% \Row{shape=tabular,   env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no}
+% \Row{shape=tabularx,  env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, packages={tabularx}}
+% \Row{shape=longtable, env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no,  packages={longtable}}
+% \Row{shape=xltabular, env=xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, packages={xltabular}}
+% \Row{shape=tabu,      env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, packages={tabu}}
+% \Row{shape=longtabu,  env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, packages={tabu,longtable}}
 % \end{KeyValTable}
-% \smallskip\par\raggedright\footnotesize
-% Packages marked with "*" only need to be loaded if automatic loading
-% is not disabled via the |NoTabuPkg| option to the \thispackage
-% package.
 % \caption{Comparison of table shapes / environments}
 % \label{tab:TabEnv}
 % \end{table}
@@ -691,8 +1158,8 @@
 %    morekeywords={tabular,longtable}]
 % \NewKeyValTable[showrules=false]{ShapeNoX}{
 %   id: align=l, default=\thekvtTypeRow;
-%   l: align=l; c: align=c; r: align=r;}[
-%   l+c+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::]
+%   l: align=l; c: align=c; r: align=r;}[headers={
+%   l+c+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::}]
 % \begin{KeyValTable}[shape=tabular]{ShapeNoX}
 %   \Row{l=left,   c=center,     r=right}
 %   \Row{l=left-2, c=2-center-2, r=2-right}
@@ -703,11 +1170,11 @@
 % \end{KeyValTable}
 % \end{LTXexample}
 % \begin{LTXexample}[width=0.475\hsize,
-%    morekeywords={tabularx,xltabular,onepage,multipage}]
+%    morekeywords={tabularx,xltabular,tabu,longtabu}]
 % \NewKeyValTable[showrules=false]{ShapeWithX}{
 %   id: align=l, default=\thekvtTypeRow;
-%   l: align=l; X: align=X; r: align=r;}[
-%   l+X+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::]
+%   l: align=l; X: align=X; r: align=r;}[headers={
+%   l+X+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::}]
 % \begin{KeyValTable}[shape=tabularx]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
@@ -716,11 +1183,11 @@
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}
-% \begin{KeyValTable}[shape=onepage]{ShapeWithX}
+% \begin{KeyValTable}[shape=tabu]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}
-% \begin{KeyValTable}[shape=multipage]{ShapeWithX}
+% \begin{KeyValTable}[shape=longtabu]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}
@@ -730,78 +1197,9 @@
 % \end{figure}
 %
 %
-% \subsection{Special Row Formatting}\label{sec:RowOptions}
-%
-% Through the \meta{options} argument of the
-%   |\Row|\oarg{options}\marg{content}
-% and the
-%   |\KeyValRow|\marg{tname}\oarg{options}\marg{content}
-% macros, special options of the row can be configured.
-% As with other option arguments of the \thispackage package, the
-% options must be a comma-separated list of key-value pairs.
-% The following table lists the supported option keys and their meaning.
-%
-% \begin{KeyValTable}{KeyDesc}
-% \Row{key=hidden,
-%   desc={This property specifies whether the row shall be hidden
-%     (|true|) or not (|false|). If only |hidden| is used without a
-%     value, this is equivalent to |hidden=true|.},
-%   default=false}
-% \Row{key=bg,
-%   desc={This property specifies the background color for the
-%     particular row. If left empty, the default color as determined by
-%     the |rowbg| option of the table applies.},
-%   default={\normalfont\itshape(empty)}}
-% \Row{key=above,
-%   desc={This property specifies extra vertical space above the row.
-%     Note that this space is currently not colored with the row's
-%     background color but with the page's background color.
-%     The argument, if provided, is directly passed to \cmd{\vspace}.},
-%   default={\normalfont\itshape(empty)}}
-% \Row{key=below,
-%   desc={Analogously to |above|, this property specifies extra vertical
-%     space below the row.},
-%   default={\normalfont\itshape(empty)}}
-% \Row{key=around,
-%   desc={This property is a short-hand for setting both, |above| and
-%     |below|, to the same value.},
-%   default={\normalfont\itshape(empty)}}
-% \end{KeyValTable}
-%
-% The following example demonstrates the options.
-% \begin{LTXexample}[morepreset=\NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X[l]},morekeywords={hidden,above,bg}]
-% \begin{KeyValTable}{Recipe}
-% \Row{amount=150g, ingredient=ice cream,
-%   step=put into bowl}
-% \Row{amount= 50g, ingredient=cherries,
-%   step=heat up and add to bowl}
-% \Row[hidden]{amount=25g, ingredient=cream,
-%   step=decorate on top}
-% \Row[above=1ex,bg=red!10!white]{
-%   step=serve with a smile}
-% \end{KeyValTable}
-% \end{LTXexample}
-%
-% \subsection{Rules Between Rows}
-%
-% Additional horizontal rules between rows can simply be added by
-% placing the respective rule command between |\Row| commands.
-% The following example demonstrates this possibility.
-% \begin{LTXexample}[morepreset=\NewKeyValTable{Recipe}{amount:align=r;ingredient:align=l;step:align=X[l]},morekeywords={midrule}]
-% \begin{KeyValTable}{Recipe}
-% \Row{amount=150g, ingredient=ice cream,
-%   step=put into bowl}
-% \Row{amount= 50g, ingredient=cherries,
-%   step=heat up and add to bowl}
-% \midrule
-% \Row{step=serve with a smile}
-% \end{KeyValTable}
-% \end{LTXexample}
-%
-%
 % \section{Use with Other Packages}
 %
-% \subsection{Named References}\label{sec:package-cleveref}
+% \subsection{Named References (\pkgname{cleveref})}\label{sec:package-cleveref}
 %
 % The |\kvtLabel| feature of the \thispackage package can be
 % used together with named references, as provided by the
@@ -823,7 +1221,85 @@
 % \end{KeyValTable}
 % \end{LTXexample}
 %
-% \subsection{Computational Cells}
+%
+% \subsection{Tables from CSV Files (\pkgname{datatool} and \pkgname{csvsimple})}\label{sec:CSV}
+%
+% The \thispackage package itself does not offer its own functionality
+% for generating tables from CSV files. However, together with existing
+% CSV packages, table content can be sourced from CSV files.
+% The remainder of this section shows how this can be achieved by
+% example. The following CSV file serves as the data file in the
+% examples. We use the same |Recipe| table type as previously.
+%
+% \lstinputlisting[caption=recipes.csv]{recipes.csv}
+%
+% \paragraph{\pkgname{datatool}}
+% The package provides a variety of macros for loading and also
+% displaying CSV database content. The following shows how the macros
+% |\DTLloaddb| and |\DTLforeach*| can be used, together with
+% |\AddKeyValRow| and |\ShowKeyValTable|.
+% The example also shows how a simple filter can be applied to the rows
+% via |\DTLforeach*|.
+%
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={DTLloaddb,DTLforeach,expandonce}]
+% \usepackage{datatool}
+% \DTLloaddb{recipes}{recipes.csv}
+% \DTLforeach*[\equal{\Id}{snowman}]{recipes}
+%   {\Id=id,
+%    \Amount=amount,\Ingr=ingredient,\Step=step}
+%   {\AddKeyValRow{Recipe}[expandonce]{
+%    amount=\Amount,ingredient=\Ingr,step=\Step}}
+% \ShowKeyValTable{Recipe}
+% \end{LTXexample}
+%
+% Two aspects shall be noted.
+% Firstly, we use |\AddKeyValRow| rather than |KeyValTable|,
+% because |\DTLforeach*| interferes with how |KeyValTable| constructs
+% its rows and yields "misplaced |\noalign|" errors. We do not use
+% |\CollectRow| here, because it requires two runs and we do not need
+% the feature to show the table before the rows are specified.
+% Secondly, we use the row option |expandonce| to ensure that the macros
+% |\Amount|, |\Ingr|, and |\Step| are expanded (i.e., replaced by their
+% values). Without this option, all rows would only carry the three
+% macros and display the value that these macros have at the time of the
+% |\ShowKeyValTable|.
+%
+% \NiceDescribeKeys{2}
+%    {expandonce}{vals={true,false}, init=false, def=true}
+%    {expand}{vals={true,false}, init=false, def=true}
+% These row options can be used when programmatically constructing the
+% rows of a table, particularly with |KeyValTableContent| and
+% |\CollectRow|.
+% The |expandonce| option expands all the cell values
+% given to a row (default values not included) exactly once before
+% including it in the respective row.
+% The |expand| option fully expands the cell values, in |protect|'ed
+% mode (i.e., robust commands are not expanded).
+%
+%
+% \paragraph{\pkgname{csvsimple}}
+% For the sake of our example, using this package is very similar to
+% using \pkgname{datatool}.
+%
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={csvreader,expand}]
+% \usepackage{csvsimple}
+% \csvreader[head to column names,
+%   filter equal={\id}{cherries}]{recipes.csv}{}
+%   {\AddKeyValRow{Recipe}[expand]{
+%      amount=\amount,ingredient=\ingredient,
+%      step=\step}}
+% \ShowKeyValTable{Recipe}
+% \end{LTXexample}
+%
+% Two differences are noteworthy here:
+% First, we can avoid specifying macro names for the columns through the
+% |head to column names|, which uses the column names as macro names.
+% Second, we have to use the |expand| option rather than |expandonce|
+% here, because \pkgname{csvsimple} apparently does not directly store
+% the column value in the respective macro.
+%
+%
+% \subsection{Computational Cells (\pkgname{xint})}
 %
 % The mechanism of cell formatting macros enables a simple means for
 % automatically computing formulas contained in a column. This can be
@@ -841,7 +1317,8 @@
 % \end{KeyValTable}
 % \end{LTXexample}
 %
-% \subsection{Cell Formatting}
+%
+% \subsection{Cell Formatting (\pkgname{makecell})}
 %
 % The \thispackage package can be used together with the
 % \pkgname{makecell} package in at least two ways:
@@ -862,6 +1339,8 @@
 % \end{KeyValTable}
 % \end{LTXexample}
 %
+%
+% \clearpage
 % \section{Related Packages}
 %
 % I'm not aware of any \LaTeX{} packages that pursue similar goals or
@@ -869,6 +1348,16 @@
 % loosely related functionalities to the \thispackage package.
 %
 % \begin{description}
+% \item[\pkgname{tablestyles}:]
+%   This package simplifies typesetting tables with common and/or more
+%   appealing appearances than default \hologo{LaTeX} tables.
+%   This corresponds to what \thispackage supports with the various
+%   coloring and formatting options to |\kvtSet|, |\NewKeyValTable|, and
+%   individual tables.
+%   The \pkgname{tablestyles} package builds on the default
+%   \hologo{LaTeX} environments and syntax for typesetting tables (with
+%   column alignments specified in an argument to the table environment,
+%   and columns separated by |&| in the body of the environment).
 % \item[\pkgname{ctable}:]
 %   This package focuses on typesetting tables with captions and notes.
 %   With this package, the specification of table content is quite
@@ -892,8 +1381,19 @@
 % \section{Future Work}
 %
 % \begin{itemize}
+% \item support for different headers on the first page vs.\@ on
+%   subsequent pages of a multipage table; support configurable spacing
+%   between and above/below header rows
+% \item support for more flexibility with regards to captions position
+%   (top vs.\@ bottom) and distinct captions on first/middle/last page
+%   of the table.
 % \item improved row coloring that makes sure that the alternation
 %   re-starts on continued pages of a table that spans several pages
+% \item rerun detection for recorded rows (possibly via
+%   \pkgname{rerunfilecheck})
+% \item nesting of |KeyValTable| environments (this is so far not tested
+%   by the package author and might not work or work only to a limited
+%   extent)
 % \end{itemize}
 %
 % \clearpage
@@ -981,6 +1481,26 @@
 % \end{macro}
 % \end{macro}
 %
+% \begin{macro}{\kvt@colsetkeys}
+% \begin{macro}{\kvt@colsetcmdkeys}
+% \begin{macro}{\kvt@colsetcskeys}
+% The |\kvt@colsetkeys|\marg{fam}\marg{keys} macro abbreviates
+% |\setkeys[KeyValTable]|\meta{fam}\meta{keys}.
+% The |\kvt@colsetcmdkeys|\marg{famcmd}\marg{keys} and
+% |\kvt@colsetcskeys|\marg{famcs}\marg{keys} abbreviate the cases where
+% \meta{fam} is stored in macro \meta{famcmd} or, respectively,
+% stored in a macro with name \meta{famcs}.
+%    \begin{macrocode}
+\newcommand\kvt@colsetkeys[2]{\setkeys[KeyValTable]{#1}{#2}}
+\newcommand\kvt@colsetcmdkeys[2]{%
+  \expandafter\kvt@colsetkeys\expandafter{#1}{#2}}
+\newcommand\kvt@colsetcskeys[2]{%
+  \expandafter\kvt@colsetcmdkeys\expandafter{\csname #1\endcsname}{#2}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
 % \begin{macro}{\kvtStrutted}
 % The |\kvtStrutted|\oarg{inner}\marg{arg} macro prefixes and suffixes
 % the argument \meta{arg} with a |\strut|. When used for formatting
@@ -990,7 +1510,7 @@
 % that takes one argument. In this case, instead of \meta{arg},
 % \meta{inner}|{|\meta{arg}|}| is prefixed and sufficed with |\strut|.
 % \changes{v0.3}{2016/06/06}{Fix for cells with vertical material}
-% \changes{v1.1}{2019/03/22}{Added optional argument}
+% \changes{v2.0}{2019/03/22}{Added optional argument}
 %    \begin{macrocode}
 \newcommand\kvtStrutted[2][\@firstofone]{%
   \strut#1{#2}\ifhmode\expandafter\strut\fi}
@@ -1005,7 +1525,7 @@
 % to all tables typeset with the package.
 %    \begin{macrocode}
 \newcommand\kvtSet[1]{%
-  \kvt@setkeys{#1}{Table,Column}%
+  \kvt@setkeys{#1}{global,Table,Column}%
   \ifdefvoid\kvt@@presetqueue{}
     {\kvt@@presetqueue\undef\kvt@@presetqueue}}
 %    \end{macrocode}
@@ -1054,14 +1574,21 @@
 % The following code defines the possible table options.
 %
 % \changes{v0.2}{2016/05/21}{Added ``shape'' table option}
+% \changes{v2.0}{2019/05/11}{added table options "caption" and "label"}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Table}{rowbg}{}
 \define@cmdkey[kvt]{Table}{headbg}{}
+\define@boolkey[kvt]{Table}{norowbg}[true]{%
+  \kvt@setkeys{rowbg={}}{Table}}
+\define@key[kvt]{Table}{nobg}[true]{%
+  \kvt@setkeys{rowbg={},headbg={}}{Table}}
 \define@cmdkey[kvt]{Table}{headalign}{}
 \define@cmdkey[kvt]{Table}{headformat}{}
 \define@cmdkey[kvt]{Table}{width}{}
 \define@boolkey[kvt]{Table}{showhead}{}
 \define@boolkey[kvt]{Table}{showrules}{}
+\define@cmdkey[kvt]{Table}{caption}{}
+\define@cmdkey[kvt]{Table}{label}{}
 
 %    \end{macrocode}
 % When adding further |shape| options below, ensure to also add a
@@ -1069,23 +1596,10 @@
 % code.
 %    \begin{macrocode}
 \define@choicekey[kvt]{Table}{shape}
-  {multipage,onepage,tabular,longtable,tabularx,xltabular}
+  {multipage,onepage,tabular,longtable,tabularx,xltabular,tabu,longtabu}
   {\csdef{cmdkvt@Table@shape}{#1}}
 %    \end{macrocode}
 %
-% The following sets the default values for the options.
-%    \begin{macrocode}
-\kvtSet{%
-  rowbg=white..black!10,
-  headbg=black!14,
-  showhead=true,
-  showrules=true,
-  headformat=\@firstofone,
-  headalign=,
-  shape=multipage,
-  width=\linewidth,
-}
-%    \end{macrocode}
 %
 % \subsubsection{Column Options}
 %
@@ -1111,41 +1625,114 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% The following sets the default values for the options.
+% \begin{macro}{\kvt@def@globalopt}
+% \begin{macro}{\kvt@def@globalopts}
+% The |\kvt@def@globalopt|\marg{family}{key} macro creates an option key
+% "\meta{family}/\meta{key}" for |\kvtSet| that set the preset value for
+% the \meta{key} in \meta{family}.
+% The |\kvt@def@globalopts|\marg{family}{keys} macro extends the former
+% macro to comma-separated lists of \meta{keys} within a single
+% \meta{family}.
 %    \begin{macrocode}
-\kvtSet{%
-  default=,
-  format=\kvtStrutted,
-  align=l,
-  head=,%TODO: setting a global default other than "" does not make sense
-  hidden=false,
-}
+\newcommand\kvt@def@globalopt[2]{%
+  \define@key[kvt]{global}{#1/#2}{\kvt@lazypreset{#1}{#2={##1}}}}
+\newcommand\kvt@def@globalopts[2]{%
+  \forcsvlist{\kvt@def@globalopt{#1}}{#2}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+%    \begin{macrocode}
+\define@cmdkey[kvt]{ColGroup}{span}{%
+  \csdef{kvt@colgrp@span@\kvt@@colgrp}{#1}}
+\define@cmdkey[kvt]{ColGroup}{align}{%
+  \csdef{kvt@colgrp@align@\kvt@@colgrp}{#1}}
+\define@cmdkey[kvt]{ColGroup}{format}{%
+  \csdef{kvt@colgrp@format@\kvt@@colgrp}{#1}}
+\kvt@def@globalopts{ColGroup}{align, format}
 %    \end{macrocode}
 %
-% \subsubsection{Column Group Options}
-% TODO: Change the following code to allow setting global defaults
+%
+% \subsubsection{Layout Customization Options}
+%
+% The following defines the options for the second optional argument to
+% |\NewKeyValTable|. These options intentionally do not support setting
+% global defaults via |\kvtSet|.
+%    \begin{macrocode}
+\define@cmdkey[kvt]{Layout}{headers}{%
+  \expandafter\kvt@parseheadrows\expandafter{\kvt@@tname}{#1}}
+\define@cmdkey[kvt]{Layout}{colgroups}{%
+  \expandafter\kvt@parsecolgroups\expandafter{\kvt@@tname}{#1}}
+%    \end{macrocode}
 %
 % The following defines the options for header cells.
 %    \begin{macrocode}
-\define@key[kvt]{ColGroup}{head}{%
-  \csdef{kvt@@colgrp@head@\kvt@@colgrp}{#1}}
-\define@key[kvt]{ColGroup}{align}{%
-  \csdef{kvt@@colgrp@align@\kvt@@colgrp}{#1}}
-\presetkeys[kvt]{ColGroup}{align=c}{}%
+\define@key[kvt]{HeadCell}{head}{%
+  \csdef{kvt@@hdcell@head@\kvt@@hdcell}{#1}}
+\define@key[kvt]{HeadCell}{align}{%
+  \csdef{kvt@@hdcell@align@\kvt@@hdcell}{#1}}
+\kvt@def@globalopts{HeadCell}{align}
 %    \end{macrocode}
 %
 %
 % \subsubsection{Row Options}
-% TODO: Change the following code to allow setting global defaults
 %
 % The following block declares the known row options.
+% Note that these are not enabled for |\kvtSet|.
+% \changes{v2.0}{2019/05/11}{added row options "expand" and "expandonce"}
+% \changes{v2.0}{2019/05/11}{added row options "nobg" and "norowbg"}
+% \changes{v2.0}{2019/05/11}{added row option "style"}
+% \changes{v2.0}{2019/05/11}{added row option "uncounted"}
 %    \begin{macrocode}
-\define@cmdkey[kvt]{Row}{bg}{}%
-\define@boolkey[kvt]{Row}{hidden}[true]{}%
+\define@cmdkey[kvt]{Row}{bg}{}
+\define@boolkey[kvt]{Row}{hidden}[true]{}
 \define@cmdkey[kvt]{Row}{below}{}
 \define@cmdkey[kvt]{Row}{above}{}
 \define@key[kvt]{Row}{around}{%
   \kvt@setkeys{below={#1},above={#1}}{Row}}
+\define@key[kvt]{Row}{style}{\kvt@UseRowStyles{#1}}
+\define@boolkey[kvt]{Row}{uncounted}[true]{}
+\define@boolkey[kvt]{Row}{expand}[true]{}
+\define@boolkey[kvt]{Row}{expandonce}[true]{}
+\kvt@def@globalopts{Row}{
+  bg,hidden,below,above,around,style,uncounted,
+  expand,expandonce}
+%    \end{macrocode}
+%
+%
+% \subsubsection{Option Defaults}
+%
+% The following sets the default values for the options.
+%    \begin{macrocode}
+\kvtSet{%
+  rowbg=white..black!10,
+  headbg=black!14,
+  showhead=true,
+  showrules=true,
+  headformat=\@firstofone,
+  headalign=,
+  shape=multipage,
+  width=\linewidth,
+  caption={}, label={},
+%    \end{macrocode}
+% Column options
+%    \begin{macrocode}
+  default=,
+  format=\kvtStrutted,
+  align=l,
+  head=,
+  hidden=false,
+  Row/bg={},
+  Row/hidden=false,
+  Row/above={},
+  Row/below={},
+  Row/uncounted=false,
+  Row/expand=false,
+  Row/expandonce=false,
+  ColGroup/align=c,
+  ColGroup/format=\kvtStrutted,
+  HeadCell/align=c,
+}
 %    \end{macrocode}
 %
 %
@@ -1153,13 +1740,14 @@
 %
 % \begin{macro}{\NewKeyValTable}
 % The
-% |\NewKeyValTable|\oarg{options}\marg{tname}\marg{colspecs}\oarg{headers}
+% |\NewKeyValTable|\oarg{options}\marg{tname}\marg{colspecs}\oarg{layout}
 % declares a new key-value table type, identified by the given
 % \meta{tname}. The columns of the table type are specified by
 % \meta{colspecs}. The optional \meta{options}, if given, override the
 % default table options for tables of type \meta{tname}.
 % \changes{v0.2}{2016/05/21}{Added table-type options}
 % \changes{v1.0}{2019/02/03}{Added optional headers argument}
+% \changes{v2.0}{2019/04/28}{Changed headers argument to layout argument}
 %    \begin{macrocode}
 \newcommand\NewKeyValTable[3][]{%
   \@ifnextchar[%]
@@ -1167,11 +1755,19 @@
     {\kvt@NewKeyValTable{#1}{#2}{#3}[]}}
 %    \end{macrocode}
 % The
-% |\kvt@NewKeyValTable|\marg{options}\marg{tname}\marg{colspecs}\oarg{headers}
+% |\kvt@NewKeyValTable|\marg{options}\marg{tname}\marg{colspecs}\oarg{layout}
 % macro is an auxiliary macro used for parsing the fourth, optional
 % argument of |\NewKeyValTable|.
 %    \begin{macrocode}
 \def\kvt@NewKeyValTable#1#2#3[#4]{%
+%    \end{macrocode}
+% Before doing anything, check whether \meta{tname} has already been
+% defined.
+%    \begin{macrocode}
+  \ifinlist{#2}{\kvt@alltables}
+    {\kvt@error{Table type with name '#2' already defined}
+      {Check '#2' for typos and check other uses of
+      \string\NewKeyValTable}}{}%
 %    \end{macrocode}
 % First initialize the ``variables''.
 %    \begin{macrocode}
@@ -1191,7 +1787,8 @@
 % presence of |\multicolumn| does not produce errors.
 %    \begin{macrocode}
   \csedef{kvt@alignments@#2}{p{0pt}\expandonce\kvt@HackIntercolSpace}%
-  \csdef{kvt@colkeys@#2}{}%
+  \csdef{kvt@allcolumns@#2}{}%
+  \csdef{kvt@displaycols@#2}{}%
   \csdef{kvt@rowcount@#2}{0}%
   \csdef{kvt@rows@#2}{}%
   \csdef{kvt@headings@#2}{\kvt@defaultheader}
@@ -1205,27 +1802,42 @@
     \kvt@parsecolspec{#2}##1::\@undefined}%
   \kvt@dossvlist{#3}%
 %    \end{macrocode}
+% By default, a single header row is constructed.
+%    \begin{macrocode}
+  \csdef{kvt@headrowcount@#2}{1}%
+%    \end{macrocode}
 % The following terminates the argument list of |\kvt@defaultheader|.
 %    \begin{macrocode}
   \csappto{kvt@headings@#2}{{\@nil}}%
 %    \end{macrocode}
-% Finally, parse \meta{headers}, also a semicolon-separated list of
-% individual column groups, where |\\| marks a new row of column groups.
-% If \meta{headers} is omitted (or empty), then simply take the result
-% of |\kvt@parsecolspec| as the header row.
+% Finally, parse \meta{layout}.
 %    \begin{macrocode}
-  \ifstrempty{#4}
-    {\csdef{kvt@headrowcount@#2}{1}}
-    {\kvt@parseheadrows{#2}{#4}}%
+  \kvt@parselayout{#4}{#2}%
 }
 %    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@parsecolspec}
 % The
 % |\kvt@parsecolspec|\marg{tname}\meta{cname}|:|\meta{config}|:|\meta{empty}|\@undefined|
 % takes a configuration \meta{config} for a column \meta{cname} in table
 % \meta{tname} and adds the column with the configuration to the table.
 %    \begin{macrocode}
 \def\kvt@parsecolspec#1#2:#3:#4\@undefined{%
+  \def\kvt@@column{#2}%
+  \trim@spaces@in\kvt@@column
+  \expandafter\kvt@parsecolspec@i\expandafter{\kvt@@column}{#1}{#3}}
+\newcommand\kvt@parsecolspec@i[3]{\kvt@parsecolspec@ii{#2}{#1}{#3}}
+\newcommand\kvt@parsecolspec@ii[3]{%
   \def\kvt@@column{#1@#2}%
+%    \end{macrocode}
+% Check and record the column name first.
+%    \begin{macrocode}
+  \ifinlistcs{#2}{kvt@allcolumns@#1}
+    {\kvt@error{Column name '#2' declared more than once in table type
+      '#1'}{Check '#2' for typos; column names declared so far:%
+      \forlistcsloop{ }{kvt@allcolumns@#1}}}{}%
+  \listcsadd{kvt@allcolumns@#1}{#2}%
   \kvt@setkeys{#3}{Column}%
 %    \end{macrocode}
 % The following stores the column's properties. The column is only added
@@ -1237,27 +1849,31 @@
 % Append the column heading to \cs{kvt@headings@\meta{tname}}, which
 % collects arguments to |\kvt@defaultheader|. Hence, the appended tokens
 % are enclosed in curly braces. If no |head| is specified for the
-% column, \meta{cname} is used for the column head. Otherwise, the
+% column, \meta{cname} is used for the column header. Otherwise, the
 % |head| value is used.
 %    \begin{macrocode}
     \ifcsvoid{kvt@col@head@#1@#2}%
       {\csappto{kvt@headings@#1}{{#2}}}%
       {\cseappto{kvt@headings@#1}{{\csexpandonce{kvt@col@head@#1@#2}}}}%
-    \listcsadd{kvt@colkeys@#1}{#2}%
+    \listcsadd{kvt@displaycols@#1}{#2}%
   }%
 %    \end{macrocode}
 % The following creates the column key that can be used by the row
 % macros to set the content of the column's content in that row.
+% The starred variant of the key disables the column's |format| for the
+% cell.
 %    \begin{macrocode}
   \define@cmdkey[KeyValTable]{#1}{#2}[]{}%
+  \define@key[KeyValTable]{#1}{#2*}{%
+    \csdef{cmdKeyValTable@#1@#2}{##1}%
+    \csdef{kvt@@noformat@#1@#2}{1}}%
   \presetkeys[KeyValTable]{#1}{#2}{}%
 %    \end{macrocode}
 % The |\kvt@parsecolspec| macro is not necessarily enclosed in a group.
 % To avoid leaking a local |\kvt@@column| value to the outer (global)
 % scope, we explicitly undefine it.
 %    \begin{macrocode}
-  \undef\kvt@@column
-}
+  \undef\kvt@@column}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1271,7 +1887,7 @@
 % In the above, \meta{rowcolor}=|\rowcolor{|\meta{headbg}|}|.
 %    \begin{macrocode}
 \newcommand\kvt@defaultheader{%
-  \noexpand\rowcolor{\cmdkvt@Table@headbg}%
+  \noexpand\kvt@rowcolorornot{\cmdkvt@Table@headbg}%
   \kvt@defaultheader@i}
 \newcommand\kvt@defaultheader@i[1]{%
   \kvt@ifnil{#1}{\noexpand\tabularnewline}{%
@@ -1317,16 +1933,197 @@
 % \end{macro}
 %
 %
-% \subsection{Custom Column Headers}
+% \subsection{Custom Layout Parameters}
+%
+% \begin{macro}{\kvt@parselayout}
+% The |\kvt@parselayout|\marg{layout-opts}\marg{tname} macro parses the
+% layout options, \meta{layout-opts}, for table type \meta{tname},
+%    \begin{macrocode}
+\newcommand\kvt@parselayout[2]{%
+  \def\kvt@@tname{#2}%
+%    \end{macrocode}
+% Now parse the \meta{layout-opts}. The keys are defined such that their
+% handlers already do the parsing.
+%    \begin{macrocode}
+  \kvt@setkeys{#1}{Layout}%
+  \undef\kvt@@tname}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@parsecolgroups}
+% The |\kvt@parsecolgroups|\marg{tname}\marg{spec} macro parses the
+% specification, \meta{spec}, of column groups for table type
+% \meta{tname}.
+%    \begin{macrocode}
+\newcommand\kvt@parsecolgroups[2]{%
+  \begingroup
+%    \end{macrocode}
+% |\kvt@@result| collects the parsing outcome code that shall escape the
+% group started above.
+%    \begin{macrocode}
+  \def\kvt@@result{}%
+  \def\do##1{\kvt@parsecolgroup{#1}##1::\@undefined}%
+  \kvt@dossvlist{#2}%
+  \expandafter\endgroup\kvt@@result}
+%    \end{macrocode}
+% The
+% |\kvt@parsecolgroup|\marg{tname}\marg{cgname}\marg{cgopts}\marg{empty}
+% macro parses a single column group, \meta{cgname} with options
+% \meta{cgopts}.
+%    \begin{macrocode}
+\def\kvt@parsecolgroup#1#2:#3:#4\@undefined{%
+  \ifinlistcs{#2}{kvt@allcolumns@#1}{\kvt@error
+    {Name `#2' cannot be used for a column group in table type `#1',
+     as it is already used for a column}
+    {Check the \string\NewKeyValTable{#1} for
+     the names of known columns and check `#2' for a typo.}}{}%
+  \ifinlistcs{#2}{kvt@grpcolkeys@#1}{\kvt@error
+    {Name `#2' is used twice in table type `#1'}
+    {Check the \string\NewKeyValTable{#1} for typos in the names of
+     columns groups.}}{}%
+  \def\kvt@@colgrp{#2}%
+  \kvt@setkeys{#3}{ColGroup}%
+  \kvt@checkcolgroupcs{kvt@colgrp@span@\kvt@@colgrp}{#1}{#2}%
+  \eappto\kvt@@result{%
+%    \end{macrocode}
+% The following defines the |\Row| key for \meta{cgname}, as an
+% abbreviation for setting the value of the first displayed column of
+% \meta{cgname} (|\kvt@@colgrp@first| to a |\multicolumn| that spans the
+% "right" number of columns. Notice the "*" after |\kvt@@colgrp@first|,
+% which disables the first column's default formatting to replace it by
+% the formatting of \meta{cgname}.
+%    \begin{macrocode}
+    \noexpand\define@cmdkey[KeyValTable]{#1}{#2}{%
+%    \end{macrocode}
+% The following |\ifdefvoid| check ensures that if \meta{cgname} is a
+% hidden column group (i.e., a column group of which all spanned columns
+% are hidden), then setting \meta{cgname} to a value has no effect.
+%    \begin{macrocode}
+      \ifdefvoid\kvt@@colgrp@first{}{%
+        \noexpand\setkeys[KeyValTable]{#1}{%
+          \expandonce\kvt@@colgrp@first*=\noexpand\multicolumn
+            {\expandonce\kvt@@colgrp@n}%
+            {\csexpandonce{kvt@colgrp@align@#2}}%
+            {\csexpandonce{kvt@colgrp@format@#2}{\unexpanded{##1}}}}%
+      }%
+    }%
+    \noexpand\listcsadd{kvt@grpcolkeys@#1}{#2}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@checkcolgroup}
+% The |\kvt@checkcolgroup|\marg{span-psv}\marg{tname}\marg{cgname} macro
+% performs some checks on \meta{span-psv} as a specification of which
+% columns shall be spanned by a group column of name \meta{cgname}.
+% The checks are
+% \begin{itemize}
+% \item whether all column names are indeed columns of \meta{tname},
+% \item whether each column appears at most once in the column group,
+%   and
+% \item whether the (displayed) columns from \meta{span-psv} appear
+%   consecutively in \meta{tname}.
+% \end{itemize}
+% The macro returns the number of spanned (displayed!) columns in
+% |\kvt@@colgrp@n| and the name of the first column in
+% |\kvt@@colgrp@first|.
+%
+% Fixme: There can probably be some code sharing with
+% |\kvt@parseheadrow| and |\kvt@parsecolgroup|.
+%    \begin{macrocode}
+\newcommand\kvt@checkcolgroup[3]{%
+%    \end{macrocode}
+% First, check individual colums in \meta{span-psv} and transfer them
+% into a "map", |kvt@@incolgrp@| that simply records which column names
+% occur in \meta{span-psv}.
+%    \begin{macrocode}
+  \def\kvt@@psvdo##1{%
+    \ifinlistcs{##1}{kvt@allcolumns@#2}{}{\kvt@error
+      {Column `##1' referenced in column group `#3' not known
+       in table type `#2'}
+      {Check the \string\NewKeyValTable{#2} for
+       the names of known columns and check `##1' for a typo.}}%
+    \ifcsvoid{kvt@@incolgrp@##1}{}{\kvt@error
+      {Column `##1' used more than once in column group `#3' of table
+       type `#2'}
+      {Check `##1' for a typo.}}%
+    \csdef{kvt@@incolgrp@##1}{#2}%
+  }\kvt@forpsvlist{\kvt@@psvdo}{#1}%
+%    \end{macrocode}
+% The following two macros are the "return values".
+%    \begin{macrocode}
+  \def\kvt@@colgrp@n{0}%
+  \let\kvt@@colgrp@first\relax
+%    \end{macrocode}
+% Second, iterate over the displayed columns of \meta{tname} to check
+% whether the columns in \meta{span-psv} are consecutive.
+% For this, use |\kvt@@status| to track
+% whether no column of \meta{span-psv} has yet been visited (value 0,
+% the initial value),
+% whether the current column is part of \meta{span-psv} (value 1), and
+% whether columns of \meta{span-psv} have been visited but the current
+% column is not part of \meta{span-psv} (value 2).
+%    \begin{macrocode}
+  \def\kvt@@status{0}%
+%    \end{macrocode}
+% |\kvt@@coldo|\marg{column} is applied to each displayed column, in
+% order.
+%    \begin{macrocode}
+  \def\kvt@@coldo##1{%
+    \ifcsvoid{kvt@@incolgrp@##1}
+%    \end{macrocode}
+% If \meta{column} is \emph{not} in \meta{span-psv}, then change
+% |\kvt@@status| from 1 to 2, but do not change it when it is 0 or 2.
+%    \begin{macrocode}
+      {\expandafter\ifcase\kvt@@status \or
+        \def\kvt@@status{2}\fi}%
+%    \end{macrocode}
+% If \meta{column} is in \meta{span-psv}, then change |\kvt@@status|
+% from 0 to 1 and record \meta{column} as |\kvt@@colgrp@first|; if
+% |\kvt@@status| is previously 2, then the columns in \meta{span-psv}
+% would not be consecutively displayed and, hence, an error is raised.
+%    \begin{macrocode}
+      {\expandafter\ifcase\kvt@@status
+        \def\kvt@@status{1}\def\kvt@@colgrp@first{##1}%
+        \or\or
+        \kvt@error{Column group `\kvt@@colgrp' must consist of only
+           consecutive columns, but it is not}%
+          {Compare `\string\kvt@@curgrp' to the column ordering as
+           specified in `\string\NewKeyValTable{#1}'}%
+        \fi
+        \edef\kvt@@colgrp@n{\the\numexpr\kvt@@colgrp@n+1\relax}}%
+  }\forlistcsloop{\kvt@@coldo}{kvt@displaycols@#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@checkcolgroupcs}
+% The |\kvt@checkcolgroupcs|\marg{span-psv-cs}\marg{tname}\marg{cgname}
+% macro is the same as |\kvt@checkcolgroup| except that it takes a
+% control sequence name as its first argument rather than a
+% plus-separated list directly.
+%    \begin{macrocode}
+\newcommand\kvt@checkcolgroupcs[3]{%
+  \expandafter\expandafter\expandafter
+  \kvt@checkcolgroup
+  \expandafter\expandafter\expandafter{\csname #1\endcsname}{#2}{#3}}
+%    \end{macrocode}
+% \end{macro}
 %
 % \begin{macro}{\kvt@parseheadrows}
 % The |\kvt@parseheadrows|\marg{tname}\marg{headers}
-% macro parses the \meta{headers} argument of |\NewKeyValTable|.
+% macro parses the values of the |headers| key in the \meta{layout}
+% argument of |\NewKeyValTable|. The values are |\\|-separated lists of
+% header rows, and the rows are semicolon-separated lists of header
+% cells. Each header cell can span zero, one, or more visible columns.
+% If the |headers| key is not set (or empty), then the default header
+% (based on the column specification alone) is used, as set by
+% |\kvt@NewKeyValTable|.
 %    \begin{macrocode}
 \newcommand\kvt@parseheadrows[2]{%
-  \csdef{kvt@@colgroups@#1}{}%
-  \csdef{kvt@headrowcount@#1}{0}%
-  \bgroup
+  \ifstrempty{#2}{}{\kvt@parseheadrows@i{#2}{#1}}}
+\newcommand\kvt@parseheadrows@i[2]{%
+  \csdef{kvt@@custheadrows@#2}{}%
+  \csdef{kvt@headrowcount@#2}{0}%
+  \begingroup
   \def\kvt@@parseheadrows{}%
 %    \end{macrocode}
 % Now loop over \meta{headers} to split \meta{headers} by |\\|.
@@ -1339,36 +2136,36 @@
     \def\kvt@@tmp{##1}\trim@post@space@in\kvt@@tmp%
     \expandafter\ifstrequal\expandafter{\kvt@@tmp}{::}
       {\appto\kvt@@parseheadrows{%
-         \cseappto{kvt@@colgroups@#1}{%
-           \csexpandonce{kvt@headings@#1}}}}
-      {\appto\kvt@@parseheadrows{\kvt@parseheadrow{#1}{##1}}}%
+         \cseappto{kvt@@custheadrows@#2}{%
+           \csexpandonce{kvt@headings@#2}}}}
+      {\appto\kvt@@parseheadrows{\kvt@parseheadrow{#2}{##1}}}%
 %    \end{macrocode}
 % Increment the header row counter for each |\\|-separated item of
 % \meta{headers}.
 %    \begin{macrocode}
-    \appto\kvt@@parseheadrows{\csedef{kvt@headrowcount@#1}{%
-      \the\numexpr\csuse{kvt@headrowcount@#1}+1\relax}}%
-  }\kvt@dobrklist{#2}%
+    \appto\kvt@@parseheadrows{\csedef{kvt@headrowcount@#2}{%
+      \the\numexpr\csuse{kvt@headrowcount@#2}+1\relax}}%
+  }\kvt@dobrklist{#1}%
 %    \end{macrocode}
 % Finally, escape the inner group and overwrite the headings
 % with the result of the parsing.
 %    \begin{macrocode}
-  \expandafter\egroup\kvt@@parseheadrows
-  \csletcs{kvt@headings@#1}{kvt@@colgroups@#1}}
+  \expandafter\endgroup\kvt@@parseheadrows
+  \csletcs{kvt@headings@#2}{kvt@@custheadrows@#2}}
 %    \end{macrocode}
 % \end{macro}
 %
 % \begin{macro}{\kvt@parseheadrow}
 % The |\kvt@parseheadrow|\marg{tname}\marg{colspec} macro parses a
 % single header row and appends the resulting table code to
-% \cs{kvt@@colgroups@\meta{tname}}.
+% \cs{kvt@@custheadrows@\meta{tname}}.
 %    \begin{macrocode}
 \newcommand\kvt@parseheadrow[2]{%
-  \bgroup
+  \begingroup
 %    \end{macrocode}
 % First parse \meta{colspec}, populating the
-% \cs{kvt@@colgrpof@\meta{colname}} macros that associate each column
-% with the column group to which the column belongs.
+% \cs{kvt@@hdcellof@\meta{colname}} macros that associate each column
+% with the header cell to which the column belongs (in this row).
 %    \begin{macrocode}
   \def\do##1{\kvt@parsehdcolspec{#1}##1::\@undefined}%
   \kvt@dossvlist{#2}%
@@ -1377,52 +2174,62 @@
 % The |\kvt@@tmpgrphd| macro collects the code for the cells of the
 % current header row. The |\kvt@@span| counter specifies how many
 % columns the current cell shall span.
-% Finally, |\kvt@@curgrp| and |\kvt@@lastgrp| hold the name of the group
-% in which the current column and, respectively, previous column are in.
-% Each of the two macros is undefined if there is no such column group.
+% Finally, |\kvt@@curhd| and |\kvt@@lasthd| hold the name of the
+% header cell in which the current column and, respectively, previous
+% column are in.  Each of the two macros is undefined if there is no
+% such header cell.
 %    \begin{macrocode}
   \let\kvt@@tmpgrphd\@empty
   \kvt@@span\z@
-  \undef\kvt@@curgrp \undef\kvt@@lastgrp
+  \undef\kvt@@curhd \undef\kvt@@lasthd
 %    \end{macrocode}
 % Next, loop over all displayed (non-hidden) columns stored in
-% \cs{kvt@colkeys@\meta{tname}}. The following |\do|\marg{colname}
-% collects (spanned) columns as specified in \meta{colspec}, in the
+% \cs{kvt@displaycols@\meta{tname}}. The following |\do|\marg{colname}
+% macro collects (spanned) columns as specified in \meta{colspec}, in the
 % ordering in which the table's columns are displayed. The spanned
 % columns are stored in |\kvt@@tmpgrphd|.
 %    \begin{macrocode}
-  \def\do##1{\letcs\kvt@@curgrp{kvt@@colgrpof@##1}%
-    \ifdefequal\kvt@@curgrp\kvt@@lastgrp
+  \def\do##1{\letcs\kvt@@curhd{kvt@@hdcellof@##1}%
+    \ifdefequal\kvt@@curhd\kvt@@lasthd
 %    \end{macrocode}
-% If the column group has not changed, simply increase the spanning
+% If the header cell has not changed, simply increase the spanning
 % counter.
 %    \begin{macrocode}
       {\advance\kvt@@span\@ne}%
 %    \end{macrocode}
-% Otherwise, i.e., if the column group has changed, then conclude the
+% Otherwise, i.e., if the header cell has changed, then conclude the
 % previous column (if there was one) and reset the span to 1 (to count
-% for the column in |\kvt@@curgrp|) and set |\kvt@@lastgrp| to the
+% for the column in |\kvt@@curhd|) and set |\kvt@@lasthd| to the
 % current one.
 %    \begin{macrocode}
       {\ifnum\kvt@@span>\z@ \expandafter\kvt@concludecolumn\fi
-       \ifdefvoid\kvt@@curgrp{}{\ifcsdef{kvt@@colgrpdone@\kvt@@curgrp}{%
-         \kvt@error{Column group `\kvt@@curgrp' must consist of only
+       \ifdefvoid\kvt@@curhd{}{\ifcsdef{kvt@@hdcelldone@\kvt@@curhd}{%
+         \kvt@error{Header cell `\kvt@@curhd' must consist of only
             consecutive columns, but it is not}%
-           {Compare `|\kvt@@curgrp|' to the column ordering as specified
-            in `\string\NewKeyValTable{#1}'}}{}}%
-       \kvt@@span\@ne \let\kvt@@lastgrp\kvt@@curgrp}%
-  }\dolistcsloop{kvt@colkeys@#1}%
+           {Compare `\string\kvt@@curhd' to the column ordering as
+           specified in `\string\NewKeyValTable{#1}'}}{}}%
+       \kvt@@span\@ne \let\kvt@@lasthd\kvt@@curhd}%
+  }\dolistcsloop{kvt@displaycols@#1}%
   \kvt@concludecolumn
 %    \end{macrocode}
 % Finally, conclude the whole header row and append the row to the
-% overall list of rows, stored in \cs{kvt@@colgroups@\meta{tname}},
+% overall list of rows, stored in \cs{kvt@@custheadrows@\meta{tname}},
 % while ending the current \hologo{TeX} group.
 %    \begin{macrocode}
   \appto\kvt@@tmpgrphd{\tabularnewline}%
-  \edef\do{\noexpand\csappto{kvt@@colgroups@#1}{%
-    \noexpand\noexpand\noexpand\rowcolor{\noexpand\cmdkvt@Table@headbg}%
+  \edef\do{\noexpand\csappto{kvt@@custheadrows@#1}{%
+    \unexpanded{\noexpand\kvt@rowcolorornot{\cmdkvt@Table@headbg}}%
     \noexpand\unexpanded{\expandonce{\kvt@@tmpgrphd}}}}%
-  \expandafter\egroup\do}
+  \expandafter\endgroup\do}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@rowcolorornot}
+% The |\kvt@rowcolorornot|\marg{color} expands to
+% |\rowcolor|\marg{color} if \meta{color} is nonempty and does have no
+% effect if \meta{color} is empty.
+%    \begin{macrocode}
+\newcommand\kvt@rowcolorornot[1]{\ifstrempty{#1}{}{\rowcolor{#1}}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1441,8 +2248,8 @@
 %    \begin{macrocode}
 \newcommand\kvt@concludecolumn{%
 %    \end{macrocode}
-% The following conditional checks whether this is the first column
-% group in the header row. If this is the case, then the
+% The following conditional checks whether this is the first header cell
+% in the header row. If this is the case, then the
 % |\kvt@@extraalign| macro is set to |\kvt@HackIntercolSpace|, such that
 % the |\multicolumn| below does not throw away this spacing.
 %    \begin{macrocode}
@@ -1450,48 +2257,48 @@
     {\let\kvt@@extraalign\kvt@HackIntercolSpace}
     {\let\kvt@@extraalign\@empty}%
   \appto\kvt@@tmpgrphd{&}%
-  \ifdefvoid\kvt@@lastgrp{}{%
+  \ifdefvoid\kvt@@lasthd{}{%
     \eappto\kvt@@tmpgrphd{\noexpand\multicolumn
       {\the\kvt@@span}
       {\expandonce\kvt@@extraalign
-       \csexpandonce{kvt@@colgrp@align@\kvt@@lastgrp}}
-      {\csexpandonce{kvt@@colgrp@head@\kvt@@lastgrp}}}%
+       \csexpandonce{kvt@@hdcell@align@\kvt@@lasthd}}
+      {\csexpandonce{kvt@@hdcell@head@\kvt@@lasthd}}}%
 %    \end{macrocode}
-% Mark the column group as already used and concluded, such that another
-% use of the same column group can be detected and raise an error.
+% Mark the header cell as already used and concluded, such that another
+% use of the same header cell can be detected and raise an error.
 %    \begin{macrocode}
-    \cslet{kvt@@colgrpdone@\kvt@@lastgrp}{\@ne}}}
+    \cslet{kvt@@hdcelldone@\kvt@@lasthd}{\@ne}}}
 %    \end{macrocode}
 % \end{macro}
 %
 % \begin{macro}{\kvt@parsehdcolspec}
 % The |\kvt@parsehdcolspec|\marg{tname}\meta{cname}|:|\meta{config}|:|\meta{empty}|\@undefined|
-% macro parses a single header column (resp. column group), \meta{cname}.
-% For a column group, \meta{cname} can consist of multiple,
+% macro parses a single header cell (resp. column group), \meta{cname}.
+% For a header cell, \meta{cname} can consist of multiple,
 % "+"-separated column names.
 %    \begin{macrocode}
 \def\kvt@parsehdcolspec#1#2:#3:#4\@undefined{%
 %    \end{macrocode}
-% First link the individual columns of a column group to the group.
-% In this, ensure that no column is contained in more than one column
-% group.
+% First link the individual columns of a header cell to the cell.
+% In this, ensure that no column is contained in more than one header
+% cell.
 %    \begin{macrocode}
   \def\kvt@@colreg##1{%
-    \ifinlistcs{##1}{kvt@colkeys@#1}{}
-      {\kvt@error{Column `##1' referenced in column group `#2' not known
+    \ifinlistcs{##1}{kvt@allcolumns@#1}{}
+      {\kvt@error{Column `##1', referenced in header cell `#2', not known
         in table type `#1'}{Check the \string\NewKeyValTable{#1} for
         the names of known columns and check `##1' for a typo.}}%
-    \ifcsmacro{kvt@@colgrpof@##1}
-      {\kvt@error{Column `##1' used in more than one column group}
+    \ifcsmacro{kvt@@hdcellof@##1}
+      {\kvt@error{Column `##1' used in more than one header cell}
          {Check the fourth, optional argument of \string\NewKeyValTable
          and eliminate multiple occurrences of column `##1'.}}
-      {\csdef{kvt@@colgrpof@##1}{#2}}%
+      {\csdef{kvt@@hdcellof@##1}{#2}}%
   }\kvt@forpsvlist{\kvt@@colreg}{#2}%
 %    \end{macrocode}
-% Now parse the \meta{config} of the column, resp. column group.
+% Now parse the \meta{config} of the header cell.
 %    \begin{macrocode}
-  \def\kvt@@colgrp{#2}%
-  \kvt@setkeys{#3}{ColGroup}}
+  \def\kvt@@hdcell{#2}%
+  \kvt@setkeys{#3}{HeadCell}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -1595,12 +2402,12 @@
 % \end{environment}
 %
 % \begin{macro}{\kvt@SetOptions}
-% The |\kvt@SetOptions|\marg{tname}\marg{options} set the specific table
-% options in the current environment, based on the options for table
-% type \meta{tname} and the specific \meta{options}.
+% The |\kvt@SetOptions|\marg{tname}\marg{options} macro sets the
+% specific table options in the current environment, based on the
+% options for table type \meta{tname} and the specific \meta{options}.
 %    \begin{macrocode}
 \newcommand\kvt@SetOptions[2]{%
-  \bgroup\edef\kvt@@do{\egroup\noexpand%
+  \begingroup\edef\kvt@@do{\endgroup\noexpand%
     \kvt@setkeys{\csexpandonce{kvt@options@#1},\unexpanded{#2}}{Table}%
   }\kvt@@do}
 %    \end{macrocode}
@@ -1610,123 +2417,71 @@
 %
 % \begin{macro}{\kvt@StartTabularlike}
 % The
-% |\kvt@StartTabularlike|\marg{env}\marg{tname}\marg{bLong}\marg{bTabu}\marg{bWidth}
+% |\kvt@StartTabularlike|\marg{env}\marg{tname}
 % macro begins a table environment for the given table type \meta{tname}.
 % The \meta{env} parameter specifies the concrete environment name.
-% The parameters \meta{bLong}, \meta{bTabu}, and \meta{bWidth} are
-% Boolean parameters (expecting value |true| or value |false|).
-% They specify whether the table environment supports multi-page tables
-% (\meta{bLong}), whether the environment is a \pkgname{tabu}
-% environment (\meta{bTabu}), and whether the environment supports
-% specifying the width of the table (\meta{bWidth}).
 %    \begin{macrocode}
-\newcommand\kvt@StartTabularlike[5]{%
+\newcommand\kvt@StartTabularlike[2]{%
 %    \end{macrocode}
 % The |\kvt@@recenttable| allows the |\AfterEndEnvironment| hook for
 % |KeyValTable| to access the most recent table type.
-%    \begin{macrocode}
-  \gdef\kvt@@recenttable{#2}%
-%    \end{macrocode}
 % \changes{v1.0}{2019/02/18}{Implemented \texttt{showrules} option}
 %    \begin{macrocode}
+  \gdef\kvt@@recenttable{#2}%
+  \metatblAtEnd{#1}{\kvt@@endhook}\let\kvt@@endhook\relax%
   \ifbool{kvt@Table@showrules}
     {\def\kvt@@rule##1{\csuse{##1rule}}}
     {\def\kvt@@rule##1{}}%
-  \csuse{kvt@@patchenvend@#1}%
+  \appto\kvt@@endhook{\kvt@@rule{bottom}}
+%    \end{macrocode}
+% Adding caption and label, if given, to the end hook. This displays the
+% caption solely at the very end of the table.
+%    \begin{macrocode}
+  \ifdefempty\cmdkvt@Table@caption{}{%
+    \metatblHasCaption{#1}
+      {\appto\kvt@@endhook{\rowcolor{white}%
+        \caption{\cmdkvt@Table@caption}}%
+       \ifdefempty\cmdkvt@Table@label{}{%
+         \appto\kvt@@endhook{\expandafter%
+           \label\expandafter{\cmdkvt@Table@label}}}}
+      {\kvt@warn{Caption lost, table environment '#1'
+                 does not support captions.}}}%
+%    \end{macrocode}
+% Initializing the row counters. The global counter |kvtTotalRow| needs
+% no local initialization.
+%    \begin{macrocode}
   \setcounter{kvtRow}{0}%
   \setcounter{kvtTypeRow}{\csuse{kvt@rowcount@#2}}%
 %    \end{macrocode}
 % In |\kvt@@do|, the start code for the environment, including the
 % header rows, is gathered, with expansion to fill in all the table
 % settings and options.
+% \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
+% \changes{v1.0}{2019/03/09}{Added \texttt{width} option}
 %    \begin{macrocode}
-  \bgroup\edef\kvt@@do{\egroup
-    \ifbool{#4}{}{\noexpand\kvt@dottedrowcolors
+  \begingroup\edef\kvt@@do{\endgroup
+    \metatblIsTabu{#1}{}{\noexpand\kvt@dottedrowcolors
       {\ifbool{kvt@Table@showhead}
         {\the\numexpr\csuse{kvt@headrowcount@#2}+1\relax}
         {1}}%
       {\expandonce\cmdkvt@Table@rowbg}}%
-%    \end{macrocode}
-% \changes{v1.0}{2019/03/09}{Added \texttt{width} option}
-%    \begin{macrocode}
     \expandafter\noexpand\csname #1\endcsname
-      \ifbool{#5}
-        {\ifbool{#4}
+      \metatblHasWidth{#1}
+        {\metatblIsTabu{#1}
           {to \expandonce\cmdkvt@Table@width}
           {{\expandonce\cmdkvt@Table@width}}}
         {}%
       {\csexpandonce{kvt@alignments@#2}}%
     \noexpand\kvt@@rule{top}%
-%    \end{macrocode}
-% \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
-%    \begin{macrocode}
     \ifbool{kvt@Table@showhead}
       {\csuse{kvt@headings@#2}\noexpand\kvt@@rule{mid}}
       {}%
-    \ifbool{#4}
-      {\noexpand\taburowcolors 2{\expandonce\cmdkvt@Table@rowbg}}{}%
-    \ifbool{#3}{\noexpand\endhead}{}%
+    \metatblIsTabu{#1}
+      {\noexpand\kvt@taburowcolors{\expandonce\cmdkvt@Table@rowbg}}{}%
+    \metatblIsLong{#1}{\noexpand\endhead}{}%
   }\kvt@@do}
 %    \end{macrocode}
 % \end{macro}
-%
-% \begin{macro}{\kvt@stepcounters}
-% The |\kvt@stepcounters|\oarg{delta} macro increments all row counters
-% by \meta{delta}. If \meta{delta} is omitted, \meta{delta}=1.
-%    \begin{macrocode}
-\newcommand\kvt@stepcounters[1][1]{%
-  \addtocounter{kvtRow}{#1}%
-  \addtocounter{kvtTypeRow}{#1}%
-  \addtocounter{kvtTotalRow}{#1}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvt@DefineStdTabEnv}
-% The
-% |\kvt@DefineStdTabEnv|\oarg{shape}\marg{env}\marg{bLong}\marg{bTabu}\marg{bWidth}\marg{endpatch}
-% macro defines the macros needed for the given \meta{shape} value.
-% If \meta{shape} is omitted, \meta{env} (the name of the environment to
-% use for the shape) is used as \meta{shape} value.
-% The \meta{endpatch} parameter expects macro code that shall be run
-% at the beginning of the |KeyValTable| environment to (locally) patch
-% macros related to the end code of \meta{env} for ensuring
-% that the bottom rule, |\kvt@@rule{bottom}|, is displayed.
-% If \meta{endpatch} is empty, the rule is displayed via
-% \cs{kvt@EndTable@\meta{shape}}. Otherwise,
-% \cs{kvt@EndTable@\meta{shape}} equals \cs{end\meta{env}}.
-% Environments such as |tabularx| require the latter to parse for the
-% end of the environment.
-% The parameters \meta{bLong}, \meta{bTabu}, and \meta{bWidth}
-% are the same as for |\kvt@StartTabularlike|.
-%
-% Note: In the future, the macro could automatically add \meta{option}
-% to the list of possible values for the |shape| option.
-%    \begin{macrocode}
-\newcommand\kvt@DefineStdTabEnv{\@dblarg\kvt@DefineStdTabEnv@i}
-\newcommand\kvt@DefineStdTabEnv@i[6][]{%
-  \expandafter\newcommand\csname kvt@StartTable@#1\endcsname[1]{%
-    \kvt@StartTabularlike{#2}{##1}{#3}{#4}{#5}}%
-  \csedef{kvt@EndTable@#1}{%
-    \ifstrempty{#6}{\noexpand\kvt@@rule{bottom}}{}%
-    \expandafter\noexpand\csname end#2\endcsname}%
-  \ifstrempty{#6}{}{\csdef{kvt@@patchenvend@#2}{#6}}}
-%    \end{macrocode}
-% \end{macro}
-%
-% The following lines define the macros for the various table shapes /
-% environments.
-%    \begin{macrocode}
-\kvt@DefineStdTabEnv{tabular}{false}{false}{false}{}
-\kvt@DefineStdTabEnv{longtable}{true}{false}{false}{}
-\kvt@DefineStdTabEnv{tabularx}{false}{false}{true}{%
-  \preto\TX@endtabularx{\toks@\expandafter{\the\toks@
-      \kvt@@rule{bottom}}}}
-\kvt@DefineStdTabEnv{xltabular}{true}{false}{true}{%
-  \preto\XLT@ii@TX@endtabularx{\toks@\expandafter{\the\toks@
-      \kvt@@rule{bottom}}}}
-\kvt@DefineStdTabEnv[onepage]{tabu}{false}{true}{true}{}
-\kvt@DefineStdTabEnv[multipage]{longtabu}{true}{true}{true}{}
-%    \end{macrocode}
 %
 % \begin{macro}{\kvt@dottedrowcolors}
 % The |\kvt@dottedrowcolors|\marg{start-row}\marg{colors} sets up row
@@ -1737,9 +2492,10 @@
 % \meta{color2}, starting with \meta{color1} in \meta{start-row}.
 % This macro substitutes |\taburowcolors| for non-\pkgname{tabu}
 % environments.
+% If \meta{colors} is empty, then no row colors are setup.
 %    \begin{macrocode}
 \newcommand\kvt@dottedrowcolors[2]{%
-  \kvt@dottedrowcolors@i{#1}#2\@nil}
+  \ifstrempty{#2}{}{\kvt@dottedrowcolors@i{#1}#2\@nil}}
 \def\kvt@dottedrowcolors@i#1#2..#3\@nil{%
 %    \end{macrocode}
 % Since |\rowcolors| expects its color arguments to specify the odd and
@@ -1753,6 +2509,294 @@
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\kvt@taburowcolors}
+% The |\kvt@taburowcolors|\marg{colors} expands to
+% |\taburowcolors|\marg{colors} if \meta{colors} is nonempty and does
+% have no effect if \meta{color} is empty.
+%    \begin{macrocode}
+\newcommand\kvt@taburowcolors[1]{%
+  \ifstrempty{#1}{}{\taburowcolors{#1}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@DefineStdTabEnv}
+% The |\kvt@DefineStdTabEnv|\oarg{shape}\marg{env}
+% macro defines the macros needed for the given \meta{shape} value.
+% If \meta{shape} is omitted, \meta{env} (the name of the environment to
+% use for the shape) is used as \meta{shape} value.
+%
+% Note: In the future, the macro could automatically add \meta{option}
+% to the list of possible values for the |shape| option.
+%    \begin{macrocode}
+\newcommand\kvt@DefineStdTabEnv{\@dblarg\kvt@DefineStdTabEnv@i}
+\newcommand\kvt@DefineStdTabEnv@i[2][]{%
+  \expandafter\newcommand\csname kvt@StartTable@#1\endcsname[1]{%
+    \kvt@StartTabularlike{#2}{##1}}%
+  \csedef{kvt@EndTable@#1}{%
+    \expandafter\noexpand\csname end#2\endcsname}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@DefineDualTabEnv}
+% The |\kvt@DefineDualTabEnv|\marg{shape}\marg{nonX-env}\marg{X-env}
+% macro defines the macros for the given \meta{shape} name.
+% The macros are defined in a way such that the table environment
+% \meta{nonX-env} is used for typesetting tables that do not use |X|
+% columns and that table environment \meta{X-env} is used for
+% typesetting tables that do use |X| columns.
+%    \begin{macrocode}
+\newcommand\kvt@DefineDualTabEnv[3]{%
+  \expandafter\newcommand\csname kvt@StartTable@#1\endcsname[1]{%
+    \kvt@ifhasXcolumns{##1}
+      {\csedef{kvt@EndTable@#1}{%
+         \expandafter\noexpand\csname end#3\endcsname}%
+       \kvt@StartTabularlike{#3}{##1}%
+      }{\csedef{kvt@EndTable@#1}{%
+         \expandafter\noexpand\csname end#2\endcsname}%
+       \kvt@StartTabularlike{#2}{##1}}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@ifhasXcolumns}
+% The |\kvt@ifhasXcolumns|\marg{tname}\marg{iftrue}\marg{iffalse}
+% takes a table type \meta{tname} and checks whether the table type
+% contains an "|X|" column. If such a column is contained, the macro
+% expands to \meta{iftrue}. Otherwise, it expands to \meta{iffalse}.
+%    \begin{macrocode}
+\newcommand\kvt@ifhasXcolumns[1]{%
+  \expandafter\expandafter\expandafter\metatbl@ifhasXcolumns
+  \expandafter\expandafter\expandafter{%
+    \csname kvt@alignments@#1\endcsname}}
+%    \end{macrocode}
+% \end{macro}
+%
+% The following lines define the macros for the various table shapes /
+% environments.
+%    \begin{macrocode}
+\kvt@DefineStdTabEnv{tabular}
+\kvt@DefineStdTabEnv{longtable}
+\kvt@DefineStdTabEnv{tabularx}
+\kvt@DefineStdTabEnv{xltabular}
+\kvt@DefineStdTabEnv{tabu}
+\kvt@DefineStdTabEnv{longtabu}
+%    \end{macrocode}
+%
+% \subsubsection{Table Environment Properties}
+%
+% The following code maintains properties about known table
+% environments. This code does not depend on other code of the
+% \thispackage package but is only used by \thispackage.
+%
+% The following properties can be maintained about table environments.
+%    \begin{macrocode}
+\define@boolkey[metatbl]{EnvProp}{isLong}{\metatbl@boolprop{isLong}{#1}}
+\define@boolkey[metatbl]{EnvProp}{isTabu}{\metatbl@boolprop{isTabu}{#1}}
+\define@boolkey[metatbl]{EnvProp}{hasWidth}{%
+  \metatbl@boolprop{hasWidth}{#1}}
+\define@boolkey[metatbl]{EnvProp}{hasCaption}{%
+  \metatbl@boolprop{hasCaption}{#1}}
+\define@cmdkey[metatbl]{EnvProp}{packages}{\metatbl@setprop{pkg}{#1}}
+%    \end{macrocode}
+% The |atEnd| property shall be set to \hologo{TeX} code with one
+% argument (i.e., using the positional argument |#1|) that adds its
+% argument to the end of the active table environment's final content.
+% Finding such code is not obvious for table environments that collect
+% the content of the environment, like |tabularx| does, for instance.
+%    \begin{macrocode}
+\define@key[metatbl]{EnvProp}{atEnd}{\metatbl@setprop[1]{atEnd}{#1}}
+%    \end{macrocode}
+%
+% \begin{macro}{\metatblRegisterEnv}
+% The |\metatblRegisterEnv|\marg{env-name}\marg{properties} macro
+% registers a table environment with name \meta{env-name} and sets its
+% properties according to \meta{properties}, a comma-separated key-value
+% list.
+%    \begin{macrocode}
+\newrobustcmd\metatblRegisterEnv[2]{%
+  \edef\metatbl@@envname{#1}%
+  \setkeys[metatbl]{EnvProp}{#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatbl@setprop}
+% The |\metatbl@setprop|\oarg{n}\marg{key}\marg{value}
+% macro defines a macro with \meta{n} arguments ($0$ by default) for the
+% environment stored in |\metatbl@@envname| and the given
+% \meta{key}. This macro then expands to \meta{value}.
+%    \begin{macrocode}
+\newcommand\metatbl@setprop[3][0]{%
+  \expandafter\newcommand
+    \csname metatbl@EnvProp@#2@\metatbl@@envname\endcsname[#1]{#3}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatbl@boolprop}
+% The |\metatbl@boolprop|\marg{prop}\marg{value} macro stores the
+% Boolean value \meta{value} in a property \meta{prop} for the
+% environment stored in |\metatbl@@envname|.
+%    \begin{macrocode}
+\newcommand\metatbl@boolprop[2]{%
+  \providebool{metatbl@EnvProp@#1@\metatbl@@envname}%
+  \setbool{metatbl@EnvProp@#1@\metatbl@@envname}{#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatblIsLong}
+% \begin{macro}{\metatblIsTabu}
+% \begin{macro}{\metatblHasWidth}
+% \begin{macro}{\metatblHasCaption}
+% The macro
+% |\metatblIsLong|\marg{env-name}\marg{iftrue}\marg{iffalse}
+% expands to \meta{iftrue} if \meta{env-name} is a "long" table
+% environment, i.e., one that can span multiple pages. Otherwise, the
+% macro expands to \meta{iffalse}.
+% The macro
+% |\metatblIsTabu|\marg{env-name}\marg{iftrue}\marg{iffalse}
+% expands to \meta{iftrue} if \meta{env-name} is a table environment
+% that inherits from |tabu| and expands to \meta{iffalse} otherwise.
+% The macro
+% |\metatblHasWidth|\marg{env-name}\marg{iftrue}\marg{iffalse}
+% expands to \meta{iftrue} if \meta{env-name} is a table environment
+% that expects a width argument and expands to \meta{iffalse} otherwise.
+% |\metatblHasCaption|\marg{env-name}\marg{iftrue}\marg{iffalse}
+% expands to \meta{iftrue} if \meta{env-name} is a table environment
+% that supports a caption and expands to \meta{iffalse} otherwise.
+%    \begin{macrocode}
+\newcommand\metatblIsLong[1]{\ifbool{metatbl@EnvProp@isLong@#1}}
+\newcommand\metatblIsTabu[1]{\ifbool{metatbl@EnvProp@isTabu@#1}}
+\newcommand\metatblHasWidth[1]{\ifbool{metatbl@EnvProp@hasWidth@#1}}
+\newcommand\metatblHasCaption[1]{\ifbool{metatbl@EnvProp@hasCaption@#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\metatblUsePackage}
+% \begin{macro}{\metatblRequire}
+% The |\metatblUsePackage|\marg{env-names} and
+% |\metatblRequire|\marg{env-names} macros load the packages required
+% for typesetting |KeyValTable| tables based on the table environments
+% listed in \meta{env-names}.
+% The former aims more at normal document use, the second at use by
+% package developers.
+%    \begin{macrocode}
+\newcommand\metatblUsePackage[1]{%
+  \def\do##1{\metatbl@csnamearg\usepackage{metatbl@EnvProp@pkg@##1}}%
+  \docsvlist{#1}}
+\newcommand\metatblRequire[1]{%
+  \def\do##1{\metatbl@csnamearg\RequirePackage{metatbl@EnvProp@pkg@##1}}%
+  \docsvlist{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\metatblAtEnd}
+% The |\metatblAtEnd|\marg{env-name}\marg{code} macro registers
+% \meta{code} for addition at the end of tables based on the
+% \meta{env-name} environment.
+%    \begin{macrocode}
+\newcommand\metatblAtEnd[2]{% #1=env-name, #2=code
+  \csname metatbl@EnvProp@atEnd@#1\endcsname{#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatbl@csnamearg}
+% The auxiliary macro
+% |\metatbl@csnamearg|\marg{command}\marg{csname}
+% passes the expansion of the macro with name \meta{csname} as the first
+% argument to \meta{command}.
+%    \begin{macrocode}
+\newcommand\metatbl@csnamearg[2]{%
+  \expandafter\expandafter\expandafter#1%
+  \expandafter\expandafter\expandafter{\csname#2\endcsname}}
+%    \end{macrocode}
+% \end{macro}
+%
+% The following are the properties of some basic table environments.
+%    \begin{macrocode}
+\metatblRegisterEnv{tabular}{%
+  isLong=false, hasWidth=false, isTabu=false, hasCaption=false,
+  packages={},
+  atEnd={\preto\endtabular{#1}},
+}
+\metatblRegisterEnv{tabularx}{%
+  isLong=false, hasWidth=true, isTabu=false, hasCaption=false,
+  packages=tabularx,
+  atEnd={%
+%    \end{macrocode}
+% Of the following two lines, the latter is for the case that the
+% \pkgname{xltabular} package is loaded, and the former is for the case
+% that the package is not loaded.
+%    \begin{macrocode}
+    \preto\TX@endtabularx{\toks@\expandafter{\the\toks@#1}}%
+    \preto\XLT@i@TX@endtabularx{\toks@\expandafter{\the\toks@#1}}},
+}
+\metatblRegisterEnv{longtable}{%
+  isLong=true, hasWidth=false, isTabu=false, hasCaption=true,
+  packages={longtable},
+  atEnd={\preto\endlongtable{#1}},
+}
+\metatblRegisterEnv{xltabular}{%
+  isLong=true, hasWidth=true, isTabu=false, hasCaption=true,
+  packages=xltabular,
+  atEnd={\preto\XLT@ii@TX@endtabularx{\toks@\expandafter{\the\toks@#1}}},
+}
+\metatblRegisterEnv{tabu}{%
+  isLong=false, hasWidth=true, isTabu=true, hasCaption=false,
+  packages={tabu},
+%    \end{macrocode}
+% The following is not a mistake: |tabu| does
+% |\def\endtabu{\endtabular}| at the beginning of a |tabu| environment.
+%    \begin{macrocode}
+  atEnd={\preto\endtabular{#1}},
+}
+\metatblRegisterEnv{longtabu}{%
+  isLong=true, hasWidth=true, isTabu=true, hasCaption=true,
+  packages={tabu,longtable},
+%    \end{macrocode}
+% The following is not a mistake: |tabu| does
+% |\def\endlongtabu{\endlongtable}| at the beginning of a |longtabu|
+% environment.
+%    \begin{macrocode}
+  atEnd={\preto\endlongtable{#1}},
+}
+%    \end{macrocode}
+%
+% \begin{macro}{\metatbl@ifhasXcolumns}
+% The |\metatbl@ifhasXcolumns|\marg{preamble}\marg{iftrue}\marg{iffalse}
+% takes a \meta{preamble} (the argument of a |tabular| environment that
+% specifies the columns of the table) and checks, whether this preamble
+% contains an "|X|" column. If such a column is contained, the macro
+% expands to \meta{iftrue}. Otherwise, it expands to \meta{iffalse}.
+%    \begin{macrocode}
+\newrobustcmd\metatbl@ifhasXcolumns[1]{%
+  \begingroup
+%    \end{macrocode}
+% The |\metatbl@@branch| macro is used at the end of the macro to select
+% \meta{iftrue} or \meta{iffalse} for expansion. Initially, the macro is
+% defined to select \meta{iffalse}.
+%    \begin{macrocode}
+  \def\metatbl@@branch{\@secondoftwo}%
+%    \end{macrocode}
+% The code uses the |\@mkpream| macro of the \pkgname{array} package to
+% create an |\halign| preamble from the |tabular| \meta{preamble}.
+% The result of |\@mkpream| is in |\@preamble| afterwards, but this
+% result is not used, but rather discarded at the |\endgroup| below.
+% Rather, we hook into |\@mkpream| via |\NC@rewrite@X|, which is used
+% when an |X| column was encountered in \meta{preamble}.\footnote{This
+% hooking into \cmd{\@mkpream} is inspired by how |tabularx| replaces |X|
+% columns by |p| columns as part of its measuring.}
+% When an |X| column is encountered, |\metatbl@@branch| is redefined to
+% expand to \meta{iftrue} in the end.
+%    \begin{macrocode}
+  \def\NC@rewrite@X{\def\metatbl@@branch{\@firstoftwo}\NC@find}%
+  \@mkpream{#1}%
+  \expandafter\endgroup\metatbl@@branch}
+%    \end{macrocode}
+% \end{macro}
+%
+%
 % \subsubsection{Environment-Independent Parts}
 %
 % \begin{macro}{\kvt@AddKeyValRow}
@@ -1764,8 +2808,8 @@
 % the row. The result is returned in macro |\kvt@@row|.
 % The arguments \meta{pre} and \meta{post} are expanded at the very
 % beginning, resp.\@ end of the macro.
-% They allow to control grouping (|\bgroup| and |\egroup|) as well as
-% table placement via |\noalign|.
+% They allow to control grouping (|\begingroup| and |\endgroup|) as well
+% as table placement via |\noalign|.
 % \changes{v1.0}{2019/03/17}{Added \oarg{options}}
 %    \begin{macrocode}
 \newcommand\kvt@AddKeyValRow[3]{%
@@ -1811,14 +2855,12 @@
       \expandonce\cmdkvt@Row@above}}}}%
   \ifdefvoid\cmdkvt@Row@bg{}{%
     \eappto\kvt@@row{\noexpand\rowcolor{\expandonce\cmdkvt@Row@bg}}}%
-%    \end{macrocode}
-% Place the |everyrow| hook after |\noalign|.
-%    \begin{macrocode}
-  \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@everyrow}
+  \ifbool{kvt@Row@uncounted}{}{%
+    \appto\kvt@@row{\noalign{\kvt@stepcounters}}}%
 %    \end{macrocode}
 % The following loop uses |\do|\marg{cname} to append the content of
-% all columns (in the given format and using the given default value),
-% where each column value is in
+% all displayed columns (in the given format and using the given default
+% value), where each column value is in
 % \cs{cmdKeyValTable@\meta{tname}@\meta{cname}}.
 % Note that currently the default value is formatted using the given
 % format macro -- a design decision.
@@ -1833,12 +2875,24 @@
 %    \begin{macrocode}
     \ifcsvoid{cmdKeyValTable@#2@##1}
       {\letcs\kvt@@cell{kvt@col@default@#2@##1}}
-      {\letcs\kvt@@cell{cmdKeyValTable@#2@##1}}%
+      {\letcs\kvt@@cell{cmdKeyValTable@#2@##1}%
+%    \end{macrocode}
+% Apply expansion control options, but only to manually supplied cell
+% values, not to default values.
+%    \begin{macrocode}
+       \ifbool{kvt@Row@expandonce}
+         {\expandafter\let\expandafter\kvt@@cell\kvt@@cell}{}%
+       \ifbool{kvt@Row@expand}
+         {\protected@edef\kvt@@cell{\kvt@@cell}}{}}%
 %    \end{macrocode}
 % Separately also already create the formatted content.
 %    \begin{macrocode}
-    \edef\kvt@@fmtcell{\csexpandonce{kvt@col@format@#2@##1}{%
+    \ifcsvoid{kvt@@noformat@#2@##1}
+      {\edef\kvt@@formatter{\expandonce{\csname kvt@col@format@#2@##1\endcsname}}}%
+      {\def\kvt@@formatter{\@firstofone}}%
+    \edef\kvt@@fmtcell{\expandonce\kvt@@formatter{%
       \expandonce\kvt@@cell}}%
+    \csundef{kvt@@noformat@#2@##1}%
 %    \end{macrocode}
 % Next, check whether a column-spanning cell is active
 % ($\cs{kvt@@span}>0$). If this is the case, ensure that if the raw cell
@@ -1854,9 +2908,9 @@
 % Now check whether the cell itself spans multiple columns.
 %    \begin{macrocode}
     \expandafter\kvt@CheckMulticolumn\kvt@@cell
-      \relax\relax\relax\relax\@undefined{#2}{##1}%
+      \relax\relax\relax\relax\@undefined
     \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@fmtcell}%
-  }\dolistcsloop{kvt@colkeys@#2}%
+  }\dolistcsloop{kvt@displaycols@#2}%
 %    \end{macrocode}
 % Finally, add the concluding newline for the row as well as
 % the vertical space after the row, if requested.
@@ -1872,22 +2926,20 @@
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\kvt@everyrow}
-% The |\kvt@everyrow|\marg{code} registers \meta{code} to be included in
-% the first (invisible) cell of every row.
+% \begin{macro}{\kvt@stepcounters}
+% The |\kvt@stepcounters|\oarg{delta} macro increments all row counters
+% by \meta{delta}. If \meta{delta} is omitted, \meta{delta}=1.
 %    \begin{macrocode}
-\newcommand\kvt@everyrow[1]{\def\kvt@@everyrow{#1}}
-\newcommand\kvt@@everyrow{}
+\newcommand\kvt@stepcounters[1][1]{%
+  \addtocounter{kvtRow}{#1}%
+  \addtocounter{kvtTypeRow}{#1}%
+  \addtocounter{kvtTotalRow}{#1}}
 %    \end{macrocode}
 % \end{macro}
-% Initialize the hook for every row to increment the row counters.
-%    \begin{macrocode}
-\kvt@everyrow{\kvt@stepcounters}%
-%    \end{macrocode}
 %
 % \begin{macro}{\kvt@CheckMulticolumn}
 % The
-% |\kvt@CheckMulticolumn|\marg{arg1}\marg{arg2}\marg{arg3}\marg{arg4}|\@undefined|\linebreak[4]\marg{tname}\marg{colname}
+% |\kvt@CheckMulticolumn|\marg{arg1}\marg{arg2}\marg{arg3}\marg{arg4}|\@undefined|
 % macro checks whether a cell's initial content (captured by \meta{arg1}
 % to \meta{arg4}, starts a multi-column cell. If this is the case, the
 % macro records the arguments to |\multicolumn| for use by
@@ -1896,7 +2948,7 @@
 % of columns to span), \meta{arg3}=\meta{format} (column alignment), and
 % \meta{arg4}=\meta{item} (the content of the cell).
 %    \begin{macrocode}
-\def\kvt@CheckMulticolumn#1#2#3#4\@undefined#5#6{%
+\def\kvt@CheckMulticolumn#1#2#3#4\@undefined{%
   \ifx#1\multicolumn
 %    \end{macrocode}
 % First, record \meta{n} in |\kvt@@span|. The subtraction of $-1$ is
@@ -1909,12 +2961,362 @@
 % argument of |\multicolumn| rather than around the |\multicolumn|.
 %    \begin{macrocode}
     \edef\kvt@@fmtcell{\unexpanded{\multicolumn{#2}{#3}}%
-      {\csexpandonce{kvt@col@format@#5@#6}{\expandonce{#4}}}}%
+      {\expandonce\kvt@@formatter{\expandonce{#4}}}}%
   \fi}
 %    \end{macrocode}
 % \end{macro}
 %
+% \subsubsection{Row Styles}
+%
+% \begin{macro}{\kvtNewRowStyle}
+% The |\kvtNewRowStyle|\marg{name}\marg{row-options} macro declares
+% \meta{name} as a row style and defines it to be equivalent to
+% specifying \meta{row-options} directly in the optional argument of
+% |\Row|. The macro fails if \meta{name} is already declared as a row
+% style.
+% \changes{v2.0}{2019/03/25}{Added the macro}
+%    \begin{macrocode}
+\newcommand\kvtNewRowStyle[2]{%
+  \ifcsundef{kvt@@rowstyle@#1}
+    {\csdef{kvt@@rowstyle@#1}{#2}}
+    {\kvt@error{Row style '#1' is already defined}{Use
+      \string\kvtRenewRowStyle\space to change an existing style.}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtRenewRowStyle}
+% The |\kvtRenewRowStyle|\marg{name}\marg{row-options} macro re-defines
+% an already existing row style with new \meta{row-options}.
+% \changes{v2.0}{2019/03/25}{Added the macro}
+%    \begin{macrocode}
+\newcommand\kvtRenewRowStyle[2]{%
+  \ifcsundef{kvt@@rowstyle@#1}
+    {\kvt@error{Row style '#1' is not defined}
+      {Use \string\kvtNewRowStyle\space to define a new row style.}}
+    {\csdef{kvt@@rowstyle@#1}{#2}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@UseRowStyle}
+% The |\kvt@UseRowStyle|\marg{style} macro sets the row keys based on
+% the \meta{row-options} stored for the given \meta{style}.
+%    \begin{macrocode}
+\newcommand\kvt@UseRowStyle[1]{%
+  \ifcsundef{kvt@@rowstyle@#1}
+    {\kvt@error{Row style '#1' is not defined}
+      {Use \string\kvtNewRowStyle\space to define a new row style.}}
+    {\kvt@setcskeys{kvt@@rowstyle@#1}{Row}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\kvt@UseRowStyles}
+% The |\kvt@UseRowStyle|\marg{styles} macro sets the row keys based on
+% the \meta{row-options} for all styles in the comma-separated list
+% \meta{styles}.
+%    \begin{macrocode}
+\newcommand\kvt@UseRowStyles[1]{%
+%    \end{macrocode}
+% We use |\kvt@xkv@disablepreset| to eliminate undesired effects from
+% presets. When, for example, using |\Row[bg=red,style=abc]{...}|, this
+% causes a |\setkeys[kvt]{Row}{xyz}| (if |xyz| is how the style |abc| is
+% defined) inside the |\setkeys[kvt]{Row}{bg=red,style=abc}|. The former
+% |\setkeys| would then again employ the presets for |Row| (e.g., from a
+% |\kvtSet{Row/bg=blue}| and overwrite the |bg=red|.
+%    \begin{macrocode}
+  \kvt@xkv@disablepreset[kvt]{Row}{%
+    \forcsvlist\kvt@UseRowStyle{#1}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@xkv@disablepreset}
+% \begin{macro}{\kvt@xkv@savepreset}
+% \begin{macro}{\kvt@xkv@restorepreset}
+% The |\kvt@xkv@disablepreset|\oarg{prefix}\marg{family}\marg{code}
+% disables presets (head and tail) for \meta{family} during the
+% expansion of \meta{code}.
+% The auxiliary macros
+% |\kvt@xkv@savepreset|\marg{prefix}\marg{family}\marg{h/t}
+% and
+% |\kvt@xkv@restorepreset|\marg{prefix}\marg{family}\marg{h/t}
+% save+unset and, respectively, restore the preset keys for
+% \meta{family} -- head keys for \meta{h/t}=h and tail keys otherwise.
+%    \begin{macrocode}
+\newcommand\kvt@xkv@disablepreset[3][KV]{%
+  \ifnumgreater{\XKV@depth}{1}
+    {#3}
+    {\kvt@xkv@savepreset{#1}{#2}{h}%
+     \kvt@xkv@savepreset{#1}{#2}{t}%
+     #3%
+     \kvt@xkv@restorepreset{#1}{#2}{h}%
+     \kvt@xkv@restorepreset{#1}{#2}{t}}}
+\newcommand\kvt@xkv@savepreset[3]{%
+  \csletcs{kvt@@saved@preset#3}{XKV@#1@#2@preset#3}%
+  \csundef{XKV@#1@#2@preset#3}}
+\newcommand\kvt@xkv@restorepreset[3]{%
+  \csletcs{XKV@#1@#2@preset#3}{kvt@@saved@preset#3}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
 % \subsection{Collecting Key-Value Table Content}
+%
+% \begin{macro}{\NewCollectedTable}
+% The |\NewCollectedTable|\marg{cname}\marg{tname} macro registers a new
+% table for recorded rows under name \meta{cname} for table type
+% \meta{tname}. The macro can only be used when
+% \meta{cname} is not already defined. It's function is not more than
+% memorizing \meta{tname} for \meta{cname}.
+% \changes{v2.0}{2019/04/10}{Added the macro}
+%    \begin{macrocode}
+\newcommand\NewCollectedTable[2]{%
+  \ifcsvoid{kvt@@tnameof@#1}
+    {\csgdef{kvt@@tnameof@#1}{#2}}
+    {\kvt@error{Name '#1' for a row collection is already defined}
+      {Check for other \string\NewCollectedTable{#1}.}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\CollectRow}
+% The |\CollectRow|\oarg{options}\marg{cname}\marg{content} writes a
+% |\kvt@RecordedRow| entry to the aux file. Fragile parts of
+% \meta{content} are protected through |\protected@write|.
+% \changes{v2.0}{2019/04/09}{Added the macro}
+%    \begin{macrocode}
+\newcommand\CollectRow[3][]{%
+  \ifcsvoid{kvt@@tnameof@#2}
+    {\kvt@error{No row collection with name '#2' defined}
+      {Use \string\NewCollectedTable in the preamble to define it.}}
+    {%
+%    \end{macrocode}
+% First check in a local group whether the passed \meta{content} and
+% \meta{options} are of a proper syntax.
+%    \begin{macrocode}
+     \begingroup
+     \kvt@setkeys{#1}{Row}%
+     \kvt@colsetcskeys{kvt@@tnameof@#2}{#3}%
+     \endgroup
+%    \end{macrocode}
+% Next, write to |\@auxout|.
+%    \begin{macrocode}
+     \kvt@protected@write\@auxout{\string\kvt@RecordedRow{#1}{#2}{%
+%    \end{macrocode}
+% In the following, the columns' default values are explicitly added to
+% the row. This ensures that defaults are expanded (via the |\write|) at
+% the point at which a row is recorded rather than when the row is
+% displayed. This allows using |\thepage| as the default value for a
+% column with the intuitively expected outcome.
+%    \begin{macrocode}
+        \kvt@coldefaults{#2}%
+        #3}}%
+    }}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@protected@write}
+% The |\kvt@protected@write|\marg{file}{content} macro writes
+% \meta{content} to \meta{file}. The write ensures that \meta{content}
+% is written in a particularly protected form that
+% \begin{enumerate}[noitemsep]
+% \item protects ordinarily |\protect|'ed parts via |\protected@write|;
+%    \begin{macrocode}
+\newcommand\kvt@protected@write[2]{\protected@write{#1}
+%    \end{macrocode}
+% \item protects table macros -- like |\thekvtRow| --, which are stored
+%   in the \pkgname{etoolbox} list |\kvt@@writeprotected@cmds|, by
+%   defining them to expand to their own name -- delaying the actual
+%   expansion until when the file's contents is expanded;
+%    \begin{macrocode}
+    {\def\do##1{\def##1{\string##1}}%
+     \dolistloop{\kvt@@writeprotected@cmds}%
+%    \end{macrocode}
+% \item protects table counters like |kvtRow| by adapting the
+%   counter-formatting macros to treat table counters differently from
+%   other counters.
+%    \begin{macrocode}
+     \forlistloop{\kvt@writeprotect@fmt}{\kvt@@numberformatters}}
+    {#2}}
+%    \end{macrocode}
+% \end{enumerate}
+% \end{macro}
+%
+% \begin{macro}{\kvt@writeprotect@fmt}
+% The |\kvt@writeprotect@fmt|\marg{fmt-csname} macro takes the name of a
+% counter-formatting macro (e.g., the name "arabic" for the macro|\arabic|)
+% and redefines it such that counters declared via
+% |\kvtDeclareTableCounters| are not expanded while all other counters
+% are treated normally.
+%    \begin{macrocode}
+\newcommand\kvt@writeprotect@fmt[1]{%
+%    \end{macrocode}
+% First, save a copy of \meta{fmt-csname} and then redefine
+% \meta{fmt-csname}.
+%    \begin{macrocode}
+  \csletcs{kvt@@fmt@#1}{#1}%
+  \csdef{#1}##1{%
+%    \end{macrocode}
+% The |kvt@@c@##1| in the following condition is a csname that is
+% defined by |\kvtDeclareTableCounters| if |##1| (the counter to be
+% formatted) has been declared as a table counter. If the macro is
+% defined, then \meta{fmt-csname} expands to its name with its argument.
+% Otherwise, the saved copy of \meta{fmt-csname} is expanded, producing
+% the actual counter value.
+%    \begin{macrocode}
+    \ifcsdef{kvt@@c@##1}
+      {\expandafter\string\csname#1\endcsname{##1}}
+      {\csname kvt@@fmt@#1\endcsname{##1}}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtDeclareTableMacros}
+% The |\kvtDeclareTableMacros|\marg{macro-list} macro declares all
+% the macros in \meta{macro-list} to be "table macros", i.e.,
+% macros that should be expanded inside the |KeyValTable| environment
+% rather than in a |\CollectRow|.
+% The macro records the \meta{macro-list} by appending its elements to
+% |\kvt@@writeprotected@cmds|. The actual expansion control is performed
+% by |\kvt@protected@write|.
+%    \begin{macrocode}
+\newcommand\kvtDeclareTableMacros[1]{%
+  \forcsvlist{\listadd\kvt@@writeprotected@cmds}{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\kvt@@writeprotected@cmds}
+% Initially empty \pkgname{etoolbox} list of table macros.
+%    \begin{macrocode}
+\newcommand\kvt@@writeprotected@cmds{}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtDeclareTableCounters}
+% The |\kvtDeclareTableCounters|\marg{counter-list} macro declares all
+% the counters in \meta{counter-list} to be "table counters", i.e.,
+% counters that should be expanded inside the |KeyValTable| environment
+% rather than in a |\CollectRow|.
+% The macro only marks the counters by defining
+% \cs{kvt@@c@\meta{counter}}. The actual expansion control is performed
+% by |\kvt@writeprotect@fmt|.
+%    \begin{macrocode}
+\newcommand\kvtDeclareTableCounters[1]{%
+  \def\do##1{\cslet{kvt@@c@##1}\@ne}%
+  \docsvlist{#1}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtDeclareCtrFormatters}
+% The |\kvtDeclareCtrFormatters|\marg{macro-list} macro declares all the
+% macros in \meta{macro-list} to be counter-formatting macros, i.e.,
+% macros that take a \hologo{LaTeX} counter as their argument and format
+% the counter's value, e.g., arabic, alphabetic, or as a roman number.
+% The macro records the \meta{macro-list} by appending the csnames of
+% its elements to |\kvt@@numberformatters|. The actual expansion
+% control for the macros in \meta{macro-list} is performed by
+% |\kvt@writeprotect@fmt|.
+%    \begin{macrocode}
+\newcommand\kvtDeclareCtrFormatters[1]{%
+  \def\do##1{\listeadd\kvt@@numberformatters{%
+    \expandafter\@gobble\string##1}}%
+  \docsvlist{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\kvt@@writeprotected@cmds}
+% Initially empty \pkgname{etoolbox} list of counter-formatting macros.
+%    \begin{macrocode}
+\newcommand\kvt@@numberformatters{}
+%    \end{macrocode}
+% \end{macro}
+%
+% The following registers the row counter macros as well as the row
+% counters themselves as macros/counters that shall only be expanded
+% inside the respective table.
+%    \begin{macrocode}
+\kvtDeclareTableMacros{\thekvtRow,\thekvtTypeRow,\thekvtTotalRow}
+\kvtDeclareTableCounters{kvtRow,kvtTypeRow,kvtTotalRow}
+%    \end{macrocode}
+% The following registers macros that format counter values. This
+% registering is necessary such that |\kvt@writeprotect@fmt| can protect
+% table counters from expansion.
+%    \begin{macrocode}
+\kvtDeclareCtrFormatters{\arabic,\alph,\Alph,\roman,\Roman,\fnsymbol}
+%    \end{macrocode}
+%
+% \begin{macro}{\kvt@coldefault}
+% \begin{macro}{\kvt@coldefaults}
+% \begin{macro}{\kvt@coldefaults@i}
+% The |\kvt@coldefault|\marg{tname}\marg{cname} macro expands to
+% "\meta{cname}|={|\meta{default}|},|", where \meta{default} is the
+% default value of column \meta{cname} in table type \meta{tname}. If
+% \meta{default} is empty, then the macro expands to the empty string.
+% The |\kvt@coldefaults@i|\marg{tname} macro expands to the
+% comma-separated list of the |\kvt@coldefault| for all \emph{displayed}
+% columns of table type \meta{tname}.
+% Finally, the |\kvt@coldefaults|\marg{cname} macro expands to
+% |\kvt@coldefaults| for the table type assigned to \meta{cname} via
+% |\NewCollectedTable|.
+%    \begin{macrocode}
+\newcommand\kvt@coldefaults[1]{%
+  \kvt@coldefaults@i{\csuse{kvt@@tnameof@#1}}}
+\newcommand\kvt@coldefaults@i[1]{%
+  \forlistcsloop{\kvt@coldefault{#1}}{kvt@displaycols@#1}}
+\newcommand\kvt@coldefault[2]{\ifcsvoid{kvt@col@default@#1@#2}{}{%
+  #2={\csuse{kvt@col@default@#1@#2}},}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\kvt@RecordedRow}
+% The |\kvt@RecordedRow|\marg{options}\marg{cname}\marg{content}
+% appends a |\Row| with \meta{options} and \meta{content} to a global
+% macro for \meta{cname}.
+%    \begin{macrocode}
+\newcommand\kvt@RecordedRow[3]{%
+  \csgappto{kvt@@rowsof@#2}{\Row[{#1}]{#3}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\ShowCollectedTable}
+% The |\ShowCollectedTable|\oarg{options}\marg{cname}
+% produces a |KeyValTable| table for the rows stored under the given
+% \meta{cname}, table options \meta{options}.
+% \changes{v2.0}{2019/04/09}{Added the macro}
+%    \begin{macrocode}
+\newcommand\ShowCollectedTable[2][]{%
+  \ifcsvoid{kvt@@tnameof@#2}
+    {\kvt@error{No row collection with name '#2' defined}
+      {Use \string\NewCollectedTable in the preamble to define it.}}
+    {\ifcsvoid{kvt@@rowsof@#2}
+      {\kvt@warn{No row data available for name '#2'.
+        A LaTeX rerun might be needed^^M
+        for the row data to be available}%
+       \kvt@tableofcname{#2}{#1}{???\tabularnewline}}%
+      {\kvt@tableofcname{#2}{#1}{\csuse{kvt@@rowsof@#2}}}}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@tableof}
+% \begin{macro}{\kvt@tableofcname}
+% \begin{macro}{\kvt@tableofcname@i}
+% The |\kvt@tableof|\marg{tname}\marg{options}\marg{content} expands to
+% a |KeyValTable| environment for table type \meta{tname} with
+% \meta{options} and environment body \meta{content}.
+% The |\kvt@tableofcname|\marg{cname}\marg{options}\marg{content}
+% expands to a |\kvt@tableof| where \meta{tname} is the table type
+% assigned to \meta{cname}.
+% Finally, |\kvt@tableofcname@i| is an auxiliary macro for expansion
+% control.
+%    \begin{macrocode}
+\newcommand\kvt@tableof[3]{%
+  \begin{KeyValTable}[{#2}]{#1}%
+    #3%
+  \end{KeyValTable}}
+\newcommand\kvt@tableofcname[1]{\expandafter
+  \kvt@tableofcname@i\expandafter{\csname kvt@@tnameof@#1\endcsname}}
+\newcommand\kvt@tableofcname@i[1]{\expandafter
+  \kvt@tableof\expandafter{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
 %
 % \subsubsection{Table Content from Files}
 %
@@ -1923,7 +3325,7 @@
 % macro typesets a |KeyValTable| environment of type \meta{tname} with
 % the given \meta{options}. The body of the environment (i.e., the rows
 % of the table) are read from the file \meta{filename}.
-% \changes{v1.1}{2019/03/25}{Added the macro}
+% \changes{v2.0}{2019/03/25}{Added the macro}
 %    \begin{macrocode}
 \newcommand\ShowKeyValTableFile[3][]{%
   \IfFileExists{#3}
@@ -1982,29 +3384,61 @@
 %
 % \subsection{Package Options}
 %
-% The \pkgname{tabu} is used by default for typesetting the tables,
-% additionally with \pkgname{longtable} for tables that can span
-% multiple pages.
-% If the default packages are never used or the \pkgname{tabu} package
-% shall be loaded manually, the |noTabuPkg| option can be used.
+% The following option allows specifying a version for (hopefully)
+% compatibility with the respective old version.
+% \changes{v2.0}{2019/05/11}{added package option "compat"}
 %    \begin{macrocode}
-\define@boolkey[kvt]{PackageOptions}[kvt@@]{noTabuPkg}[true]{}
+\define@cmdkey[kvt]{PackageOptions}[kvt@@pkg@]{compat}{}
 %    \end{macrocode}
 %
 % Next, set default package options and process them.
 %    \begin{macrocode}
 \ExecuteOptionsX[kvt]<PackageOptions>{%
-  noTabuPkg=false,
+  compat=2.0,
 }
 \ProcessOptionsX[kvt]<PackageOptions>\relax
 %    \end{macrocode}
 %
-% Finally, implement the outcome of the options parsing.
+%
+% \subsection{Compatibility}
+%
+% \begin{macro}{\kvt@NewCompat}
+% The
+% |\kvt@IfVersion|\marg{relation}\marg{version}\marg{iftrue}\marg{iffalse}
+% macro expands to \meta{iftrue} if the requested package version is in
+% the given \meta{relation} ($<$, $<$, or $=$) to \meta{version}.
+% Otherwise, the macro expands to \meta{iffalse}.
+% Package versions are requested via the |compat| package option. If no
+% version is explicitly requested, the newest version is implicitly
+% assumed to be requested.
+% \meta{code} as
 %    \begin{macrocode}
-\ifbool{kvt@@noTabuPkg}{}{%
-  \RequirePackage{longtable,tabu}}
+\newcommand\kvt@IfVersion[2]{%
+  \ifdimcomp{\kvt@@pkg@compat pt}{#1}{#2pt}}
+%    \end{macrocode}
+% \end{macro}
+%
+% Before v2.0, \pkgname{tabu} was the default table environment.
+%    \begin{macrocode}
+\kvt@IfVersion{<}{2.0}{%
+  \metatblRequire{tabu,longtabu}
+  \kvt@DefineStdTabEnv[onepage]{tabu}
+  \kvt@DefineStdTabEnv[multipage]{longtabu}
+}{%
+  \metatblRequire{tabularx,longtable,xltabular}
+  \kvt@DefineDualTabEnv{onepage}{tabular}{tabularx}
+  \kvt@DefineDualTabEnv{multipage}{longtable}{xltabular}
+}
 %    \end{macrocode}
 %
+% Before v2.0, the second optional argument of |\NewKeyValTable|
+% specified the header rows only. Only afterwards, that argument
+% received a key-value syntax.
+%    \begin{macrocode}
+\kvt@IfVersion{<}{2.0}{%
+  \let\kvt@parselayout=\kvt@parseheadrows
+}{}
+%    \end{macrocode}
 %
 %\iffalse
 %</package>
