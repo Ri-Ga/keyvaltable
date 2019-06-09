@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2019/05/11 v2.0 Package for filling tables using key-value lists]
+    [2019/05/11 v2.0.1 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -1115,14 +1115,18 @@ cherries,50g,cherries,heat up and add to bowl
 % Originally, the \thispackage package uses the \pkgname{tabu} package
 % and |tabu|, resp. |longtabu| environments for typesetting the actual
 % tables. Through the |shape| option of tables, the table environment
-% used by \thispackage tables can be changed. \Vref{tab:TabEnv} compares
-% the possible shapes/environments with regards to whether they support
-% tables that span multiple pages, whether they support |X|-type
-% (variable-width) columns, and whether their width can be specified
-% (through the |width| option). Finally, the table also displays the
+% used by \thispackage tables can be changed.
+% \Vref{tab:TabEnv} compares
+% the possible shapes/environments with regards to
+% \begin{itemize}[nosep]
+% \item whether they support tables that span multiple pages,
+% \item whether they support |caption| and |label| options,
+% \item whether they support |X|-type (variable-width) columns,
+% \item and whether their width can be specified (through the |width| option).
+% \end{itemize}
+% Finally, the table also displays the
 % package(s) that must be loaded manually when the respective shapes are
 % used.
-% Examples can be found in \vref{fig:TableTypes}.
 % \begin{table}\centering
 %   \newcommand\RHead[1]{\rotatebox{90}{\small\varwidth{\linewidth}#1\endvarwidth}}%
 %   \newcommand\YesNo[1]{\ifstrequal{#1}{yes}{\checkmark}{}}%
@@ -1153,6 +1157,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \label{tab:TabEnv}
 % \end{table}
 %
+% Examples can be found in \vref{fig:TableTypes}.
 % \begin{figure}[p]
 % \begin{LTXexample}[width=0.475\hsize,
 %    morekeywords={tabular,longtable}]
@@ -1160,6 +1165,7 @@ cherries,50g,cherries,heat up and add to bowl
 %   id: align=l, default=\thekvtTypeRow;
 %   l: align=l; c: align=c; r: align=r;}[headers={
 %   l+c+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::}]
+%
 % \begin{KeyValTable}[shape=tabular]{ShapeNoX}
 %   \Row{l=left,   c=center,     r=right}
 %   \Row{l=left-2, c=2-center-2, r=2-right}
@@ -1169,12 +1175,14 @@ cherries,50g,cherries,heat up and add to bowl
 %   \Row{l=left-2, c=2-center-2, r=2-right}
 % \end{KeyValTable}
 % \end{LTXexample}
+%
 % \begin{LTXexample}[width=0.475\hsize,
 %    morekeywords={tabularx,xltabular,tabu,longtabu}]
 % \NewKeyValTable[showrules=false]{ShapeWithX}{
 %   id: align=l, default=\thekvtTypeRow;
 %   l: align=l; X: align=X; r: align=r;}[headers={
 %   l+X+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::}]
+%
 % \begin{KeyValTable}[shape=tabularx]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
@@ -1196,7 +1204,10 @@ cherries,50g,cherries,heat up and add to bowl
 % \label{fig:TableTypes}
 % \end{figure}
 %
-%
+% ^^M The following \clearpage is a hack! It fixes the page breaking
+% ^^M that is messed up because of the longtable/xltabular/longtabu
+% ^^M in fig:TableTypes.
+% \clearpage
 % \section{Use with Other Packages}
 %
 % \subsection{Named References (\pkgname{cleveref})}\label{sec:package-cleveref}
@@ -1485,7 +1496,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{macro}{\kvt@colsetcmdkeys}
 % \begin{macro}{\kvt@colsetcskeys}
 % The |\kvt@colsetkeys|\marg{fam}\marg{keys} macro abbreviates
-% |\setkeys[KeyValTable]|\meta{fam}\meta{keys}.
+% |\setkeys[KeyValTable]| with the same arguments.
 % The |\kvt@colsetcmdkeys|\marg{famcmd}\marg{keys} and
 % |\kvt@colsetcskeys|\marg{famcs}\marg{keys} abbreviate the cases where
 % \meta{fam} is stored in macro \meta{famcmd} or, respectively,
@@ -1627,9 +1638,9 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \begin{macro}{\kvt@def@globalopt}
 % \begin{macro}{\kvt@def@globalopts}
-% The |\kvt@def@globalopt|\marg{family}{key} macro creates an option key
-% "\meta{family}/\meta{key}" for |\kvtSet| that set the preset value for
-% the \meta{key} in \meta{family}.
+% The |\kvt@def@globalopt|\marg{family}{key} macro creates the option key
+% "\meta{family}/\meta{key}". When used in |\kvtSet|, this key sets the preset
+% value for the \meta{key} in \meta{family}.
 % The |\kvt@def@globalopts|\marg{family}{keys} macro extends the former
 % macro to comma-separated lists of \meta{keys} within a single
 % \meta{family}.
@@ -1655,9 +1666,9 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \subsubsection{Layout Customization Options}
 %
-% The following defines the options for the second optional argument to
-% |\NewKeyValTable|. These options intentionally do not support setting
-% global defaults via |\kvtSet|.
+% The following defines the option keys for the second optional argument
+% to |\NewKeyValTable|. These options intentionally do not support
+% setting global defaults via |\kvtSet|.
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Layout}{headers}{%
   \expandafter\kvt@parseheadrows\expandafter{\kvt@@tname}{#1}}
@@ -2183,7 +2194,7 @@ cherries,50g,cherries,heat up and add to bowl
   \kvt@@span\z@
   \undef\kvt@@curhd \undef\kvt@@lasthd
 %    \end{macrocode}
-% Next, loop over all displayed (non-hidden) columns stored in
+% Next, loop over all displayed columns, stored in
 % \cs{kvt@displaycols@\meta{tname}}. The following |\do|\marg{colname}
 % macro collects (spanned) columns as specified in \meta{colspec}, in the
 % ordering in which the table's columns are displayed. The spanned
@@ -2285,9 +2296,9 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
   \def\kvt@@colreg##1{%
     \ifinlistcs{##1}{kvt@allcolumns@#1}{}
-      {\kvt@error{Column `##1', referenced in header cell `#2', not known
-        in table type `#1'}{Check the \string\NewKeyValTable{#1} for
-        the names of known columns and check `##1' for a typo.}}%
+      {\kvt@error{Column `##1', referenced in header cell `#2', not
+        known in table type `#1'}{Check the \string\NewKeyValTable{#1}
+        for the names of known columns and check `##1' for a typo.}}%
     \ifcsmacro{kvt@@hdcellof@##1}
       {\kvt@error{Column `##1' used in more than one header cell}
          {Check the fourth, optional argument of \string\NewKeyValTable
@@ -2674,18 +2685,20 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \begin{macro}{\metatblUsePackage}
 % \begin{macro}{\metatblRequire}
-% The |\metatblUsePackage|\marg{env-names} and
-% |\metatblRequire|\marg{env-names} macros load the packages required
+% Macros |\metatblUsePackage|\marg{env-names} and
+% |\metatblRequire|\marg{env-names} load the packages required
 % for typesetting |KeyValTable| tables based on the table environments
 % listed in \meta{env-names}.
 % The former aims more at normal document use, the second at use by
 % package developers.
 %    \begin{macrocode}
 \newcommand\metatblUsePackage[1]{%
-  \def\do##1{\metatbl@csnamearg\usepackage{metatbl@EnvProp@pkg@##1}}%
+  \def\do##1{%
+    \metatbl@csnamearg\usepackage{metatbl@EnvProp@pkg@##1}}%
   \docsvlist{#1}}
 \newcommand\metatblRequire[1]{%
-  \def\do##1{\metatbl@csnamearg\RequirePackage{metatbl@EnvProp@pkg@##1}}%
+  \def\do##1{%
+    \metatbl@csnamearg\RequirePackage{metatbl@EnvProp@pkg@##1}}%
   \docsvlist{#1}}
 %    \end{macrocode}
 % \end{macro}
@@ -2888,7 +2901,8 @@ cherries,50g,cherries,heat up and add to bowl
 % Separately also already create the formatted content.
 %    \begin{macrocode}
     \ifcsvoid{kvt@@noformat@#2@##1}
-      {\edef\kvt@@formatter{\expandonce{\csname kvt@col@format@#2@##1\endcsname}}}%
+      {\edef\kvt@@formatter{\expandonce
+        {\csname kvt@col@format@#2@##1\endcsname}}}%
       {\def\kvt@@formatter{\@firstofone}}%
     \edef\kvt@@fmtcell{\expandonce\kvt@@formatter{%
       \expandonce\kvt@@cell}}%
@@ -3015,12 +3029,18 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
 \newcommand\kvt@UseRowStyles[1]{%
 %    \end{macrocode}
-% We use |\kvt@xkv@disablepreset| to eliminate undesired effects from
-% presets. When, for example, using |\Row[bg=red,style=abc]{...}|, this
-% causes a |\setkeys[kvt]{Row}{xyz}| (if |xyz| is how the style |abc| is
-% defined) inside the |\setkeys[kvt]{Row}{bg=red,style=abc}|. The former
+% We use |\kvt@xkv@disablepreset| to eliminate undesired effects that
+% would otherwise be caused by preset values for keys.
+% For an example of such side-effect, consider a style "|vis|" that is
+% defined as "|hidden=false|". Then,
+%   |\Row[bg=red,style=vis]{...}|
+% causes a
+%   |\setkeys[kvt]{Row}{hidden=false}|
+% to be processed inside the |\setkeys[kvt]{Row}{bg=red,style=vis}|,
+% after the |bg=red| is processed.
+% The former
 % |\setkeys| would then again employ the presets for |Row| (e.g., from a
-% |\kvtSet{Row/bg=blue}| and overwrite the |bg=red|.
+% |\kvtSet{Row/bg=blue}|) and undesirably overwrite the |bg=red|.
 %    \begin{macrocode}
   \kvt@xkv@disablepreset[kvt]{Row}{%
     \forcsvlist\kvt@UseRowStyle{#1}}}
@@ -3028,17 +3048,9 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{macro}
 %
 % \begin{macro}{\kvt@xkv@disablepreset}
-% \begin{macro}{\kvt@xkv@savepreset}
-% \begin{macro}{\kvt@xkv@restorepreset}
 % The |\kvt@xkv@disablepreset|\oarg{prefix}\marg{family}\marg{code}
-% disables presets (head and tail) for \meta{family} during the
+% disables head presets and tail presets for \meta{family} during the
 % expansion of \meta{code}.
-% The auxiliary macros
-% |\kvt@xkv@savepreset|\marg{prefix}\marg{family}\marg{h/t}
-% and
-% |\kvt@xkv@restorepreset|\marg{prefix}\marg{family}\marg{h/t}
-% save+unset and, respectively, restore the preset keys for
-% \meta{family} -- head keys for \meta{h/t}=h and tail keys otherwise.
 %    \begin{macrocode}
 \newcommand\kvt@xkv@disablepreset[3][KV]{%
   \ifnumgreater{\XKV@depth}{1}
@@ -3048,13 +3060,23 @@ cherries,50g,cherries,heat up and add to bowl
      #3%
      \kvt@xkv@restorepreset{#1}{#2}{h}%
      \kvt@xkv@restorepreset{#1}{#2}{t}}}
+%    \end{macrocode}
+% \end{macro}
+% \begin{macro}{\kvt@xkv@savepreset}
+% \begin{macro}{\kvt@xkv@restorepreset}
+% The auxiliary macro
+% |\kvt@xkv@savepreset|\marg{prefix}\marg{family}\marg{h/t}
+% saves and unsets the preset keys (head keys for \meta{h/t}=h and tail
+% keys otherwise) for \meta{family}. The macro
+% |\kvt@xkv@restorepreset|\marg{prefix}\marg{family}\marg{h/t}
+% restores the preset keys saved via |\kvt@xkv@savepreset|.
+%    \begin{macrocode}
 \newcommand\kvt@xkv@savepreset[3]{%
   \csletcs{kvt@@saved@preset#3}{XKV@#1@#2@preset#3}%
   \csundef{XKV@#1@#2@preset#3}}
 \newcommand\kvt@xkv@restorepreset[3]{%
   \csletcs{XKV@#1@#2@preset#3}{kvt@@saved@preset#3}}
 %    \end{macrocode}
-% \end{macro}
 % \end{macro}
 % \end{macro}
 %
@@ -3322,9 +3344,10 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \begin{macro}{\ShowKeyValTableFile}
 % The |\ShowKeyValTableFile|\oarg{options}\marg{tname}\marg{filename}
-% macro typesets a |KeyValTable| environment of type \meta{tname} with
-% the given \meta{options}. The body of the environment (i.e., the rows
-% of the table) are read from the file \meta{filename}.
+% loads the content of the file with name \meta{filename} and places it
+% inside the body of a |KeyValTable| environment of type \meta{tname} with
+% the given \meta{options}. That is, the filename should contain the rows
+% of the table.
 % \changes{v2.0}{2019/03/25}{Added the macro}
 %    \begin{macrocode}
 \newcommand\ShowKeyValTableFile[3][]{%
