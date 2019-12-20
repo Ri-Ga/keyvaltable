@@ -3460,7 +3460,7 @@ cherries,50g,cherries,heat up and add to bowl
 % received a key-value syntax.
 %    \begin{macrocode}
 \kvt@IfVersion{<}{2.0}{%
-  \let\kvt@parselayout=\kvt@parseheadrows
+  \renewcommand\kvt@parselayout[2]{\kvt@parseheadrows{#2}{#1}}%
 }{}
 %    \end{macrocode}
 %
