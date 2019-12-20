@@ -2404,12 +2404,6 @@ cherries,50g,cherries,heat up and add to bowl
 }{%
   \csuse{kvt@EndTable@\cmdkvt@Table@shape}}
 %    \end{macrocode}
-% The following saves the row counter value outside the table
-% environment but still in the then-local scope.
-%    \begin{macrocode}
-\AfterEndEnvironment{KeyValTable}{%
-  \csdef{kvt@rowcount@\kvt@@recenttable}{\thekvtTypeRow}}
-%    \end{macrocode}
 % \end{environment}
 %
 % \begin{macro}{\kvt@SetOptions}
@@ -2457,6 +2451,13 @@ cherries,50g,cherries,heat up and add to bowl
            \label\expandafter{\cmdkvt@Table@label}}}}
       {\kvt@warn{Caption lost, table environment '#1'
                  does not support captions.}}}%
+%    \end{macrocode}
+% The following saves the row counter value for the table type globally,
+% such that subsequent tables of the same \meta{tname} can start counting
+% from there.
+%    \begin{macrocode}
+  \appto\kvt@@endhook{%
+    \noalign{\csxdef{kvt@rowcount@#2}{\thekvtTypeRow}}}%
 %    \end{macrocode}
 % Initializing the row counters. The global counter |kvtTotalRow| needs
 % no local initialization.
