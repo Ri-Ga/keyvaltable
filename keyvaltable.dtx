@@ -2439,6 +2439,13 @@ cherries,50g,cherries,heat up and add to bowl
     {\def\kvt@@rule##1{}}%
   \appto\kvt@@endhook{\kvt@@rule{bottom}}
 %    \end{macrocode}
+% The following saves the row counter value for the table type globally,
+% such that subsequent tables of the same \meta{tname} can start counting
+% from there.
+%    \begin{macrocode}
+  \appto\kvt@@endhook{%
+    \noalign{\csxdef{kvt@rowcount@#2}{\thekvtTypeRow}}}%
+%    \end{macrocode}
 % Adding caption and label, if given, to the end hook. This displays the
 % caption solely at the very end of the table.
 %    \begin{macrocode}
@@ -2451,13 +2458,6 @@ cherries,50g,cherries,heat up and add to bowl
            \label\expandafter{\cmdkvt@Table@label}}}}
       {\kvt@warn{Caption lost, table environment '#1'
                  does not support captions.}}}%
-%    \end{macrocode}
-% The following saves the row counter value for the table type globally,
-% such that subsequent tables of the same \meta{tname} can start counting
-% from there.
-%    \begin{macrocode}
-  \appto\kvt@@endhook{%
-    \noalign{\csxdef{kvt@rowcount@#2}{\thekvtTypeRow}}}%
 %    \end{macrocode}
 % Initializing the row counters. The global counter |kvtTotalRow| needs
 % no local initialization.
