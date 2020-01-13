@@ -2101,7 +2101,14 @@ cherries,50g,cherries,heat up and add to bowl
           {Compare `\string\kvt@@curgrp' to the column ordering as
            specified in `\string\NewKeyValTable{#1}'}%
         \fi
-        \edef\kvt@@colgrp@n{\the\numexpr\kvt@@colgrp@n+1\relax}}%
+        \edef\kvt@@colgrp@n{\the\numexpr\kvt@@colgrp@n+1\relax}%
+%    \end{macrocode}
+% Since this macro is not encapsulated in a group (in order to return
+% |\kvt@@colgrp@n| and |\kvt@@colgrp@first|), we finally prevent the
+% local \cs{kvt@@incolgrp@\meta{column}} from leaking outside this
+% macro.
+%    \begin{macrocode}
+        \csundef{kvt@@incolgrp@##1}}%
   }\forlistcsloop{\kvt@@coldo}{kvt@displaycols@#2}}
 %    \end{macrocode}
 % \end{macro}
