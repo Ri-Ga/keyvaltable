@@ -2000,9 +2000,7 @@ cherries,50g,cherries,heat up and add to bowl
 % The following defines the |\Row| key for \meta{cgname}, as an
 % abbreviation for setting the value of the first displayed column of
 % \meta{cgname} (|\kvt@@colgrp@first| to a |\multicolumn| that spans the
-% "right" number of columns. Notice the "*" after |\kvt@@colgrp@first|,
-% which disables the first column's default formatting to replace it by
-% the formatting of \meta{cgname}.
+% "right" number of columns).
 %    \begin{macrocode}
     \noexpand\define@cmdkey[KeyValTable]{#1}{#2}{%
 %    \end{macrocode}
@@ -2011,11 +2009,23 @@ cherries,50g,cherries,heat up and add to bowl
 % are hidden), then setting \meta{cgname} to a value has no effect.
 %    \begin{macrocode}
       \ifdefvoid\kvt@@colgrp@first{}{%
-        \noexpand\setkeys[KeyValTable]{#1}{%
-          \expandonce\kvt@@colgrp@first*=\noexpand\multicolumn
-            {\expandonce\kvt@@colgrp@n}%
-            {\csexpandonce{kvt@colgrp@align@#2}}%
-            {\csexpandonce{kvt@colgrp@format@#2}{\unexpanded{##1}}}}%
+%    \end{macrocode}
+% The "abbreviation" is implemented via |\setkeys|. The letter normally
+% employs the defined |\presetkeys|, but we disable this through
+% |\kvt@xkv@disablepreset| to avoid that column keys that are set before
+% a colgroup key are overwritten by their preset values.
+%    \begin{macrocode}
+        \noexpand\kvt@xkv@disablepreset[KeyValTable]{#1}{%
+          \noexpand\setkeys[KeyValTable]{#1}{%
+%    \end{macrocode}
+% Notice the "*" after |\kvt@@colgrp@first|,
+% which disables the first column's default formatting to replace it by
+% the formatting of \meta{cgname}.
+%    \begin{macrocode}
+            \expandonce\kvt@@colgrp@first*=\noexpand\multicolumn
+              {\expandonce\kvt@@colgrp@n}%
+              {\csexpandonce{kvt@colgrp@align@#2}}%
+              {\csexpandonce{kvt@colgrp@format@#2}{\unexpanded{##1}}}}}%
       }%
     }}%
     \listcsadd{kvt@grpcolkeys@#1}{#2}}
