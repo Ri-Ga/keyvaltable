@@ -1,6 +1,6 @@
 % \iffalse meta-comment
 %
-% Copyright (C) 2016-2019 by Richard Grewe <r-g+tex@posteo.net>
+% Copyright (C) 2016-2020 by Richard Grewe <r-g+tex@posteo.net>
 % -------------------------------------------------------
 %
 % This file may be distributed and/or modified under the
@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2019/05/11 v2.0.1 Package for filling tables using key-value lists]
+    [2020/01/19 v2.1 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -630,9 +630,17 @@ cherries,50g,cherries,heat up and add to bowl
 % specifies that the header row is shown and |false| specifies that the
 % header row is not shown.
 %
-% \NiceDescribeKey{showrules}{vals={true,false}, init=true}
-% This property specifies whether top and bottom rules as well
-% as a rule below the header row are drawn (|true|) or not (|false|).
+% \NiceDescribeKeys{2}
+%   {showrules}{vals={true,false}, init=true}
+%   {norules}{vals={true,false}, init=false, def=true}
+% The |showrules| property specifies whether top and bottom rules as
+% well as a rule below the header row are drawn (|true|) or not
+% (|false|). The |norules| property serves the same purpose, but the
+% value |true| hides the rules and the value |false| causes the rules to
+% be drawn.
+% Note that both properties only affect the rules that \thispackage
+% produces automatically; rules manually added, e.g., via |\hline| or
+% |\midrule| are not affected by the properties.
 %
 % \NiceDescribeKey{headalign}{vals={\vmeta{empty} or \vmeta{coltype}}, init=\vmeta{empty}}
 % This property specifies the alignment for header cells.  If left
@@ -1589,10 +1597,6 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Table}{rowbg}{}
 \define@cmdkey[kvt]{Table}{headbg}{}
-\define@boolkey[kvt]{Table}{norowbg}[true]{%
-  \kvt@setkeys{rowbg={}}{Table}}
-\define@key[kvt]{Table}{nobg}[true]{%
-  \kvt@setkeys{rowbg={},headbg={}}{Table}}
 \define@cmdkey[kvt]{Table}{headalign}{}
 \define@cmdkey[kvt]{Table}{headformat}{}
 \define@cmdkey[kvt]{Table}{width}{}
@@ -1600,7 +1604,18 @@ cherries,50g,cherries,heat up and add to bowl
 \define@boolkey[kvt]{Table}{showrules}{}
 \define@cmdkey[kvt]{Table}{caption}{}
 \define@cmdkey[kvt]{Table}{label}{}
-
+%    \end{macrocode}
+% The following options only abbreviate options defined above.
+% \changes{v2.1}{2020/01/14}{added abbreviation option "norules"}
+%    \begin{macrocode}
+\define@boolkey[kvt]{Table}{norowbg}[true]{%
+  \kvt@setkeys{rowbg={}}{Table}}
+\define@boolkey[kvt]{Table}{nobg}[true]{%
+  \kvt@setkeys{rowbg={},headbg={}}{Table}}
+\define@boolkey[kvt]{Table}{norules}[true]{%
+  \ifbool{#1}
+    {\kvt@setkeys{showrules=false}{Table}}
+    {\kvt@setkeys{showrules=true}{Table}}}
 %    \end{macrocode}
 % When adding further |shape| options below, ensure to also add a
 % corresponding |\kvt@DefineStdTabEnv| counterpart further below in the
