@@ -1500,6 +1500,16 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{macro}
 % \end{macro}
 %
+% \begin{macro}{\kvt@setkeys@nopresets}
+% The
+% |\kvt@setkeys@nopresets|\marg{keys}\marg{family} macro
+% expands to a |\kvt@setkeys| in which no presets are active.
+%    \begin{macrocode}
+\newcommand\kvt@setkeys@nopresets[2]{%
+  \kvt@xkv@disablepreset[kvt]{#2}{\kvt@setkeys{#1}{#2}}}
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{\kvt@colsetkeys}
 % \begin{macro}{\kvt@colsetcmdkeys}
 % \begin{macro}{\kvt@colsetcskeys}
@@ -1715,7 +1725,7 @@ cherries,50g,cherries,heat up and add to bowl
 \define@cmdkey[kvt]{Row}{below}{}
 \define@cmdkey[kvt]{Row}{above}{}
 \define@key[kvt]{Row}{around}{%
-  \kvt@setkeys{below={#1},above={#1}}{Row}}
+  \kvt@setkeys@nopresets{below={#1},above={#1}}{Row}}
 \define@key[kvt]{Row}{style}{\kvt@UseRowStyles{#1}}
 \define@boolkey[kvt]{Row}{uncounted}[true]{}
 \define@boolkey[kvt]{Row}{expand}[true]{}
