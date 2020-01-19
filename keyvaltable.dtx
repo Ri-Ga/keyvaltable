@@ -624,6 +624,10 @@ cherries,50g,cherries,heat up and add to bowl
 % This property specifies the width of the table, if the selected
 % |shape| supports it (see \cref{sec:AltTabEnv}).
 %
+% \NiceDescribeKey{valign}{vals={t,c,b}, init=\vmeta{empty}}
+% This property specifies the vertical alignment of the table, if the
+% selected |shape| supports it (see \cref{sec:AltTabEnv}).
+%
 % \NiceDescribeKey{showhead}{vals={true,false}, init=true}
 % This property specifies whether the header row shall be shown.  The
 % \meta{value} must be a Boolean (i.e., |true| or |false|), where |true|
@@ -1145,21 +1149,22 @@ cherries,50g,cherries,heat up and add to bowl
 %   caption:   align=c, head=\RHead{caption}, format=\YesNo;
 %   Xcols:     align=c, head=\RHead{\texttt{X} columns}, format=\YesNo;
 %   width:     align=c, head=\RHead{width}, format=\YesNo;
+%   valign:    align=c, head=\RHead{valign}, format=\YesNo;
 %   packages: align=l,  format=\pkgnames}%
 % \begin{KeyValTable}{ShapeProps}
-% \Row{shape=onepage,   env=tabular/tabularx,   multipage=no,  caption=no,  Xcols=yes, width=yes, packages=tabularx}
-% \Row{shape=multipage, env=longtabu/xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, packages={longtable, xltabular}}
+% \Row{shape=onepage,   env=tabular/tabularx,   multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages=tabularx}
+% \Row{shape=multipage, env=longtabu/xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no, packages={longtable, xltabular}}
 % \midrule
 % \noalign{\footnotesize with package option |compat=1.0|:}
-% \Row{shape=onepage,   env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, packages=tabu}
-% \Row{shape=multipage, env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, packages={tabu, longtable}}
+% \Row{shape=onepage,   env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages=tabu}
+% \Row{shape=multipage, env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no,  packages={tabu, longtable}}
 % \midrule
-% \Row{shape=tabular,   env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no}
-% \Row{shape=tabularx,  env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, packages={tabularx}}
-% \Row{shape=longtable, env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no,  packages={longtable}}
-% \Row{shape=xltabular, env=xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, packages={xltabular}}
-% \Row{shape=tabu,      env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, packages={tabu}}
-% \Row{shape=longtabu,  env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, packages={tabu,longtable}}
+% \Row{shape=tabular,   env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no, valign=yes}
+% \Row{shape=tabularx,  env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages={tabularx}}
+% \Row{shape=longtable, env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no, valign=no,   packages={longtable}}
+% \Row{shape=xltabular, env=xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no,  packages={xltabular}}
+% \Row{shape=tabu,      env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages={tabu}}
+% \Row{shape=longtabu,  env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no,  packages={tabu,longtable}}
 % \end{KeyValTable}
 % \caption{Comparison of table shapes / environments}
 % \label{tab:TabEnv}
@@ -1604,6 +1609,7 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \changes{v0.2}{2016/05/21}{Added ``shape'' table option}
 % \changes{v2.0}{2019/05/11}{added table options "caption" and "label"}
+% \changes{v2.1}{2020/01/18}{Added ``valign'' table option}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Table}{rowbg}{}
 \define@cmdkey[kvt]{Table}{headbg}{}
@@ -1614,6 +1620,8 @@ cherries,50g,cherries,heat up and add to bowl
 \define@boolkey[kvt]{Table}{showrules}{}
 \define@cmdkey[kvt]{Table}{caption}{}
 \define@cmdkey[kvt]{Table}{label}{}
+\define@choicekey[kvt]{Table}{valign}{t,c,b}
+  {\csdef{cmdkvt@Table@valign}{#1}}
 %    \end{macrocode}
 % The following options only abbreviate options defined above.
 % \changes{v2.1}{2020/01/14}{added abbreviation option "norules"}
@@ -2501,6 +2509,15 @@ cherries,50g,cherries,heat up and add to bowl
       {\kvt@warn{Caption lost, table environment '#1'
                  does not support captions.}}}%
 %    \end{macrocode}
+% The following lines perform some checks before the table environment
+% is started.
+%    \begin{macrocode}
+  \ifdefvoid{\cmdkvt@Table@valign}{}{\metatblCanVAlign{#1}{}
+    {\undef{\cmdkvt@Table@valign}%
+      \kvt@warn{Table environment '#1' of table '#2'
+        does not support the vertical alignment option (valign).
+        Ignoring the option}}}%
+%    \end{macrocode}
 % Initializing the row counters. The global counter |kvtTotalRow| needs
 % no local initialization.
 %    \begin{macrocode}
@@ -2512,6 +2529,7 @@ cherries,50g,cherries,heat up and add to bowl
 % settings and options.
 % \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
 % \changes{v1.0}{2019/03/09}{Added \texttt{width} option}
+% \changes{v2.1}{2020/01/18}{Added \texttt{valign} option}
 %    \begin{macrocode}
   \begingroup\edef\kvt@@do{\endgroup
     \metatblIsTabu{#1}{}{\noexpand\kvt@dottedrowcolors
@@ -2525,6 +2543,7 @@ cherries,50g,cherries,heat up and add to bowl
           {to \expandonce\cmdkvt@Table@width}
           {{\expandonce\cmdkvt@Table@width}}}
         {}%
+      \ifdefvoid{\cmdkvt@Table@valign}{}{[\cmdkvt@Table@valign]}%
       {\csexpandonce{kvt@alignments@#2}}%
     \noexpand\kvt@@rule{top}%
     \ifbool{kvt@Table@showhead}
@@ -2649,6 +2668,10 @@ cherries,50g,cherries,heat up and add to bowl
   \metatbl@boolprop{hasWidth}{#1}}
 \define@boolkey[metatbl]{EnvProp}{hasCaption}{%
   \metatbl@boolprop{hasCaption}{#1}}
+\define@boolkey[metatbl]{EnvProp}{canVAlign}{%
+  \metatbl@boolprop{canVAlign}{#1}}
+\define@boolkey[metatbl]{EnvProp}{canHAlign}{%
+  \metatbl@boolprop{canHAlign}{#1}}
 \define@cmdkey[metatbl]{EnvProp}{packages}{\metatbl@setprop{pkg}{#1}}
 %    \end{macrocode}
 % The |atEnd| property shall be set to \hologo{TeX} code with one
@@ -2699,6 +2722,8 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{macro}{\metatblIsTabu}
 % \begin{macro}{\metatblHasWidth}
 % \begin{macro}{\metatblHasCaption}
+% \begin{macro}{\metatblCanVAlign}
+% \begin{macro}{\metatblCanHAlign}
 % The macro
 % |\metatblIsLong|\marg{env-name}\marg{iftrue}\marg{iffalse}
 % expands to \meta{iftrue} if \meta{env-name} is a "long" table
@@ -2720,7 +2745,11 @@ cherries,50g,cherries,heat up and add to bowl
 \newcommand\metatblIsTabu[1]{\ifbool{metatbl@EnvProp@isTabu@#1}}
 \newcommand\metatblHasWidth[1]{\ifbool{metatbl@EnvProp@hasWidth@#1}}
 \newcommand\metatblHasCaption[1]{\ifbool{metatbl@EnvProp@hasCaption@#1}}
+\newcommand\metatblCanVAlign[1]{\ifbool{metatbl@EnvProp@canVAlign@#1}}
+\newcommand\metatblCanHAlign[1]{\ifbool{metatbl@EnvProp@canHAlign@#1}}
 %    \end{macrocode}
+% \end{macro}
+% \end{macro}
 % \end{macro}
 % \end{macro}
 % \end{macro}
@@ -2773,11 +2802,13 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
 \metatblRegisterEnv{tabular}{%
   isLong=false, hasWidth=false, isTabu=false, hasCaption=false,
+  canVAlign=true, canHAlign=false,
   packages={},
   atEnd={\preto\endtabular{#1}},
 }
 \metatblRegisterEnv{tabularx}{%
   isLong=false, hasWidth=true, isTabu=false, hasCaption=false,
+  canVAlign=true, canHAlign=false,
   packages=tabularx,
   atEnd={%
 %    \end{macrocode}
@@ -2790,16 +2821,19 @@ cherries,50g,cherries,heat up and add to bowl
 }
 \metatblRegisterEnv{longtable}{%
   isLong=true, hasWidth=false, isTabu=false, hasCaption=true,
+  canVAlign=false, canHAlign=true,
   packages={longtable},
   atEnd={\preto\endlongtable{#1}},
 }
 \metatblRegisterEnv{xltabular}{%
   isLong=true, hasWidth=true, isTabu=false, hasCaption=true,
+  canVAlign=false, canHAlign=true,
   packages=xltabular,
   atEnd={\preto\XLT@ii@TX@endtabularx{\toks@\expandafter{\the\toks@#1}}},
 }
 \metatblRegisterEnv{tabu}{%
   isLong=false, hasWidth=true, isTabu=true, hasCaption=false,
+  canVAlign=true, canHAlign=false,
   packages={tabu},
 %    \end{macrocode}
 % The following is not a mistake: |tabu| does
@@ -2809,6 +2843,7 @@ cherries,50g,cherries,heat up and add to bowl
 }
 \metatblRegisterEnv{longtabu}{%
   isLong=true, hasWidth=true, isTabu=true, hasCaption=true,
+  canVAlign=false, canHAlign=true,
   packages={tabu,longtable},
 %    \end{macrocode}
 % The following is not a mistake: |tabu| does
