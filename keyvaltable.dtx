@@ -624,9 +624,12 @@ cherries,50g,cherries,heat up and add to bowl
 % This property specifies the width of the table, if the selected
 % |shape| supports it (see \cref{sec:AltTabEnv}).
 %
-% \NiceDescribeKey{valign}{vals={t,c,b}, init=\vmeta{empty}}
-% This property specifies the vertical alignment of the table, if the
-% selected |shape| supports it (see \cref{sec:AltTabEnv}).
+% \NiceDescribeKeys{2}
+%   {valign}{vals={t,c,b}, init=\vmeta{empty}}
+%   {halign}{vals={l,c,r}, init=\vmeta{empty}}
+% These two properties specify the vertical and, respectively, horizontal
+% alignment of the table, if the selected |shape| supports it (see
+% \cref{sec:AltTabEnv}).
 %
 % \NiceDescribeKey{showhead}{vals={true,false}, init=true}
 % This property specifies whether the header row shall be shown.  The
@@ -688,34 +691,42 @@ cherries,50g,cherries,heat up and add to bowl
 % \vref{fig:TableOptionExamples} demonstrates the \meta{options} in
 % examples.
 % \begin{figure}
-% \begin{LTXexample}[morekeywords={shape,showhead,rowbg}]
-% \NewKeyValTable[shape=onepage,
-%     showhead=false,
+% \begin{LTXexample}[morekeywords={showhead,rowbg}]
+% \kvtSet{format=\texttt}
+% \NewKeyValTable[showhead=false,
 %     rowbg=blue!10..blue!15,
-%   ]{TabOptions}{
-%     opt: align=l, format=\texttt;
-%     val: align=l, format=\texttt;}
-% \begin{table}\centering
+%   ]{TabOptions}{opt; val}
 % \begin{KeyValTable}{TabOptions}
-% \Row{opt=shape,  val=onepage}
-% \Row{opt=showhead, val=false}
-% \Row{opt=rowbg,  val=blue!10..blue!15}
+%   \Row{opt=showhead, val=false}
+%   \Row{opt=rowbg,  val=blue!10..blue!15}
 % \end{KeyValTable}
-% \caption{table options demo}
-% \end{table}
 % \end{LTXexample}
-% \begin{LTXexample}[morekeywords={showrules,headbg,headalign,headformat,norowbg}]
+% \begin{LTXexample}[morepreset={\kvtSet{format=\texttt}},morekeywords={showrules,headbg,headalign,headformat,halign,norowbg}]
 % \NewKeyValTable[showrules=false,headbg=blue!25,
-%     headalign=c,headformat=\textbf,norowbg
-%   ]{TabOptions2}{
-%     opt: align=l, format=\texttt;
-%     val: align=l, format=\texttt;}
+%     headalign=c,headformat=\textbf,norowbg,
+%     halign=r,
+%   ]{TabOptions2}{opt; val}
 % \begin{KeyValTable}{TabOptions2}
-% \Row{opt=showrules, val=false}
-% \Row{opt=headbg, val=blue!25}
-% \Row{opt=headalign, val=c}
-% \Row{opt=headformat, val=\string\textbf}
-% \Row{opt=norowbg, val=true}
+%   \Row{opt=showrules, val=false}
+%   \Row{opt=headbg, val=blue!25}
+%   \Row{opt=headalign, val=c}
+%   \Row{opt=headformat, val=\string\textbf}
+%   \Row{opt=norowbg, val=true}
+%   \Row{opt=halign, val=r}
+% \end{KeyValTable}
+% \end{LTXexample}
+% \begin{LTXexample}[morepreset={\kvtSet{format=\texttt}},morekeywords={nobg,norules,valign,shape,width}]
+% \NewKeyValTable[valign=t,nobg,norules,
+%     shape=onepage,width=3cm,headformat=\textbf,
+%   ]{TabOptions3}{opt: align=X;}
+% \begin{KeyValTable}{TabOptions3}
+%   \Row{opt=nobg}
+%   \Row{opt=norules}
+% \end{KeyValTable}
+% \begin{KeyValTable}{TabOptions3}
+%   \Row{opt={shape=onepage}}
+%   \Row{opt={valign=t}}
+%   \Row{opt={width=3cm}}
 % \end{KeyValTable}
 % \end{LTXexample}
 % \caption{Examples for table options}
@@ -1145,26 +1156,26 @@ cherries,50g,cherries,heat up and add to bowl
 % \NewKeyValTable[shape=tabular,headformat=\sffamily\textbf]{ShapeProps}{
 %   shape: format=\small\texttt;
 %   env: format=\small\texttt, head=environment;
-%   multipage: align=c, head=\RHead{multi-\\[-3pt] page}, format=\YesNo;
+%   multipage: align=c, head=\RHead{multipage}, format=\YesNo;
 %   caption:   align=c, head=\RHead{caption}, format=\YesNo;
 %   Xcols:     align=c, head=\RHead{\texttt{X} columns}, format=\YesNo;
 %   width:     align=c, head=\RHead{width}, format=\YesNo;
-%   valign:    align=c, head=\RHead{valign}, format=\YesNo;
+%   align:     align=c, head=\RHead{align}, format=\textsf;
 %   packages: align=l,  format=\pkgnames}%
 % \begin{KeyValTable}{ShapeProps}
-% \Row{shape=onepage,   env=tabular/tabularx,   multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages=tabularx}
-% \Row{shape=multipage, env=longtabu/xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no, packages={longtable, xltabular}}
+% \Row{shape=onepage,   env=tabular/tabularx,    multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages=tabularx}
+% \Row{shape=multipage, env=longtable/xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={longtable, xltabular}}
 % \midrule
 % \noalign{\footnotesize with package option |compat=1.0|:}
-% \Row{shape=onepage,   env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages=tabu}
-% \Row{shape=multipage, env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no,  packages={tabu, longtable}}
+% \Row{shape=onepage,   env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages=tabu}
+% \Row{shape=multipage, env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={tabu, longtable}}
 % \midrule
-% \Row{shape=tabular,   env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no, valign=yes}
-% \Row{shape=tabularx,  env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages={tabularx}}
-% \Row{shape=longtable, env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no, valign=no,   packages={longtable}}
-% \Row{shape=xltabular, env=xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no,  packages={xltabular}}
-% \Row{shape=tabu,      env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, valign=yes, packages={tabu}}
-% \Row{shape=longtabu,  env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, valign=no,  packages={tabu,longtable}}
+% \Row{shape=tabular,   env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no,  align=v}
+% \Row{shape=tabularx,  env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages={tabularx}}
+% \Row{shape=longtable, env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no,  align=h, packages={longtable}}
+% \Row{shape=xltabular, env=xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={xltabular}}
+% \Row{shape=tabu,      env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages={tabu}}
+% \Row{shape=longtabu,  env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={tabu,longtable}}
 % \end{KeyValTable}
 % \caption{Comparison of table shapes / environments}
 % \label{tab:TabEnv}
@@ -1609,7 +1620,7 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \changes{v0.2}{2016/05/21}{Added ``shape'' table option}
 % \changes{v2.0}{2019/05/11}{added table options "caption" and "label"}
-% \changes{v2.1}{2020/01/18}{Added ``valign'' table option}
+% \changes{v2.1}{2020/01/18}{Added ``valign'' and ``halign'' table options}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Table}{rowbg}{}
 \define@cmdkey[kvt]{Table}{headbg}{}
@@ -1622,6 +1633,8 @@ cherries,50g,cherries,heat up and add to bowl
 \define@cmdkey[kvt]{Table}{label}{}
 \define@choicekey[kvt]{Table}{valign}{t,c,b}
   {\csdef{cmdkvt@Table@valign}{#1}}
+\define@choicekey[kvt]{Table}{halign}{l,c,r}
+  {\csdef{cmdkvt@Table@halign}{#1}}
 %    \end{macrocode}
 % The following options only abbreviate options defined above.
 % \changes{v2.1}{2020/01/14}{added abbreviation option "norules"}
@@ -2517,6 +2530,11 @@ cherries,50g,cherries,heat up and add to bowl
       \kvt@warn{Table environment '#1' of table '#2'
         does not support the vertical alignment option (valign).
         Ignoring the option}}}%
+  \ifdefvoid{\cmdkvt@Table@halign}{}{\metatblCanHAlign{#1}{}
+    {\undef{\cmdkvt@Table@halign}%
+      \kvt@warn{Table environment '#1' of table '#2'
+        does not support the horizontal alignment option (halign).
+        Ignoring the option}}}%
 %    \end{macrocode}
 % Initializing the row counters. The global counter |kvtTotalRow| needs
 % no local initialization.
@@ -2529,7 +2547,7 @@ cherries,50g,cherries,heat up and add to bowl
 % settings and options.
 % \changes{v0.3}{2016/06/05}{Added \texttt{showhead} option}
 % \changes{v1.0}{2019/03/09}{Added \texttt{width} option}
-% \changes{v2.1}{2020/01/18}{Added \texttt{valign} option}
+% \changes{v2.1}{2020/01/19}{Added \texttt{valign} and \texttt{halign} options}
 %    \begin{macrocode}
   \begingroup\edef\kvt@@do{\endgroup
     \metatblIsTabu{#1}{}{\noexpand\kvt@dottedrowcolors
@@ -2538,13 +2556,34 @@ cherries,50g,cherries,heat up and add to bowl
         {1}}%
       {\expandonce\cmdkvt@Table@rowbg}}%
     \expandafter\noexpand\csname #1\endcsname
+%    \end{macrocode}
+% As background on the positions of the parameters below, here is the
+% syntax for beginning the supported environments:
+% \begin{itemize}[nosep]
+% \item|\begin{tabular}|\oarg{valign}\marg{preamble}
+% \item|\begin{tabularx}|\marg{width}\oarg{valign}\marg{preamble}
+% \item|\begin{longtable}|\oarg{halign}\marg{preamble}
+% \item|\begin{xltabular}|\oarg{halign}\marg{width}\marg{preamble}
+% \item|\begin{tabu}| to \meta{width}\oarg{valign}\marg{preamble}
+% \item|\begin{longtabu}| to \meta{width}\oarg{halign}\marg{preamble}
+% \end{itemize}
+% The above cases are covered in the following lines.
+%    \begin{macrocode}
+      \ifdefvoid{\cmdkvt@Table@halign}{}
+        {\metatblIsTabu{#1}{}{[\cmdkvt@Table@halign]}}%
       \metatblHasWidth{#1}
         {\metatblIsTabu{#1}
           {to \expandonce\cmdkvt@Table@width}
           {{\expandonce\cmdkvt@Table@width}}}
         {}%
       \ifdefvoid{\cmdkvt@Table@valign}{}{[\cmdkvt@Table@valign]}%
+      \ifdefvoid{\cmdkvt@Table@halign}{}
+        {\metatblIsTabu{#1}{[\cmdkvt@Table@halign]}{}}%
       {\csexpandonce{kvt@alignments@#2}}%
+%    \end{macrocode}
+% The remainder below already starts the content of the table
+% environment.
+%    \begin{macrocode}
     \noexpand\kvt@@rule{top}%
     \ifbool{kvt@Table@showhead}
       {\csuse{kvt@headings@#2}\noexpand\kvt@@rule{mid}}
