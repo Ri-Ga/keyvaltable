@@ -2041,13 +2041,27 @@ cherries,50g,cherries,heat up and add to bowl
   \def\kvt@@colgrp{#2}%
   \kvt@setkeys{#3}{ColGroup}%
   \kvt@checkcolgroupcs{kvt@colgrp@span@\kvt@@colgrp}{#1}{#2}%
-  \eappto\kvt@@result{%
+%    \end{macrocode}
+% The following checks whether the first (displayed) column of the
+% column group (|\kvt@@colgrp@first|) is the first displayed column
+% (i.e., the first in \cs{kvt@displaycols@\meta{tname}}).
+% If this is the case, then the |\multicolumn|'s preamble needs
+% |\kvt@HackIntercolSpace| such that the horizontal position becomes
+% correct.
+%    \begin{macrocode}
+  \let\kvt@@extraalign\@empty%
+  \def\kvt@@pcgdo##1{%
+    \expandafter\ifstrequal\expandafter{\kvt@@colgrp@first}{##1}
+      {\let\kvt@@extraalign\kvt@HackIntercolSpace}{}%
+    \listbreak
+  }\forlistcsloop\kvt@@pcgdo{kvt@displaycols@#1}%
 %    \end{macrocode}
 % The following defines the |\Row| key for \meta{cgname}, as an
 % abbreviation for setting the value of the first displayed column of
 % \meta{cgname} (|\kvt@@colgrp@first| to a |\multicolumn| that spans the
 % "right" number of columns).
 %    \begin{macrocode}
+  \eappto\kvt@@result{%
     \noexpand\define@cmdkey[KeyValTable]{#1}{#2}{%
 %    \end{macrocode}
 % The following |\ifdefvoid| check ensures that if \meta{cgname} is a
@@ -2070,7 +2084,8 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
             \expandonce\kvt@@colgrp@first*=\noexpand\multicolumn
               {\expandonce\kvt@@colgrp@n}%
-              {\csexpandonce{kvt@colgrp@align@#2}}%
+              {\expandonce\kvt@@extraalign
+               \csexpandonce{kvt@colgrp@align@#2}}%
               {\csexpandonce{kvt@colgrp@format@#2}{\unexpanded{##1}}}}}%
       }%
     }}%
