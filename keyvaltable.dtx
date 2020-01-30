@@ -865,7 +865,7 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % Individual cells can be formatted by using the respective
 % \hologo{LaTeX} code directly in the value of the cell.
-% One can disabled column's configured |format| for the cell by
+% One can disable the column's configured |format| for the cell by
 % using the starred column name in |\Row|.
 % The following example demonstrates starred column names.
 %
@@ -3054,7 +3054,7 @@ cherries,50g,cherries,heat up and add to bowl
 % Now check whether the cell itself spans multiple columns.
 %    \begin{macrocode}
     \expandafter\kvt@CheckMulticolumn\kvt@@cell
-      \relax\relax\relax\relax\@undefined
+      \relax\relax\relax\relax\relax\kvt@@undefined
     \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@fmtcell}%
   }\dolistcsloop{kvt@displaycols@#2}%
 %    \end{macrocode}
@@ -3085,8 +3085,8 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \begin{macro}{\kvt@CheckMulticolumn}
 % The
-% |\kvt@CheckMulticolumn|\marg{arg1}\marg{arg2}\marg{arg3}\marg{arg4}|\@undefined|
-% macro checks whether a cell's initial content (captured by \meta{arg1}
+% |\kvt@CheckMulticolumn|\marg{arg1}\marg{arg2}\marg{arg3}\marg{arg4}\marg{ign}|\@undefined|
+% macro checks whether a cell's initial content, captured by \meta{arg1}
 % to \meta{arg4}, starts a multi-column cell. If this is the case, the
 % macro records the arguments to |\multicolumn| for use by
 % |\kvt@AddKeyValRow|.
@@ -3094,8 +3094,8 @@ cherries,50g,cherries,heat up and add to bowl
 % of columns to span), \meta{arg3}=\meta{format} (column alignment), and
 % \meta{arg4}=\meta{item} (the content of the cell).
 %    \begin{macrocode}
-\def\kvt@CheckMulticolumn#1#2#3#4\@undefined{%
-  \ifx#1\multicolumn
+\def\kvt@CheckMulticolumn#1#2#3#4#5\kvt@@undefined{%
+  \ifdefmacro{#1}{\ifx#1\multicolumn
 %    \end{macrocode}
 % First, record \meta{n} in |\kvt@@span|. The subtraction of $-1$ is
 % already in preparation for the next column, in which one spanning has
@@ -3107,8 +3107,8 @@ cherries,50g,cherries,heat up and add to bowl
 % argument of |\multicolumn| rather than around the |\multicolumn|.
 %    \begin{macrocode}
     \edef\kvt@@fmtcell{\unexpanded{\multicolumn{#2}{#3}}%
-      {\expandonce\kvt@@formatter{\expandonce{#4}}}}%
-  \fi}
+      {\expandonce{\kvt@@formatter{#4}}}}%
+  \fi}{}}
 %    \end{macrocode}
 % \end{macro}
 %
