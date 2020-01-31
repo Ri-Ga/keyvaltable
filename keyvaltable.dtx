@@ -774,6 +774,20 @@ cherries,50g,cherries,heat up and add to bowl
 %   option of the table.
 %
 % \NiceDescribeKeys{3}
+%   {format}{vals=\vmeta{single argument macro}, init=\vmeta{"identity"}}
+%   {format*}{vals=\vmeta{single argument macro}, init=\vmeta{"identity"}}
+%   {format!}{vals=\vmeta{single argument macro}, init=\vmeta{none}}
+%   These properties specify formatting for all cells of the particular
+%   row. The difference between the three properties is how they
+%   interact with the column formats of the respective cells in the row.
+%   The |format| property is applied to the cell content \emph{before}
+%   the column format, and the |format*| property is applied
+%   \emph{after} the column format.
+%   The |format!| property overrides any column formats in the
+%   respective row and also renders the |format| and |format*|
+%   properties ineffective.
+%
+% \NiceDescribeKeys{3}
 %   {above}{vals=\vmeta{dimension}, init=\vmeta{empty}}
 %   {below}{vals=\vmeta{dimension}, init=\vmeta{empty}}
 %   {around}{vals=\vmeta{dimension}, init=\vmeta{empty}}
@@ -797,7 +811,7 @@ cherries,50g,cherries,heat up and add to bowl
 %   step=heat up and add to bowl}
 % \Row[hidden]{amount=25g, ingredient=cream,
 %   step=decorate on top}
-% \Row[above=1ex,bg=Gold]{
+% \Row[above=1ex,bg=Gold,format=\textit]{
 %   step=serve with a smile}
 % \end{KeyValTable}
 % \end{LTXexample}
@@ -1742,6 +1756,9 @@ cherries,50g,cherries,heat up and add to bowl
 % \changes{v2.0}{2019/05/11}{added row option "uncounted"}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Row}{bg}{}
+\define@cmdkey[kvt]{Row}{format}{}
+\define@cmdkey[kvt]{Row}{format*}{}
+\define@cmdkey[kvt]{Row}{format!}{}
 \define@boolkey[kvt]{Row}{hidden}[true]{}
 \define@cmdkey[kvt]{Row}{below}{}
 \define@cmdkey[kvt]{Row}{above}{}
@@ -2082,7 +2099,7 @@ cherries,50g,cherries,heat up and add to bowl
 % which disables the first column's default formatting to replace it by
 % the formatting of \meta{cgname}.
 %    \begin{macrocode}
-            \expandonce\kvt@@colgrp@first*=\noexpand\multicolumn
+            \expandonce\kvt@@colgrp@first=\noexpand\multicolumn
               {\expandonce\kvt@@colgrp@n}%
               {\expandonce\kvt@@extraalign
                \csexpandonce{kvt@colgrp@align@#2}}%
@@ -3003,6 +3020,27 @@ cherries,50g,cherries,heat up and add to bowl
   \ifbool{kvt@Row@uncounted}{}{%
     \appto\kvt@@row{\noalign{\kvt@stepcounters}}}%
 %    \end{macrocode}
+% The following takes the row formatting options and defines a macro
+% |\kvt@@cellfmtbuilder|\marg{cmd}\marg{csname}.
+% This macro defines the macro \meta{cmd}\marg{cell} to format the cell
+% content, \meta{cell}, based on the column format \meta{csname} and the
+% row formatting options.
+% Through this "builder" macro, the row format options need only be
+% considered once and the column format options can then be included
+% when the displayed columns are iterated over. 
+%    \begin{macrocode}
+  \ifcsvoid{cmdkvt@Row@format!}
+    {\edef\kvt@@cellfmtbuilder##1##2{%
+       \noexpand\edef##1####1{%
+         \ifcsvoid{cmdkvt@Row@format*}{\@firstofone}
+           {\noexpand\unexpanded{\csexpandonce{cmdkvt@Row@format*}}}%
+         {\noexpand\csexpandonce{##2}{%
+             \ifdefvoid\cmdkvt@Row@format{\@firstofone}
+               {\noexpand\unexpanded{\expandonce\cmdkvt@Row@format}}%
+              {####1}}}}}}%
+    {\edef\kvt@@cellfmtbuilder##1##2{%
+      \noexpand\def##1####1{\csexpandonce{cmdkvt@Row@format!}{####1}}}}%
+%    \end{macrocode}
 % The following loop uses |\do|\marg{cname} to append the content of
 % all displayed columns (in the given format and using the given default
 % value), where each column value is in
@@ -3034,10 +3072,13 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
     \ifcsvoid{kvt@@noformat@#2@##1}
       {\edef\kvt@@formatter{\expandonce
-        {\csname kvt@col@format@#2@##1\endcsname}}}%
-      {\def\kvt@@formatter{\@firstofone}}%
-    \edef\kvt@@fmtcell{\expandonce\kvt@@formatter{%
-      \expandonce\kvt@@cell}}%
+        {\csname kvt@col@format@#2@##1\endcsname}}%
+        \ifdef\kvt@@cellfmtbuilder
+          {\kvt@@cellfmtbuilder\kvt@@formatter{kvt@col@format@#2@##1}}{}}%
+      {\let\kvt@@formatter\@firstofone}%
+    \edef\kvt@@fmtcell{%
+      \expandafter\expandonce\expandafter{\expandafter\kvt@@formatter\expandafter{%
+        \kvt@@cell}}}%
     \csundef{kvt@@noformat@#2@##1}%
 %    \end{macrocode}
 % Next, check whether a column-spanning cell is active
@@ -3048,7 +3089,7 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
     \ifnumgreater\kvt@@span{0}
       {\advance\kvt@@span\m@ne
-       \ifstrempty\kvt@@cell{\def\kvt@@fmtcell{}}{}}
+       \ifdefempty\kvt@@cell{\def\kvt@@fmtcell{}}{}}
       {\appto\kvt@@row{&}}%
 %    \end{macrocode}
 % Now check whether the cell itself spans multiple columns.
@@ -3057,6 +3098,7 @@ cherries,50g,cherries,heat up and add to bowl
       \relax\relax\relax\relax\relax\kvt@@undefined
     \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@fmtcell}%
   }\dolistcsloop{kvt@displaycols@#2}%
+  \undef\kvt@@cellfmtbuilder
 %    \end{macrocode}
 % Finally, add the concluding newline for the row as well as
 % the vertical space after the row, if requested.
