@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/01/19 v2.1 Package for filling tables using key-value lists]
+    [2020/02/15 v2.1 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -1715,11 +1715,11 @@ cherries,50g,cherries,heat up and add to bowl
 %
 %    \begin{macrocode}
 \define@cmdkey[kvt]{ColGroup}{span}{%
-  \csdef{kvt@colgrp@span@\kvt@@colgrp}{#1}}
+  \csgdef{kvt@colgrp@span@\kvt@@tname @\kvt@@colgrp}{#1}}
 \define@cmdkey[kvt]{ColGroup}{align}{%
-  \csdef{kvt@colgrp@align@\kvt@@colgrp}{#1}}
+  \csgdef{kvt@colgrp@align@\kvt@@tname @\kvt@@colgrp}{#1}}
 \define@cmdkey[kvt]{ColGroup}{format}{%
-  \csdef{kvt@colgrp@format@\kvt@@colgrp}{#1}}
+  \csgdef{kvt@colgrp@format@\kvt@@tname @\kvt@@colgrp}{#1}}
 \kvt@def@globalopts{ColGroup}{align, format}
 %    \end{macrocode}
 %
@@ -2057,7 +2057,7 @@ cherries,50g,cherries,heat up and add to bowl
      columns groups.}}{}%
   \def\kvt@@colgrp{#2}%
   \kvt@setkeys{#3}{ColGroup}%
-  \kvt@checkcolgroupcs{kvt@colgrp@span@\kvt@@colgrp}{#1}{#2}%
+  \kvt@checkcolgroupcs{kvt@colgrp@span@#1@#2}{#1}{#2}%
 %    \end{macrocode}
 % The following checks whether the first (displayed) column of the
 % column group (|\kvt@@colgrp@first|) is the first displayed column
@@ -2099,11 +2099,12 @@ cherries,50g,cherries,heat up and add to bowl
 % which disables the first column's default formatting to replace it by
 % the formatting of \meta{cgname}.
 %    \begin{macrocode}
-            \expandonce\kvt@@colgrp@first=\noexpand\multicolumn
+            \expandonce\kvt@@colgrp@first=\noexpand\kvt@@@colgroup
+              {\unexpanded{#2}}%
               {\expandonce\kvt@@colgrp@n}%
               {\expandonce\kvt@@extraalign
-               \csexpandonce{kvt@colgrp@align@#2}}%
-              {\csexpandonce{kvt@colgrp@format@#2}{\unexpanded{##1}}}}}%
+               \csexpandonce{kvt@colgrp@align@#1@#2}}%
+              {\unexpanded{##1}}}}%
       }%
     }}%
     \listcsadd{kvt@grpcolkeys@#1}{#2}}
@@ -3020,7 +3021,7 @@ cherries,50g,cherries,heat up and add to bowl
   \ifbool{kvt@Row@uncounted}{}{%
     \appto\kvt@@row{\noalign{\kvt@stepcounters}}}%
 %    \end{macrocode}
-% The following takes the row formatting options and defines a macro
+% The following defines a macro
 % |\kvt@@cellfmtbuilder|\marg{cmd}\marg{csname}.
 % This macro defines the macro \meta{cmd}\marg{cell} to format the cell
 % content, \meta{cell}, based on the column format \meta{csname} and the
@@ -3032,14 +3033,18 @@ cherries,50g,cherries,heat up and add to bowl
   \ifcsvoid{cmdkvt@Row@format!}
     {\edef\kvt@@cellfmtbuilder##1##2{%
        \noexpand\edef##1####1{%
-         \ifcsvoid{cmdkvt@Row@format*}{\@firstofone}
+         \noexpand\kvt@expandonce@onearg\noexpand\kvt@@mkmulticolumn
+         {\ifcsvoid{cmdkvt@Row@format*}{\@firstofone}
            {\noexpand\unexpanded{\csexpandonce{cmdkvt@Row@format*}}}%
          {\noexpand\csexpandonce{##2}{%
              \ifdefvoid\cmdkvt@Row@format{\@firstofone}
                {\noexpand\unexpanded{\expandonce\cmdkvt@Row@format}}%
-              {####1}}}}}}%
+              {####1}}}}}}}%
     {\edef\kvt@@cellfmtbuilder##1##2{%
-      \noexpand\def##1####1{\csexpandonce{cmdkvt@Row@format!}{####1}}}}%
+      \noexpand\edef##1####1{%
+        \noexpand\kvt@expandonce@onearg\noexpand\kvt@@mkmulticolumn{%
+          \noexpand\unexpanded{\csexpandonce{cmdkvt@Row@format!}}%
+            {####1}}}}}%
 %    \end{macrocode}
 % The following loop uses |\do|\marg{cname} to append the content of
 % all displayed columns (in the given format and using the given default
@@ -3052,51 +3057,61 @@ cherries,50g,cherries,heat up and add to bowl
   \kvt@@span=0\relax
   \def\do##1{%
 %    \end{macrocode}
+% First, check whether a column-spanning cell is active
+% ($\cs{kvt@@span}>0$). If this is the case, ensure that if the raw cell
+% content in the current column is empty, then the column is simply
+% ignored and otherwise an error is produced.
+%    \begin{macrocode}
+    \ifnumgreater\kvt@@span{0}
+      {\advance\kvt@@span\m@ne
+       \ifcsvoid{cmdKeyValTable@#2@##1}{}
+         {\ifdefvoid\kvt@@curcgname
+           {\kvt@error{Column '##1' nonempty inside a
+                       \string\multicolumn}{}}
+           {\kvt@error{Column '##1' nonempty inside column group
+                       '\kvt@@curcgname'}{}}}}
+      {\appto\kvt@@row{&}%
+       \let\kvt@@mkmulticolumn\@empty
+       \letcs\kvt@@curcolformat{kvt@col@format@#2@##1}%
+%    \end{macrocode}
 % First recover the cell content (either the specified value for the row
 % or, if no value is specified for the row, the cell's default value)
 % without formatting.
 %    \begin{macrocode}
-    \ifcsvoid{cmdKeyValTable@#2@##1}
-      {\letcs\kvt@@cell{kvt@col@default@#2@##1}}
-      {\letcs\kvt@@cell{cmdKeyValTable@#2@##1}%
+       \ifcsvoid{cmdKeyValTable@#2@##1}
+         {\letcs\kvt@@cell{kvt@col@default@#2@##1}}
+         {\letcs\kvt@@cell{cmdKeyValTable@#2@##1}%
+%    \end{macrocode}
+% Unless the default cell value is used, first check for a multicolumn
+% value. Default cell values should not need this. The check is done
+% before the expansion code afterwards, in order for applying the
+% expansion to the code in the cell value rather than to the multicolumn
+% code.
+%    \begin{macrocode}
+          \expandafter\kvt@CheckMulticolumn\expandafter{\kvt@@cell}{#2}%
 %    \end{macrocode}
 % Apply expansion control options, but only to manually supplied cell
 % values, not to default values.
 %    \begin{macrocode}
-       \ifbool{kvt@Row@expandonce}
-         {\expandafter\let\expandafter\kvt@@cell\kvt@@cell}{}%
-       \ifbool{kvt@Row@expand}
-         {\protected@edef\kvt@@cell{\kvt@@cell}}{}}%
+          \ifbool{kvt@Row@expandonce}
+            {\expandafter\let\expandafter\kvt@@cell\kvt@@cell}{}%
+          \ifbool{kvt@Row@expand}
+            {\protected@edef\kvt@@cell{\kvt@@cell}}{}}%
 %    \end{macrocode}
-% Separately also already create the formatted content.
+% Separately also already create the content -- with formatting unless
+% the user explicitly requested no cell formatting.
 %    \begin{macrocode}
-    \ifcsvoid{kvt@@noformat@#2@##1}
-      {\edef\kvt@@formatter{\expandonce
-        {\csname kvt@col@format@#2@##1\endcsname}}%
-        \ifdef\kvt@@cellfmtbuilder
-          {\kvt@@cellfmtbuilder\kvt@@formatter{kvt@col@format@#2@##1}}{}}%
-      {\let\kvt@@formatter\@firstofone}%
-    \edef\kvt@@fmtcell{%
-      \expandafter\expandonce\expandafter{\expandafter\kvt@@formatter\expandafter{%
-        \kvt@@cell}}}%
-    \csundef{kvt@@noformat@#2@##1}%
+       \ifcsvoid{kvt@@noformat@#2@##1}
+         {\kvt@@cellfmtbuilder\kvt@@formatter{kvt@@curcolformat}}%
+         {\let\kvt@@formatter\@firstofone}%
+       \csundef{kvt@@noformat@#2@##1}%
+       \edef\kvt@@fmtcell{\expandafter\expandonce\expandafter{%
+         \expandafter\kvt@@formatter\expandafter{%
+           \kvt@@cell}}}%
 %    \end{macrocode}
-% Next, check whether a column-spanning cell is active
-% ($\cs{kvt@@span}>0$). If this is the case, ensure that if the raw cell
-% content in the current column is empty, then formatting does not make
-% the cell non-empty and, thereby, cause errors with the active
-% column-spanning cell.
+% Finally, append the cell to the row.
 %    \begin{macrocode}
-    \ifnumgreater\kvt@@span{0}
-      {\advance\kvt@@span\m@ne
-       \ifdefempty\kvt@@cell{\def\kvt@@fmtcell{}}{}}
-      {\appto\kvt@@row{&}}%
-%    \end{macrocode}
-% Now check whether the cell itself spans multiple columns.
-%    \begin{macrocode}
-    \expandafter\kvt@CheckMulticolumn\kvt@@cell
-      \relax\relax\relax\relax\relax\kvt@@undefined
-    \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@fmtcell}%
+       \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@fmtcell}}%
   }\dolistcsloop{kvt@displaycols@#2}%
   \undef\kvt@@cellfmtbuilder
 %    \end{macrocode}
@@ -3114,6 +3129,26 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\kvt@expandonce@onearg}
+% The |\kvt@expandonce@onearg|\marg{cmd}\marg{arg} macro expands to
+% \meta{arg} if \meta{cmd} is empty and expands to an |\expandonce| on
+% \meta{cmd} with \meta{arg} as argument otherwise.
+% This macro is for an |\edef| context in which an empty \meta{cmd}
+% should not leave any parentheses around the \meta{arg}.
+%    \begin{macrocode}
+\newcommand\kvt@expandonce@onearg[2]{%
+  \ifdefequal{#1}{\@empty}{#2}{\expandonce{#1}{#2}}}
+%    \end{macrocode}
+% Note that the alternative of avoiding the conditional (|\ifdefequal|)
+% in the above code and using |\@firstofone| instead of |\@empty| for a
+% noop in \meta{cmd} does not work:
+% Using `|\expandonce|\marg{cmd}\marg{arg}' would expand to
+% `|\unexpanded\expandafter{\@firstofone}|' and produces the error
+% `Argument of |\@firstofone| has an extra |}|'.
+% Using `|\expandonce{|\meta{cmd}\marg{arg}|}|' would expand to
+% `|\unexpanded|\marg{arg}' and, thus, prevent expansion of \meta{arg}.
+% \end{macro}
+%
 % \begin{macro}{\kvt@stepcounters}
 % The |\kvt@stepcounters|\oarg{delta} macro increments all row counters
 % by \meta{delta}. If \meta{delta} is omitted, \meta{delta}=1.
@@ -3127,30 +3162,87 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \begin{macro}{\kvt@CheckMulticolumn}
 % The
-% |\kvt@CheckMulticolumn|\marg{arg1}\marg{arg2}\marg{arg3}\marg{arg4}\marg{ign}|\@undefined|
-% macro checks whether a cell's initial content, captured by \meta{arg1}
-% to \meta{arg4}, starts a multi-column cell. If this is the case, the
-% macro records the arguments to |\multicolumn| for use by
-% |\kvt@AddKeyValRow|.
-% In this case, \meta{arg1}=|\multicolumn|, \meta{arg2}=\meta{n} (number
-% of columns to span), \meta{arg3}=\meta{format} (column alignment), and
-% \meta{arg4}=\meta{item} (the content of the cell).
+% |\kvt@CheckMulticolumn|\marg{content}\marg{tname} macro
+% checks whether a cell's \meta{content} in a table of type \meta{tname}
+% spans multiple columns in one of two ways:
+% \begin{enumerate}[nosep]
+% \item \meta{content} = |\multicolumn|\marg{n}\marg{align}\marg{content} or
+% \item \meta{content} = |\kvt@@@colgroup|\marg{cgname}\marg{n}\marg{align}\marg{content}
+% \end{enumerate}
+% The first way corresponds to the case that a user of the package
+% explicitly assigns a |\multicolumn| expression to a cell in a row.
+% The second way is generated by the package when a user assigns a
+% normal cell value to a column group key.
 %    \begin{macrocode}
-\def\kvt@CheckMulticolumn#1#2#3#4#5\kvt@@undefined{%
-  \ifdefmacro{#1}{\ifx#1\multicolumn
+\newcommand\kvt@CheckMulticolumn[2]{%
+%    \end{macrocode}
+% For parsing \meta{content}, the macro uses |\kvt@CheckMulticolumn@i|
+% and adds 5 |\relax| after \meta{content} for the case that
+% \meta{content} is empty or too short.
+%    \begin{macrocode}
+  \kvt@CheckMulticolumn@i{#2}#1%
+    \relax\relax\relax\relax\relax\kvt@@undefined}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@CheckMulticolumn@i}
+% The
+% |\kvt@CheckMulticolumn@i|\marg{tname}\marg{c1}$\cdots$\marg{c5}\marg{ign}|\@undefined|
+% macro checks \meta{content} when split into \meta{c1}$\cdots$\meta{c5}
+% for one of the two multicolumn cases listed in the description of
+% |\kvt@CheckMulticolumn|.
+%    \begin{macrocode}
+\def\kvt@CheckMulticolumn@i#1#2#3#4#5#6#7\kvt@@undefined{%
+  \ifdefmacro{#2}{%
+%    \end{macrocode}
+% First case: \meta{c1}=|\multicolumn|. In this case, we have
+% \meta{c2}=\meta{n}, \meta{c3}=\meta{align}, and
+% \meta{c4}=\meta{content}.
+%    \begin{macrocode}
+    \ifx#2\multicolumn
+      \kvt@SetMulticolumn{#3}{#4}{#5}%
+      \let\kvt@@curcgname\@empty
+%    \end{macrocode}
+% Second case: \meta{c1}=|\kvt@@@colgroup|. In this case, we have
+% \meta{c3}=\meta{n}, \meta{c4}=\meta{align}, and
+% \meta{c5}=\meta{content}. Moreover, \meta{c2} holds \meta{cgname}.
+%    \begin{macrocode}
+    \else\ifx#2\kvt@@@colgroup
+      \letcs\kvt@@curcolformat{kvt@colgrp@format@#1@#3}%
+      \def\kvt@@curcgname{#3}%
+      \kvt@SetMulticolumn{#4}{#5}{#6}%
+    \fi\fi}{}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@@@colgroup}
+% The |\kvt@@@colgroup| macro is not used as an actual macro but only as
+% an identifier for |\kvt@CheckMulticolumn@i|.
+%    \begin{macrocode}
+\newcommand\kvt@@@colgroup{kvt@@@colgroup}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@SetMulticolumn}
+% The |\kvt@SetMulticolumn|\marg{n}\marg{align}\marg{content} records
+% that \meta{n} cells, starting from the current cell, belong to a
+% multicolumn cell with alignment \meta{align} and the given
+% \meta{content}.
+%    \begin{macrocode}
+\newcommand\kvt@SetMulticolumn[3]{%
 %    \end{macrocode}
 % First, record \meta{n} in |\kvt@@span|. The subtraction of $-1$ is
 % already in preparation for the next column, in which one spanning has
 % already been reduced.
 %    \begin{macrocode}
-    \kvt@@span=#2\relax \advance\kvt@@span\m@ne
+  \kvt@@span=#1\relax \advance\kvt@@span\m@ne
 %    \end{macrocode}
-% Second, move the defined cell format to inside of the \meta{item}
-% argument of |\multicolumn| rather than around the |\multicolumn|.
+% Next, unwrap the cell's \meta{content} to |\kvt@@cell| and record the
+% |\kvt@@mkmulticolumn| for re-wrapping the content later, after all
+% cell formatting has been applied.
 %    \begin{macrocode}
-    \edef\kvt@@fmtcell{\unexpanded{\multicolumn{#2}{#3}}%
-      {\expandonce{\kvt@@formatter{#4}}}}%
-  \fi}{}}
+  \def\kvt@@cell{#3}%
+  \def\kvt@@mkmulticolumn{\multicolumn{#1}{#2}}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -3309,7 +3401,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{macro}
 %
 % \begin{macro}{\kvt@protected@write}
-% The |\kvt@protected@write|\marg{file}{content} macro writes
+% The |\kvt@protected@write|\marg{file}\marg{content} macro writes
 % \meta{content} to \meta{file}. The write ensures that \meta{content}
 % is written in a particularly protected form that
 % \begin{enumerate}[noitemsep]
