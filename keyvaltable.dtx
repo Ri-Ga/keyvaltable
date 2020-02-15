@@ -762,10 +762,18 @@ cherries,50g,cherries,heat up and add to bowl
 % options must be a comma-separated list of key-value pairs.
 % The following options are supported.
 %
-% \NiceDescribeKey{hidden}{vals={true,false}, init=false}
+% \NiceDescribeKey{hidden}{vals={true,false}, init=false, def=true}
 %   This property specifies whether the row shall be hidden (|true|) or
 %   not (|false|). If only |hidden| is used without a value, this is
 %   equivalent to |hidden=true|.
+%
+% \NiceDescribeKey{align}{vals={\vmeta{empty} or \vmeta{coltype}}, init=\vmeta{empty}}
+%   This property specifies the alignment of the cells in the row.
+%   If this property is not specified, the respective columns' alignment
+%   is used. The alignment applies to normal cells as well as to cells
+%   in column groups.\footnote{Note that the alignment does not override
+%   the alignment specified in any \cs{multicolumn} if it is assigned to
+%   a cell in the row.}
 %
 % \NiceDescribeKey{bg}{vals=\vmeta{color}, init=\vmeta{empty}}
 %   This property specifies the background color for the particular row.
@@ -787,6 +795,13 @@ cherries,50g,cherries,heat up and add to bowl
 %   respective row and also renders the |format| and |format*|
 %   properties ineffective.
 %
+% \NiceDescribeKey{headlike}{vals={true,false}, init=false, def=true}
+%   This property, when used without a value or with value |true|,
+%   specifies that the row shall be formatted like a header row.
+%   Concretely, the alignment, background color, and format of the row's
+%   cells is then set to the values of the table's |headalign|,
+%   |headbg|, and |headformat| properties.
+%
 % \NiceDescribeKeys{3}
 %   {above}{vals=\vmeta{dimension}, init=\vmeta{empty}}
 %   {below}{vals=\vmeta{dimension}, init=\vmeta{empty}}
@@ -802,8 +817,8 @@ cherries,50g,cherries,heat up and add to bowl
 %   |\kvtSet{Row/|\meta{option}|=|\meta{value}|}| (see also
 %   \cref{sec:kvtSet}).}
 %
-% The following example demonstrates the options.
-% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={hidden,above,bg}]
+% The following example demonstrates some of the options.
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={hidden,above,bg,format}]
 % \begin{KeyValTable}{Recipe}
 % \Row{amount=150g, ingredient=ice cream,
 %   step=put into bowl}
@@ -1755,17 +1770,19 @@ cherries,50g,cherries,heat up and add to bowl
 % \changes{v2.0}{2019/05/11}{added row option "style"}
 % \changes{v2.0}{2019/05/11}{added row option "uncounted"}
 % \changes{v2.1}{2020/02/15}{added row options "format", "format*",
-%                            "format!", and "headlike"}
+%                            "format!", "align", and "headlike"}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Row}{bg}{}
 \define@cmdkey[kvt]{Row}{format}{}
 \define@cmdkey[kvt]{Row}{format*}{}
 \define@cmdkey[kvt]{Row}{format!}{}
+\define@cmdkey[kvt]{Row}{align}{}
 \define@boolkey[kvt]{Row}{headlike}[true]{%
   \ifbool{#1}{%
     \edef\kvt@@opts{%
-      bg=\expandonce\cmdkvt@Table@headbg,%
-      format!=\expandonce\cmdkvt@Table@headformat}%
+      bg={\expandonce\cmdkvt@Table@headbg},%
+      format!={\expandonce\cmdkvt@Table@headformat},%
+      align={\expandonce\cmdkvt@Table@headalign}}%
     \expandafter\kvt@setkeys@nopresets\expandafter{\kvt@@opts}{Row}%
   }{}}
 \define@boolkey[kvt]{Row}{hidden}[true]{}
@@ -3036,6 +3053,14 @@ cherries,50g,cherries,heat up and add to bowl
   \ifbool{kvt@Row@uncounted}{}{%
     \appto\kvt@@row{\noalign{\kvt@stepcounters}}}%
 %    \end{macrocode}
+% If a row alignment is specified, a default |\multicolumn| display is
+% enabled for the row's cells.
+%    \begin{macrocode}
+  \ifdefvoid\cmdkvt@Row@align
+    {\let\kvt@@rowmkmulticolumn\@empty}
+    {\edef\kvt@@rowmkmulticolumn{%
+       \noexpand\multicolumn{1}{\expandonce\cmdkvt@Row@align}}}%
+%    \end{macrocode}
 % The following defines a macro
 % |\kvt@@cellfmtbuilder|\marg{cmd}\marg{csname}.
 % This macro defines the macro \meta{cmd}\marg{cell} to format the cell
@@ -3086,7 +3111,10 @@ cherries,50g,cherries,heat up and add to bowl
            {\kvt@error{Column '##1' nonempty inside column group
                        '\kvt@@curcgname'}{}}}}
       {\appto\kvt@@row{&}%
-       \let\kvt@@mkmulticolumn\@empty
+%    \end{macrocode}
+% Initialize the multicolumn display to the row's default.
+%    \begin{macrocode}
+       \let\kvt@@mkmulticolumn\kvt@@rowmkmulticolumn
        \letcs\kvt@@curcolformat{kvt@col@format@#2@##1}%
 %    \end{macrocode}
 % First recover the cell content (either the specified value for the row
@@ -3215,7 +3243,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \meta{c4}=\meta{content}.
 %    \begin{macrocode}
     \ifx#2\multicolumn
-      \kvt@SetMulticolumn{#3}{#4}{#5}%
+      \kvt@SetMulticolumn{#4}{#3}{#5}%
       \let\kvt@@curcgname\@empty
 %    \end{macrocode}
 % Second case: \meta{c1}=|\kvt@@@colgroup|. In this case, we have
@@ -3225,7 +3253,14 @@ cherries,50g,cherries,heat up and add to bowl
     \else\ifx#2\kvt@@@colgroup
       \letcs\kvt@@curcolformat{kvt@colgrp@format@#1@#3}%
       \def\kvt@@curcgname{#3}%
-      \kvt@SetMulticolumn{#4}{#5}{#6}%
+%    \end{macrocode}
+% If a row alignment is defined, it overrides the alignment of the
+% column group:
+%    \begin{macrocode}
+      \ifdefvoid\cmdkvt@Row@align
+        {\kvt@SetMulticolumn{#5}{#4}{#6}}
+        {\expandafter
+         \kvt@SetMulticolumn\expandafter{\cmdkvt@Row@align}{#4}{#6}}%
     \fi\fi}{}}
 %    \end{macrocode}
 % \end{macro}
@@ -3239,7 +3274,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{macro}
 %
 % \begin{macro}{\kvt@SetMulticolumn}
-% The |\kvt@SetMulticolumn|\marg{n}\marg{align}\marg{content} records
+% The |\kvt@SetMulticolumn|\marg{align}\marg{n}\marg{content} records
 % that \meta{n} cells, starting from the current cell, belong to a
 % multicolumn cell with alignment \meta{align} and the given
 % \meta{content}.
@@ -3250,14 +3285,14 @@ cherries,50g,cherries,heat up and add to bowl
 % already in preparation for the next column, in which one spanning has
 % already been reduced.
 %    \begin{macrocode}
-  \kvt@@span=#1\relax \advance\kvt@@span\m@ne
+  \kvt@@span=#2\relax \advance\kvt@@span\m@ne
 %    \end{macrocode}
 % Next, unwrap the cell's \meta{content} to |\kvt@@cell| and record the
 % |\kvt@@mkmulticolumn| for re-wrapping the content later, after all
 % cell formatting has been applied.
 %    \begin{macrocode}
   \def\kvt@@cell{#3}%
-  \def\kvt@@mkmulticolumn{\multicolumn{#1}{#2}}}
+  \def\kvt@@mkmulticolumn{\multicolumn{#2}{#1}}}
 %    \end{macrocode}
 % \end{macro}
 %
