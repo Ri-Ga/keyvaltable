@@ -1754,11 +1754,20 @@ cherries,50g,cherries,heat up and add to bowl
 % \changes{v2.0}{2019/05/11}{added row options "nobg" and "norowbg"}
 % \changes{v2.0}{2019/05/11}{added row option "style"}
 % \changes{v2.0}{2019/05/11}{added row option "uncounted"}
+% \changes{v2.1}{2020/02/15}{added row options "format", "format*",
+%                            "format!", and "headlike"}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Row}{bg}{}
 \define@cmdkey[kvt]{Row}{format}{}
 \define@cmdkey[kvt]{Row}{format*}{}
 \define@cmdkey[kvt]{Row}{format!}{}
+\define@boolkey[kvt]{Row}{headlike}[true]{%
+  \ifbool{#1}{%
+    \edef\kvt@@opts{%
+      bg=\expandonce\cmdkvt@Table@headbg,%
+      format!=\expandonce\cmdkvt@Table@headformat}%
+    \expandafter\kvt@setkeys@nopresets\expandafter{\kvt@@opts}{Row}%
+  }{}}
 \define@boolkey[kvt]{Row}{hidden}[true]{}
 \define@cmdkey[kvt]{Row}{below}{}
 \define@cmdkey[kvt]{Row}{above}{}
@@ -1768,6 +1777,12 @@ cherries,50g,cherries,heat up and add to bowl
 \define@boolkey[kvt]{Row}{uncounted}[true]{}
 \define@boolkey[kvt]{Row}{expand}[true]{}
 \define@boolkey[kvt]{Row}{expandonce}[true]{}
+%    \end{macrocode}
+% The following specifies which row options can be specified globally,
+% i.e. via a |Row/option| key. Not contained in the list are the
+% |format| options and the |headlike| option, as setting these globally
+% appears strange.
+%    \begin{macrocode}
 \kvt@def@globalopts{Row}{
   bg,hidden,below,above,around,style,uncounted,
   expand,expandonce}
