@@ -1888,16 +1888,14 @@ cherries,50g,cherries,heat up and add to bowl
 % tables is that this code would prevent |\multicolumn| to be used in
 % the first column.
 % \changes{v1.0}{2019/02/03}{Added zero-width column for \cs{multicolumn}}
-% Fixme: Ideally, the whole extra column should be removed through
-% sufficient use of |\noalign| in headers and rows, such that even the
-% presence of |\multicolumn| does not produce errors.
+% \changes{v2.1}{2020/02/16}{Removed zero-width column again}
 %    \begin{macrocode}
-  \csedef{kvt@alignments@#2}{p{0pt}\expandonce\kvt@HackIntercolSpace}%
+  \csdef{kvt@alignments@#2}{}%
   \csdef{kvt@allcolumns@#2}{}%
   \csdef{kvt@displaycols@#2}{}%
   \csdef{kvt@rowcount@#2}{0}%
   \csdef{kvt@rows@#2}{}%
-  \csdef{kvt@headings@#2}{\kvt@defaultheader}
+  \csdef{kvt@headings@#2}{\kvt@defaultheader}%
   \listadd\kvt@alltables{#2}%
 %    \end{macrocode}
 % Now parse \meta{colspecs}, a semicolon-separated list of individual
@@ -1989,20 +1987,20 @@ cherries,50g,cherries,heat up and add to bowl
 % takes $n$ header cell titles, \meta{head1} to \meta{headn} and formats
 % them based on the |headformat| and |headalign| options.
 % More precisely, when fully expanded, |\kvt@defaultheader| yields
-% "\meta{rowcolor}|& |\meta{fmthead1}| & |\ldots| & |\meta{fmtheadn}|\tabularnewline|".
+% "\meta{rowcolor}\meta{fmthead1}| & |\ldots| & |\meta{fmtheadn}|\tabularnewline|".
 % In the above, \meta{rowcolor}=|\rowcolor{|\meta{headbg}|}|.
 %    \begin{macrocode}
 \newcommand\kvt@defaultheader{%
   \noexpand\kvt@rowcolorornot{\cmdkvt@Table@headbg}%
-  \kvt@defaultheader@i}
-\newcommand\kvt@defaultheader@i[1]{%
-  \kvt@ifnil{#1}{\noexpand\tabularnewline}{%
-    \unexpanded{&}%
+  \kvt@defaultheader@i{}}
+\newcommand\kvt@defaultheader@i[2]{%
+  \kvt@ifnil{#2}{\noexpand\tabularnewline}{%
+    \unexpanded{#1}%
     \ifdefvoid\cmdkvt@Table@headalign
-      {\expandonce\cmdkvt@Table@headformat{\unexpanded{#1}}}
+      {\expandonce\cmdkvt@Table@headformat{\unexpanded{#2}}}
       {\noexpand\multicolumn{1}{\expandonce\cmdkvt@Table@headalign}
-        {\expandonce\cmdkvt@Table@headformat{\unexpanded{#1}}}}%
-    \kvt@defaultheader@i}}
+        {\expandonce\cmdkvt@Table@headformat{\unexpanded{#2}}}}%
+    \kvt@defaultheader@i{&}}}
 %    \end{macrocode}
 % \begin{macro}{\kvt@ifnil}
 % The |\kvt@ifnil|\marg{val}\marg{iftrue}\marg{iffalse} macro expands to
@@ -2018,16 +2016,6 @@ cherries,50g,cherries,heat up and add to bowl
     \expandafter\@secondoftwo\fi}
 %    \end{macrocode}
 % \end{macro}
-% \end{macro}
-%
-% \begin{macro}{\kvt@HackIntercolSpace}
-% The |\kvt@HackIntercolSpace| macro captures the negative space that
-% cancels out the spacing otherwise caused by the extra column that the
-% package adds.
-%    \begin{macrocode}
-\newcommand\kvt@HackIntercolSpace{%
-  @{\hspace{-.5\arrayrulewidth}}}
-%    \end{macrocode}
 % \end{macro}
 %
 % \begin{macro}{\kvt@alltables}
@@ -2091,20 +2079,6 @@ cherries,50g,cherries,heat up and add to bowl
   \kvt@setkeys{#3}{ColGroup}%
   \kvt@checkcolgroupcs{kvt@colgrp@span@#1@#2}{#1}{#2}%
 %    \end{macrocode}
-% The following checks whether the first (displayed) column of the
-% column group (|\kvt@@colgrp@first|) is the first displayed column
-% (i.e., the first in \cs{kvt@displaycols@\meta{tname}}).
-% If this is the case, then the |\multicolumn|'s preamble needs
-% |\kvt@HackIntercolSpace| such that the horizontal position becomes
-% correct.
-%    \begin{macrocode}
-  \let\kvt@@extraalign\@empty%
-  \def\kvt@@pcgdo##1{%
-    \expandafter\ifstrequal\expandafter{\kvt@@colgrp@first}{##1}
-      {\let\kvt@@extraalign\kvt@HackIntercolSpace}{}%
-    \listbreak
-  }\forlistcsloop\kvt@@pcgdo{kvt@displaycols@#1}%
-%    \end{macrocode}
 % The following defines the |\Row| key for \meta{cgname}, as an
 % abbreviation for setting the value of the first displayed column of
 % \meta{cgname} (|\kvt@@colgrp@first| to a |\multicolumn| that spans the
@@ -2134,8 +2108,7 @@ cherries,50g,cherries,heat up and add to bowl
             \expandonce\kvt@@colgrp@first=\noexpand\kvt@@@colgroup
               {\unexpanded{#2}}%
               {\expandonce\kvt@@colgrp@n}%
-              {\expandonce\kvt@@extraalign
-               \csexpandonce{kvt@colgrp@align@#1@#2}}%
+              {\csexpandonce{kvt@colgrp@align@#1@#2}}%
               {\unexpanded{##1}}}}%
       }%
     }}%
@@ -2321,6 +2294,7 @@ cherries,50g,cherries,heat up and add to bowl
   \let\kvt@@tmpgrphd\@empty
   \kvt@@span\z@
   \undef\kvt@@curhd \undef\kvt@@lasthd
+  \kvt@def@atseconduse\kvt@@switchcol{\appto\kvt@@tmpgrphd{&}}%
 %    \end{macrocode}
 % Next, loop over all displayed columns, stored in
 % \cs{kvt@displaycols@\meta{tname}}. The following |\do|\marg{colname}
@@ -2386,21 +2360,11 @@ cherries,50g,cherries,heat up and add to bowl
 % |\kvt@@tmpgrphd|).
 %    \begin{macrocode}
 \newcommand\kvt@concludecolumn{%
-%    \end{macrocode}
-% The following conditional checks whether this is the first header cell
-% in the header row. If this is the case, then the
-% |\kvt@@extraalign| macro is set to |\kvt@HackIntercolSpace|, such that
-% the |\multicolumn| below does not throw away this spacing.
-%    \begin{macrocode}
-  \ifdefequal\kvt@@tmpgrphd\@empty
-    {\let\kvt@@extraalign\kvt@HackIntercolSpace}
-    {\let\kvt@@extraalign\@empty}%
-  \appto\kvt@@tmpgrphd{&}%
+  \kvt@@switchcol
   \ifdefvoid\kvt@@lasthd{}{%
     \eappto\kvt@@tmpgrphd{\noexpand\multicolumn
       {\the\kvt@@span}
-      {\expandonce\kvt@@extraalign
-       \csexpandonce{kvt@@hdcell@align@\kvt@@lasthd}}
+      {\csexpandonce{kvt@@hdcell@align@\kvt@@lasthd}}
       {\csexpandonce{kvt@@hdcell@head@\kvt@@lasthd}}}%
 %    \end{macrocode}
 % Mark the header cell as already used and concluded, such that another
@@ -2985,7 +2949,7 @@ cherries,50g,cherries,heat up and add to bowl
 % When an |X| column is encountered, |\metatbl@@branch| is redefined to
 % expand to \meta{iftrue} in the end.
 %    \begin{macrocode}
-  \def\NC@rewrite@X{\def\metatbl@@branch{\@firstoftwo}\NC@find}%
+  \def\NC@rewrite@X{\def\metatbl@@branch{\@firstoftwo}\NC@find l}%
   \@mkpream{#1}%
   \expandafter\endgroup\metatbl@@branch}
 %    \end{macrocode}
@@ -3095,6 +3059,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \changes{v1.0}{2019/02/03}{Added \cs{multicolumn} support}
 %    \begin{macrocode}
   \kvt@@span=0\relax
+  \kvt@def@atseconduse\kvt@@switchcol{\appto\kvt@@row{&}}%
   \def\do##1{%
 %    \end{macrocode}
 % First, check whether a column-spanning cell is active
@@ -3110,7 +3075,7 @@ cherries,50g,cherries,heat up and add to bowl
                        \string\multicolumn}{}}
            {\kvt@error{Column '##1' nonempty inside column group
                        '\kvt@@curcgname'}{}}}}
-      {\appto\kvt@@row{&}%
+      {\kvt@@switchcol
 %    \end{macrocode}
 % Initialize the multicolumn display to the row's default.
 %    \begin{macrocode}
@@ -3154,7 +3119,8 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % Finally, append the cell to the row.
 %    \begin{macrocode}
-       \expandafter\appto\expandafter\kvt@@row\expandafter{\kvt@@fmtcell}}%
+       \expandafter\appto\expandafter\kvt@@row\expandafter{%
+         \kvt@@fmtcell}}%
   }\dolistcsloop{kvt@displaycols@#2}%
   \undef\kvt@@cellfmtbuilder
 %    \end{macrocode}
@@ -3169,6 +3135,16 @@ cherries,50g,cherries,heat up and add to bowl
 % At the very end of the expansion text, put \meta{post}.
 %    \begin{macrocode}
   #1}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@def@atseconduse}
+% The |\kvt@def@atseconduse|\marg{cmd}\marg{code} defines the macro
+% \meta{cmd} to expand to \meta{code} but only from its second use
+% onwards. At its first use, \meta{cmd} only redefines itself to
+% \meta{code} but does not do anything else.
+%    \begin{macrocode}
+\newcommand\kvt@def@atseconduse[2]{\def#1{\def#1{#2}}}
 %    \end{macrocode}
 % \end{macro}
 %
