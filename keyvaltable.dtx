@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/02/19 v2.1 Package for filling tables using key-value lists]
+    [2020/02/22 v2.1a Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -497,6 +497,14 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{KeyValTable}
 % \end{LTXexample}
 %
+% By default, all counters start at value $1$. Through the following
+% possibilities, this behavior can be changed.
+%
+% \NiceDescribeKey{resume}{vals={true,false}, init=false, def=true}
+% This option is available in |KeyValTable| environments. When this
+% option is set to |true|, the value of the |kvtRow| counter is resumed
+% from the previous |KeyValTable| environment. The other two counters
+% are not affected by this option.
 %
 % \subsection{Row Labeling}
 %
@@ -1686,6 +1694,13 @@ cherries,50g,cherries,heat up and add to bowl
   {\csdef{cmdkvt@Table@shape}{#1}}
 %    \end{macrocode}
 %
+% The following table options only apply to individual |KeyValTable|
+% environments and cannot be set with |\NewKeyValTable| or |\kvtSet|.
+% \changes{v2.2}{2020/02/22}{added table option "resume"}
+%    \begin{macrocode}
+\define@boolkey[kvt]{TableEnv}{resume}[true]{}
+%    \end{macrocode}
+%
 %
 % \subsubsection{Column Options}
 %
@@ -2503,10 +2518,15 @@ cherries,50g,cherries,heat up and add to bowl
 % specific table options in the current environment, based on the
 % options for table type \meta{tname} and the specific \meta{options}.
 %    \begin{macrocode}
-\newcommand\kvt@SetOptions[2]{%
-  \begingroup\edef\kvt@@do{\endgroup\noexpand%
-    \kvt@setkeys{\csexpandonce{kvt@options@#1},\unexpanded{#2}}{Table}%
-  }\kvt@@do}
+\newcommand\kvt@SetOptions[2]{\expandafter
+  \kvt@SetOptions@i\expandafter{\csname kvt@options@#1\endcsname}{#2}}
+%    \end{macrocode}
+% The auxiliary macro |\kvt@SetOptions@i|\marg{optcmd}\marg{options}
+% first sets the options in the expansion of \meta{optcmd} and then the
+% \meta{options}.
+%    \begin{macrocode}
+\newcommand\kvt@SetOptions@i[2]{\expandafter
+  \kvt@setkeys\expandafter{#1,#2}{Table,TableEnv}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2533,10 +2553,12 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % The following saves the row counter value for the table type globally,
 % such that subsequent tables of the same \meta{tname} can start counting
-% from there.
+% from there. Moreover, it save the local row counter for the case that
+% the next table uses the "|resume|" option.
 %    \begin{macrocode}
-  \appto\kvt@@endhook{%
-    \noalign{\csxdef{kvt@rowcount@#2}{\thekvtTypeRow}}}%
+  \appto\kvt@@endhook{\noalign{%
+    \csxdef{kvt@rowcount@#2}{\thekvtTypeRow}%
+    \csxdef{kvt@rowcountlast}{\thekvtRow}}}%
 %    \end{macrocode}
 % Adding caption and label, if given, to the end hook. This displays the
 % caption solely at the very end of the table.
@@ -2568,7 +2590,9 @@ cherries,50g,cherries,heat up and add to bowl
 % Initializing the row counters. The global counter |kvtTotalRow| needs
 % no local initialization.
 %    \begin{macrocode}
-  \setcounter{kvtRow}{0}%
+  \ifbool{kvt@TableEnv@resume}
+    {\setcounter{kvtRow}{\csuse{kvt@rowcountlast}}}
+    {\setcounter{kvtRow}{0}}%
   \setcounter{kvtTypeRow}{\csuse{kvt@rowcount@#2}}%
 %    \end{macrocode}
 % In |\kvt@@do|, the start code for the environment, including the
