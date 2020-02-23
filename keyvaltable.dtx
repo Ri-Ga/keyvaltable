@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/02/22 v2.1a Package for filling tables using key-value lists]
+    [2020/02/23 v2.1b Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -500,7 +500,7 @@ cherries,50g,cherries,heat up and add to bowl
 % By default, all counters start at value $1$. Through the following
 % possibilities, this behavior can be changed.
 %
-% \NiceDescribeKey{resume}{vals={true,false}, init=false, def=true}
+% \NiceDescribeKey{resume}{vals={true,false}, init=false, def=true}\label{opt:resume}
 % This option is available in |KeyValTable| environments. When this
 % option is set to |true|, the value of the |kvtRow| counter is resumed
 % from the previous |KeyValTable| environment. The other two counters
@@ -740,6 +740,23 @@ cherries,50g,cherries,heat up and add to bowl
 % \caption{Examples for table options}
 % \label{fig:TableOptionExamples}
 % \end{figure}
+%
+% \subsubsection{Table Styles and Resumable Options}
+%
+% Table styles are not yet implemented.
+%
+% Even without table styles, the appearance of the previous
+% |KeyValTable| can be used again through the following option.
+% \NiceDescribeKey{resume*}{vals={true,false}, init=false, def=true}
+% When set to |true|, this option makes the table use the options from
+% the previous |KeyValTable| environment. This option also implies the
+% |resume| option (see \vref{opt:resume}).
+
+% If the previous environment also used |resume*|, then the options of
+% its predecessor environment are used, and so forth.
+% Note that this means that table options are not accumulated over
+% subsequent uses of |resume*|.
+% This behavior is the same as in the \pkgname{enumitem} package.
 %
 %
 % \subsection{Column Appearance}
@@ -1696,9 +1713,27 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % The following table options only apply to individual |KeyValTable|
 % environments and cannot be set with |\NewKeyValTable| or |\kvtSet|.
-% \changes{v2.2}{2020/02/22}{added table option "resume"}
+% \changes{v2.2}{2020/02/23}{added table options "resume" and "resume*"}
 %    \begin{macrocode}
-\define@boolkey[kvt]{TableEnv}{resume}[true]{}
+\define@boolkey[kvt]{TableEnv}{resume}[true]{%
+  \ifbool{#1}{\ifundef\kvt@@rowcountlast
+    {\kvt@error{No previous table whose counter could be resumed.}
+      {Check whether the "resume" is intentional and whether a
+       previously existing predecessor table has disappeared.}}{}}{}}
+\define@boolkey[kvt]{TableEnv}{resume*}[true]{%
+  \ifbool{#1}
+%    \end{macrocode}
+% The |\kvt@@lastenvopt| macro holds the previous |KeyValTable|'s
+% options. Beyond these options, |resume*| automatically also sets
+% |resume|.
+%    \begin{macrocode}
+    {\ifundef\kvt@@lastenvopt
+       {\kvt@error{No previous table whose options could be resume*'d.}
+         {Check whether the "resume*" is intentional and whether a
+          previously existing predecessor table has disappeared.}}{}%
+     \kvt@setcmdkeys\kvt@@lastenvopt{Table}%
+     \kvt@setkeys{resume}{TableEnv}}
+    {}}
 %    \end{macrocode}
 %
 %
@@ -2507,6 +2542,15 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{macro}
 %    \begin{macrocode}
   \kvt@SetOptions{#2}{#1}%
+%    \end{macrocode}
+% Save \meta{options} globally for a potential "|resume*|" option in the
+% immediately following |KeyValTable| environment.
+% If |resume*| is specified for the current environment, then the
+% previous options are not replaced. That is, |resume*| resumes the
+% options from the previous non-resuming environment.
+%    \begin{macrocode}
+  \ifbool{kvt@TableEnv@resume*}{}
+    {\gdef\kvt@@lastenvopt{#1}}%
   \csuse{kvt@StartTable@\cmdkvt@Table@shape}{#2}%
 }{%
   \csuse{kvt@EndTable@\cmdkvt@Table@shape}}
@@ -2558,7 +2602,7 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
   \appto\kvt@@endhook{\noalign{%
     \csxdef{kvt@rowcount@#2}{\thekvtTypeRow}%
-    \csxdef{kvt@rowcountlast}{\thekvtRow}}}%
+    \csxdef{kvt@@rowcountlast}{\thekvtRow}}}%
 %    \end{macrocode}
 % Adding caption and label, if given, to the end hook. This displays the
 % caption solely at the very end of the table.
@@ -2591,7 +2635,7 @@ cherries,50g,cherries,heat up and add to bowl
 % no local initialization.
 %    \begin{macrocode}
   \ifbool{kvt@TableEnv@resume}
-    {\setcounter{kvtRow}{\csuse{kvt@rowcountlast}}}
+    {\setcounter{kvtRow}{\csuse{kvt@@rowcountlast}}}
     {\setcounter{kvtRow}{0}}%
   \setcounter{kvtTypeRow}{\csuse{kvt@rowcount@#2}}%
 %    \end{macrocode}
