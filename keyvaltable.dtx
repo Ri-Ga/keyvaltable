@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/02/23 v2.1b Package for filling tables using key-value lists]
+    [2020/02/24 v2.1c Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -743,7 +743,42 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \subsubsection{Table Styles and Resumable Options}
 %
-% Table styles are not yet implemented.
+% Rather than specifying properties for individual tables or table
+% types, \thispackage also supports named \emph{table styles}.
+%
+% \NiceDescribeKey{style}{vals=\vmeta{list of style names}, init=\vmeta{empty}}
+% Through this property of tables or table types, a list of styles can
+% be applied to a single table or, respectively, a table type. Each
+% style must have been defined with |\kvtNewTableStyle| before.
+%
+% \NiceDescribeMacro{\kvtNewTableStyle}{\marg{name}\marg{options}}
+% This macro declares a new table style with the given \meta{name} and
+% defines it to be equivalent to using the given \meta{options}.
+% The \meta{name} must not already be defined.
+%
+% \NiceDescribeMacro{\kvtRenewTableStyle}{\marg{name}\marg{options}}
+% This macro re-defines an existing table style \meta{name} with new
+% \meta{options}.
+%
+% The following example demonstrates table styles for an individual
+% table.
+%
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={style,kvtNewTableStyle}]
+% \kvtNewTableStyle{plain}{
+%   norules,nobg,headformat=\textbf}
+% \begin{KeyValTable}[style=plain]{Recipe}
+% \Row{amount=150g, ingredient=ice cream,
+%   step=put into bowl}
+% \Row{amount= 50g, ingredient=cherries,
+%   step=heat up and add to bowl}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% \NiceNote{The \meta{options} in |\kvtNewTableStyle| can be left empty.
+% In this case, the table style does not have any effect on the appearance
+% of tables. However, the style can already be used for "tagging" tables
+% and table types, while the final options for the style can be
+% configured at a later point in time.}
 %
 % Even without table styles, the appearance of the previous
 % |KeyValTable| can be used again through the following option.
@@ -1673,8 +1708,9 @@ cherries,50g,cherries,heat up and add to bowl
 % The following code defines the possible table options.
 %
 % \changes{v0.2}{2016/05/21}{Added ``shape'' table option}
-% \changes{v2.0}{2019/05/11}{added table options "caption" and "label"}
+% \changes{v2.0}{2019/05/11}{Added table options "caption" and "label"}
 % \changes{v2.1}{2020/01/18}{Added ``valign'' and ``halign'' table options}
+% \changes{v2.2}{2020/02/24}{Added ``style'' table option}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Table}{rowbg}{}
 \define@cmdkey[kvt]{Table}{headbg}{}
@@ -1689,6 +1725,7 @@ cherries,50g,cherries,heat up and add to bowl
   {\csdef{cmdkvt@Table@valign}{#1}}
 \define@choicekey[kvt]{Table}{halign}{l,c,r}
   {\csdef{cmdkvt@Table@halign}{#1}}
+\define@key[kvt]{Table}{style}{\kvt@UseTableStyles{#1}}
 %    \end{macrocode}
 % The following options only abbreviate options defined above.
 % \changes{v2.1}{2020/01/14}{added abbreviation option "norules"}
@@ -3340,54 +3377,111 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
-% \subsubsection{Row Styles}
+% \subsubsection{Table and Row Styles}
+%
+% The following are the user macros.
 %
 % \begin{macro}{\kvtNewRowStyle}
+% \changes{v2.0}{2019/03/25}{Added the macro}
+% \begin{macro}{\kvtRenewRowStyle}
+% \changes{v2.0}{2019/03/25}{Added the macro}
 % The |\kvtNewRowStyle|\marg{name}\marg{row-options} macro declares
 % \meta{name} as a row style and defines it to be equivalent to
 % specifying \meta{row-options} directly in the optional argument of
 % |\Row|. The macro fails if \meta{name} is already declared as a row
 % style.
-% \changes{v2.0}{2019/03/25}{Added the macro}
-%    \begin{macrocode}
-\newcommand\kvtNewRowStyle[2]{%
-  \ifcsundef{kvt@@rowstyle@#1}
-    {\csdef{kvt@@rowstyle@#1}{#2}}
-    {\kvt@error{Row style '#1' is already defined}{Use
-      \string\kvtRenewRowStyle\space to change an existing style.}}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\kvtRenewRowStyle}
 % The |\kvtRenewRowStyle|\marg{name}\marg{row-options} macro re-defines
 % an already existing row style with new \meta{row-options}.
-% \changes{v2.0}{2019/03/25}{Added the macro}
 %    \begin{macrocode}
-\newcommand\kvtRenewRowStyle[2]{%
-  \ifcsundef{kvt@@rowstyle@#1}
-    {\kvt@error{Row style '#1' is not defined}
-      {Use \string\kvtNewRowStyle\space to define a new row style.}}
-    {\csdef{kvt@@rowstyle@#1}{#2}}}
+\newcommand\kvtNewRowStyle{\kvt@NewStyle{row}{\kvtRenewRowStyle}}
+\newcommand\kvtRenewRowStyle{\kvt@RenewStyle{row}{\kvtNewRowStyle}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\kvtNewTableStyle}
+% \changes{v2.2}{2020/02/24}{Added the macro}
+% \begin{macro}{\kvtRenewTableStyle}
+% \changes{v2.2}{2020/02/24}{Added the macro}
+% The |\kvtNewTableStyle|\marg{name}\marg{options} macro declares
+% \meta{name} as a table style and defines it to be equivalent to
+% specifying \meta{options} directly in the optional argument of
+% a |KeyValTable| environment or of a |\NewKeyValTable|. The macro fails
+% if \meta{name} is already declared as a table style.
+% The |\kvtRenewTableStyle|\marg{name}\marg{options} macro re-defines
+% an already existing table style with new \meta{options}.
+%    \begin{macrocode}
+\newcommand\kvtNewTableStyle{\kvt@NewStyle{table}{\kvtRenewTableStyle}}
+\newcommand\kvtRenewTableStyle{\kvt@RenewStyle{table}{\kvtNewTableStyle}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% The following are the internal macros that the style code shares.
+%
+% \begin{macro}{\kvt@NewStyle}
+% \begin{macro}{\kvt@RenewStyle}
+% The |\kvt@NewStyle|\marg{type}\marg{renewcmd}\marg{name}\marg{options}
+% macro defines a new style, \meta{name}, for \meta{type} (|table| or
+% |row|) to correspond to \meta{options}.
+% Analogously,
+% |\kvt@RenewStyle|\marg{type}\marg{newcmd}\marg{name}\marg{options}
+% macro re-defines a style.
+%    \begin{macrocode}
+\newcommand\kvt@NewStyle[4]{%
+  \ifcsundef{kvt@@#1style@#3}
+    {\csdef{kvt@@#1style@#3}{#4}}
+    {\kvt@error{The #1 style '#3' is already defined}{Use
+      \string#2\space to change an existing style.}}}
+\newcommand\kvt@RenewStyle[4]{%
+  \ifcsundef{kvt@@#1style@#3}
+    {\kvt@error{A #1 style '#3' is not defined}
+      {Use \string#2\space to define a new #1 style.}}
+    {\csdef{kvt@@#1style@#3}{#4}}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\kvt@UseRowStyles}
+% \begin{macro}{\kvt@UseTableStyles}
+% \changes{v2.2}{2020/02/24}{Added the macro}
+% The |\kvt@UseRowStyles|\marg{styles} and
+% |\kvt@UseTableStyles|\marg{styles} macros set the keys for the given,
+% comma-separated list of \meta{styles}.
+%    \begin{macrocode}
+\newcommand\kvt@UseRowStyles[1]{%
+  \kvt@UseStyles{row}{Row}{\kvt@NewRowStyle}{#1}}
+\newcommand\kvt@UseTableStyles[1]{%
+  \kvt@UseStyles{table}{Table}{\kvt@NewTableStyle}{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\kvt@UseStyle}
+% The |\kvt@UseStyle|\marg{type}\marg{fam}\marg{newcmd}\marg{style}
+% macro sets the keys for type \meta{type} based on the \meta{options}
+% stored for the given \meta{style}.
+% The \meta{fam} identifies the
+% \pkgname{xkeyval} family for \meta{type} and \meta{newcmd} is the
+% macro for defining new \meta{type} styles.
+%    \begin{macrocode}
+\newcommand\kvt@UseStyle[4]{%
+  \ifcsundef{kvt@@#1style@#4}
+    {\kvt@error{A #1 style '#4' is not defined}
+      {Use \string#3\space to define a new #1 style.}}
+    {\kvt@setcskeys{kvt@@#1style@#4}{#2}}}
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\kvt@UseRowStyle}
-% The |\kvt@UseRowStyle|\marg{style} macro sets the row keys based on
-% the \meta{row-options} stored for the given \meta{style}.
+% \begin{macro}{\kvt@UseStyles}
+% The |\kvt@UseStyles|\marg{type}\marg{fam}\marg{newcmd}\marg{styles}
+% macro sets the \meta{type} keys based on the \meta{options} for all
+% styles in the comma-separated list \meta{styles}.
+% The \meta{fam} identifies the
+% \pkgname{xkeyval} family for \meta{type} and \meta{newcmd} is the
+% macro for defining new \meta{type} styles.
 %    \begin{macrocode}
-\newcommand\kvt@UseRowStyle[1]{%
-  \ifcsundef{kvt@@rowstyle@#1}
-    {\kvt@error{Row style '#1' is not defined}
-      {Use \string\kvtNewRowStyle\space to define a new row style.}}
-    {\kvt@setcskeys{kvt@@rowstyle@#1}{Row}}}
-%    \end{macrocode}
-% \end{macro}
-% \begin{macro}{\kvt@UseRowStyles}
-% The |\kvt@UseRowStyle|\marg{styles} macro sets the row keys based on
-% the \meta{row-options} for all styles in the comma-separated list
-% \meta{styles}.
-%    \begin{macrocode}
-\newcommand\kvt@UseRowStyles[1]{%
+\newcommand\kvt@UseStyles[4]{%
 %    \end{macrocode}
 % We use |\kvt@xkv@disablepreset| to eliminate undesired effects that
 % would otherwise be caused by preset values for keys.
@@ -3402,8 +3496,8 @@ cherries,50g,cherries,heat up and add to bowl
 % |\setkeys| would then again employ the presets for |Row| (e.g., from a
 % |\kvtSet{Row/bg=blue}|) and undesirably overwrite the |bg=red|.
 %    \begin{macrocode}
-  \kvt@xkv@disablepreset[kvt]{Row}{%
-    \forcsvlist\kvt@UseRowStyle{#1}}}
+  \kvt@xkv@disablepreset[kvt]{#2}{%
+    \forcsvlist{\kvt@UseStyle{#1}{#2}{#3}}{#4}}}
 %    \end{macrocode}
 % \end{macro}
 %
