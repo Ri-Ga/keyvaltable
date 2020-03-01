@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/02/24 v2.1c Package for filling tables using key-value lists]
+    [2020/03/01 v2.1d Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -47,7 +47,7 @@
     showhead=false,headformat={\bfseries\footnotesize},
     rowbg=black!7!white..black!3!white,
     showrules=false,
-    shape=tabu]{GoalApproach}{
+    backend=tabu]{GoalApproach}{
   id: align=r, default=(\alph{kvtRow}), head=\#;
   goal: align=X[l];
   approach: align={X[2,l]};
@@ -616,27 +616,33 @@ cherries,50g,cherries,heat up and add to bowl
 % list of \meta{property}|=|\meta{value} pairs.
 % The following \meta{property} keys can be configured.
 %
-% \NiceDescribeKey{shape}
-%    {vals={multipage,onepage,tabular,tabularx,longtable,xltabular,tabu,longtabu},
-%     init=multipage}
-% This property specifies the table's shape. For \meta{value}, the
-% package currently supports |multipage| and |onepage| as well as
-% |tabular|, |tabularx|, |longtable|, |xltabular|, |tabu|, and
-% |longtabu|.  In case of |multipage|, the table may span multiple pages
-% and on each page, the column header is repeated. In case of |onepage|,
-% the table does not split into multiple pages.  The remaining values
-% use the respective environment for producing the table (see
-% \cref{sec:AltTabEnv} for the effect).
+% \NiceDescribeKeys{2}
+%   {backend}{vals={tabular,tabularx,longtable,xltabular,tabu,longtabu}}
+%   {shape}{vals={multipage,onepage}, init=multipage}
+% The |backend| property specifies the table environment to be used for
+% producing the table. A set of six environments is currently supported,
+% including environments that can span multiple pages and environments
+% whose columns can stretch/shrink to fill the available space ("|X|"
+% columns).
+% The |shape| property abstracts from the concrete environments.
+% In case of |multipage|, the table may span multiple pages and
+% depending on whether |X|-columns are used or not, an appropriate
+% environment is selected. In case of |onepage|, the table does not
+% split into multiple pages.
+% See \cref{sec:AltTabEnv} for more details on the available shapes and
+% backends.
+% Only one of |shape| and |backend| can be specified. If both are
+% specified, the property that is specified last wins.
 %
 % \NiceDescribeKey{width}{vals=\vmeta{dimension}, init=\cmd\linewidth}
 % This property specifies the width of the table, if the selected
-% |shape| supports it (see \cref{sec:AltTabEnv}).
+% |shape|/|backend| supports it (see \cref{sec:AltTabEnv}).
 %
 % \NiceDescribeKeys{2}
 %   {valign}{vals={t,c,b}, init=\vmeta{empty}}
 %   {halign}{vals={l,c,r}, init=\vmeta{empty}}
 % These two properties specify the vertical and, respectively, horizontal
-% alignment of the table, if the selected |shape| supports it (see
+% alignment of the table, if the selected |shape|/|backend| supports it (see
 % \cref{sec:AltTabEnv}).
 %
 % \NiceDescribeKey{showhead}{vals={true,false}, init=true}
@@ -1176,11 +1182,11 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \subsection{Captions}
 %
-% There are two ways to add captions to (\pkgname{keyvaltable}-) tables:
+% There are two ways to add captions to \pkgname{keyvaltable} tables:
 % The first way is to enclose the table in a |table| environment. This
 % is particularly suit for tables that do not span multiple pages, such
-% as those produced through the |onepage| shape (or |tabular|,
-% |tabularx|, and |tabu| -- see \cref{sec:AltTabEnv}).
+% as those produced through the |onepage| shape or the backends
+% |tabular|, |tabularx|, and |tabu| (see \cref{sec:AltTabEnv}).
 %
 % \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={caption,label,ref}]
 % \begin{table}
@@ -1199,8 +1205,8 @@ cherries,50g,cherries,heat up and add to bowl
 % The second way to add captions is through the |caption| option of
 % \pkgname{keyvaltable} tables. This is particularly suit for tables
 % that can span multiple pages, such as those produced through the
-% |multipage| shape (or |longtable|, |xltabular|, and |longtabu| -- see
-% \cref{sec:AltTabEnv}).
+% |multipage| shape or the backends |longtable|, |xltabular|, and
+% |longtabu| (see \cref{sec:AltTabEnv}).
 %
 % \NiceDescribeKeys{2}
 %    {caption}{vals=\vmeta{text}, init=\vmeta{none}}
@@ -1223,28 +1229,33 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \subsection{Alternative Table Environments}
 % \label{sec:AltTabEnv}
-%
-% Originally, the \thispackage package uses the \pkgname{tabu} package
-% and |tabu|, resp. |longtabu| environments for typesetting the actual
-% tables. Through the |shape| option of tables, the table environment
-% used by \thispackage tables can be changed.
-% \Vref{tab:TabEnv} compares
-% the possible shapes/environments with regards to
+% The \thispackage package internally uses traditional table
+% environments, such as |tabular|, for typesetting the actual tables.
+% Through the |shape| and |backend| properties of a table or table type,
+% the table environment used by for the table or, respectively, table
+% type can be changed.
+% \Vref{tab:TabEnv} compares the possible shapes/environments with
+% regards to
 % \begin{itemize}[nosep]
 % \item whether they support tables that span multiple pages,
 % \item whether they support |caption| and |label| options,
 % \item whether they support |X|-type (variable-width) columns,
-% \item and whether their width can be specified (through the |width| option).
+% \item whether their width can be specified (through the |width|
+%   option), and
+% \item whether they support a vertical or horizontal alignment of the
+%   table to be specified.
 % \end{itemize}
-% Finally, the table also displays the
-% package(s) that must be loaded manually when the respective shapes are
+% Finally, the table also lists the names of the packages that provide
+% the respective environments. The packages for the shapes |onepage| and
+% |multipage| are loaded automatically. All other packages must be
+% loaded via |\usepackage| when the respective shape or backend shall be
 % used.
 % \begin{table}\centering
 %   \newcommand\RHead[1]{\rotatebox{90}{\small\varwidth{\linewidth}#1\endvarwidth}}%
 %   \newcommand\YesNo[1]{\ifstrequal{#1}{yes}{\checkmark}{}}%
-% \NewKeyValTable[shape=tabular,headformat=\sffamily\textbf]{ShapeProps}{
+% \NewKeyValTable[backend=tabular,headformat=\sffamily\textbf]{ShapeProps}{
 %   shape: format=\small\texttt;
-%   env: format=\small\texttt, head=environment;
+%   env: format=\small\texttt, head=backend;
 %   multipage: align=c, head=\RHead{multipage}, format=\YesNo;
 %   caption:   align=c, head=\RHead{caption}, format=\YesNo;
 %   Xcols:     align=c, head=\RHead{\texttt{X} columns}, format=\YesNo;
@@ -1259,14 +1270,14 @@ cherries,50g,cherries,heat up and add to bowl
 % \Row{shape=onepage,   env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages=tabu}
 % \Row{shape=multipage, env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={tabu, longtable}}
 % \midrule
-% \Row{shape=tabular,   env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no,  align=v}
-% \Row{shape=tabularx,  env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages={tabularx}}
-% \Row{shape=longtable, env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no,  align=h, packages={longtable}}
-% \Row{shape=xltabular, env=xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={xltabular}}
-% \Row{shape=tabu,      env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages={tabu}}
-% \Row{shape=longtabu,  env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={tabu,longtable}}
+% \Row{                 env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no,  align=v}
+% \Row{                 env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages={tabularx}}
+% \Row{                 env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no,  align=h, packages={longtable}}
+% \Row{                 env=xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={xltabular}}
+% \Row{                 env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages={tabu}}
+% \Row{                 env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={tabu,longtable}}
 % \end{KeyValTable}
-% \caption{Comparison of table shapes / environments}
+% \caption{Comparison of table shapes and backends}
 % \label{tab:TabEnv}
 % \end{table}
 %
@@ -1279,11 +1290,11 @@ cherries,50g,cherries,heat up and add to bowl
 %   l: align=l; c: align=c; r: align=r;}[headers={
 %   l+c+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::}]
 %
-% \begin{KeyValTable}[shape=tabular]{ShapeNoX}
+% \begin{KeyValTable}[backend=tabular]{ShapeNoX}
 %   \Row{l=left,   c=center,     r=right}
 %   \Row{l=left-2, c=2-center-2, r=2-right}
 % \end{KeyValTable}\\
-% \begin{KeyValTable}[shape=longtable]{ShapeNoX}
+% \begin{KeyValTable}[backend=longtable]{ShapeNoX}
 %   \Row{l=left,   c=center,     r=right}
 %   \Row{l=left-2, c=2-center-2, r=2-right}
 % \end{KeyValTable}
@@ -1296,24 +1307,24 @@ cherries,50g,cherries,heat up and add to bowl
 %   l: align=l; X: align=X; r: align=r;}[headers={
 %   l+X+r: head=\textbf{\kvtTableOpt{shape} shape}\\ ::}]
 %
-% \begin{KeyValTable}[shape=tabularx]{ShapeWithX}
+% \begin{KeyValTable}[backend=tabularx]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}\medskip\\
-% \begin{KeyValTable}[shape=xltabular]{ShapeWithX}
+% \begin{KeyValTable}[backend=xltabular]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}
-% \begin{KeyValTable}[shape=tabu]{ShapeWithX}
+% \begin{KeyValTable}[backend=tabu]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}
-% \begin{KeyValTable}[shape=longtabu]{ShapeWithX}
+% \begin{KeyValTable}[backend=longtabu]{ShapeWithX}
 %   \Row{l=left,   X=expandable,   r=right}
 %   \Row{l=left-2, X=expandable-2, r=2-right}
 % \end{KeyValTable}
 % \end{LTXexample}
-% \caption{Examples for the shape option}
+% \caption{Examples for the backend option}
 % \label{fig:TableTypes}
 % \end{figure}
 %
@@ -1711,6 +1722,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \changes{v2.0}{2019/05/11}{Added table options "caption" and "label"}
 % \changes{v2.1}{2020/01/18}{Added ``valign'' and ``halign'' table options}
 % \changes{v2.2}{2020/02/24}{Added ``style'' table option}
+% \changes{v2.2}{2020/02/27}{added option "backend"}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Table}{rowbg}{}
 \define@cmdkey[kvt]{Table}{headbg}{}
@@ -1738,14 +1750,18 @@ cherries,50g,cherries,heat up and add to bowl
   \ifbool{#1}
     {\kvt@setkeys{showrules=false}{Table}}
     {\kvt@setkeys{showrules=true}{Table}}}
-%    \end{macrocode}
-% When adding further |shape| options below, ensure to also add a
-% corresponding |\kvt@DefineStdTabEnv| counterpart further below in the
-% code.
-%    \begin{macrocode}
-\define@choicekey[kvt]{Table}{shape}
-  {multipage,onepage,tabular,longtable,tabularx,xltabular,tabu,longtabu}
+\define@key[kvt]{Table}{backend}{\ifinlist{#1}{\kvt@@tablebackends}
   {\csdef{cmdkvt@Table@shape}{#1}}
+  {\kvt@error{Table backend '#1' not known}
+     {Check for misspellings in '#1'}}}
+\define@key[kvt]{Table}{shape}{\ifinlist{#1}{\kvt@@tableshapes}
+  {\csdef{cmdkvt@Table@shape}{#1}}
+  {\ifinlist{#1}{\kvt@@tablebackends}
+    {\kvt@warn{Using a backend ('#1') as shape is deprecated.
+      Use the 'backend' option instead.}%
+     \csdef{cmdkvt@Table@shape}{#1}}
+    {\kvt@error{Table shape '#1' not known}
+       {Check for misspellings in '#1'}}}}
 %    \end{macrocode}
 %
 % The following table options only apply to individual |KeyValTable|
@@ -1895,9 +1911,11 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \subsubsection{Option Defaults}
 %
-% The following sets the default values for the options.
+% The following sets the default values for the options. This is done
+% only after the package is otherwise completely processed, to ensure
+% that all features are already defined/registered at that point.
 %    \begin{macrocode}
-\kvtSet{%
+\AtEndOfPackage{\kvtSet{%
   rowbg=white..black!10,
   headbg=black!14,
   showhead=true,
@@ -1925,7 +1943,7 @@ cherries,50g,cherries,heat up and add to bowl
   ColGroup/align=c,
   ColGroup/format=\kvtStrutted,
   HeadCell/align=c,
-}
+}}
 %    \end{macrocode}
 %
 %
@@ -2611,6 +2629,238 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
+%
+% \subsubsection{Table Environment Properties}
+%
+% The following code maintains properties about known table
+% environments. This code does not depend on other code of the
+% \thispackage package but is only used by \thispackage.
+%
+% The following properties can be maintained about table environments.
+%    \begin{macrocode}
+\define@boolkey[metatbl]{EnvProp}{isLong}{\metatbl@boolprop{isLong}{#1}}
+\define@boolkey[metatbl]{EnvProp}{isTabu}{\metatbl@boolprop{isTabu}{#1}}
+\define@boolkey[metatbl]{EnvProp}{hasWidth}{%
+  \metatbl@boolprop{hasWidth}{#1}}
+\define@boolkey[metatbl]{EnvProp}{hasCaption}{%
+  \metatbl@boolprop{hasCaption}{#1}}
+\define@boolkey[metatbl]{EnvProp}{canVAlign}{%
+  \metatbl@boolprop{canVAlign}{#1}}
+\define@boolkey[metatbl]{EnvProp}{canHAlign}{%
+  \metatbl@boolprop{canHAlign}{#1}}
+\define@cmdkey[metatbl]{EnvProp}{packages}{\metatbl@setprop{pkg}{#1}}
+%    \end{macrocode}
+% The |atEnd| property shall be set to \hologo{TeX} code with one
+% argument (i.e., using the positional argument |#1|) that adds its
+% argument to the end of the active table environment's final content.
+% Finding such code is not obvious for table environments that collect
+% the content of the environment, like |tabularx| does, for instance.
+%    \begin{macrocode}
+\define@key[metatbl]{EnvProp}{atEnd}{\metatbl@setprop[1]{atEnd}{#1}}
+%    \end{macrocode}
+%
+% \begin{macro}{\metatblRegisterEnv}
+% The |\metatblRegisterEnv|\marg{env-name}\marg{properties} macro
+% registers a table environment with name \meta{env-name} and sets its
+% properties according to \meta{properties}, a comma-separated key-value
+% list.
+%    \begin{macrocode}
+\newrobustcmd\metatblRegisterEnv[2]{%
+  \edef\metatbl@@envname{#1}%
+  \csdef{metatbl@@registered@#1}{true}%
+  \setkeys[metatbl]{EnvProp}{#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatbl@setprop}
+% The |\metatbl@setprop|\oarg{n}\marg{key}\marg{value}
+% macro defines a macro with \meta{n} arguments ($0$ by default) for the
+% environment stored in |\metatbl@@envname| and the given
+% \meta{key}. This macro then expands to \meta{value}.
+%    \begin{macrocode}
+\newcommand\metatbl@setprop[3][0]{%
+  \expandafter\newcommand
+    \csname metatbl@EnvProp@#2@\metatbl@@envname\endcsname[#1]{#3}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatbl@boolprop}
+% The |\metatbl@boolprop|\marg{prop}\marg{value} macro stores the
+% Boolean value \meta{value} in a property \meta{prop} for the
+% environment stored in |\metatbl@@envname|.
+%    \begin{macrocode}
+\newcommand\metatbl@boolprop[2]{%
+  \providebool{metatbl@EnvProp@#1@\metatbl@@envname}%
+  \setbool{metatbl@EnvProp@#1@\metatbl@@envname}{#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatblRegistered}
+% \begin{macro}{\metatblIsLong}
+% \begin{macro}{\metatblIsTabu}
+% \begin{macro}{\metatblHasWidth}
+% \begin{macro}{\metatblHasCaption}
+% \begin{macro}{\metatblCanVAlign}
+% \begin{macro}{\metatblCanHAlign}
+% All macros in the following block expect three arguments,
+%   \marg{env-name}\marg{iftrue}\marg{iffalse}.
+% The macro
+% |\metatblRegistered|
+% expands to \meta{iftrue} if \meta{env-name} has been registered via
+% |\metatblRegisterEnv| and expands to \meta{iffalse} otherwise.
+% The remaining macros expand to \meta{iftrue}, if the respective
+% property has been set to |true| in when \meta{env-name} was registered
+% via |\metatblRegisterEnv|, and expand to \meta{iffalse} otherwise.
+%    \begin{macrocode}
+\newcommand\metatblRegistered[1]{\ifcsdef{metatbl@@registered@#1}}
+\newcommand\metatblIsLong[1]{\ifbool{metatbl@EnvProp@isLong@#1}}
+\newcommand\metatblIsTabu[1]{\ifbool{metatbl@EnvProp@isTabu@#1}}
+\newcommand\metatblHasWidth[1]{\ifbool{metatbl@EnvProp@hasWidth@#1}}
+\newcommand\metatblHasCaption[1]{\ifbool{metatbl@EnvProp@hasCaption@#1}}
+\newcommand\metatblCanVAlign[1]{\ifbool{metatbl@EnvProp@canVAlign@#1}}
+\newcommand\metatblCanHAlign[1]{\ifbool{metatbl@EnvProp@canHAlign@#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\metatblUsePackage}
+% \begin{macro}{\metatblRequire}
+% Macros |\metatblUsePackage|\marg{env-names} and
+% |\metatblRequire|\marg{env-names} load the packages required
+% for typesetting |KeyValTable| tables based on the table environments
+% listed in \meta{env-names}.
+% The former aims more at normal document use, the second at use by
+% package developers.
+%    \begin{macrocode}
+\newcommand\metatblUsePackage[1]{%
+  \def\do##1{%
+    \metatbl@csnamearg\usepackage{metatbl@EnvProp@pkg@##1}}%
+  \docsvlist{#1}}
+\newcommand\metatblRequire[1]{%
+  \def\do##1{%
+    \metatbl@csnamearg\RequirePackage{metatbl@EnvProp@pkg@##1}}%
+  \docsvlist{#1}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\metatblAtEnd}
+% The |\metatblAtEnd|\marg{env-name}\marg{code} macro registers
+% \meta{code} for addition at the end of tables based on the
+% \meta{env-name} environment.
+%    \begin{macrocode}
+\newcommand\metatblAtEnd[2]{% #1=env-name, #2=code
+  \csname metatbl@EnvProp@atEnd@#1\endcsname{#2}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\metatbl@csnamearg}
+% The auxiliary macro
+% |\metatbl@csnamearg|\marg{command}\marg{csname}
+% passes the expansion of the macro with name \meta{csname} as the first
+% argument to \meta{command}.
+%    \begin{macrocode}
+\newcommand\metatbl@csnamearg[2]{%
+  \expandafter\expandafter\expandafter#1%
+  \expandafter\expandafter\expandafter{\csname#2\endcsname}}
+%    \end{macrocode}
+% \end{macro}
+%
+% The following are the properties of some basic table environments.
+%    \begin{macrocode}
+\metatblRegisterEnv{tabular}{%
+  isLong=false, hasWidth=false, isTabu=false, hasCaption=false,
+  canVAlign=true, canHAlign=false,
+  packages={},
+  atEnd={\preto\endtabular{#1}},
+}
+\metatblRegisterEnv{tabularx}{%
+  isLong=false, hasWidth=true, isTabu=false, hasCaption=false,
+  canVAlign=true, canHAlign=false,
+  packages=tabularx,
+  atEnd={%
+%    \end{macrocode}
+% Of the following two lines, the latter is for the case that the
+% \pkgname{xltabular} package is loaded, and the former is for the case
+% that the package is not loaded.
+%    \begin{macrocode}
+    \preto\TX@endtabularx{\toks@\expandafter{\the\toks@#1}}%
+    \preto\XLT@i@TX@endtabularx{\toks@\expandafter{\the\toks@#1}}},
+}
+\metatblRegisterEnv{longtable}{%
+  isLong=true, hasWidth=false, isTabu=false, hasCaption=true,
+  canVAlign=false, canHAlign=true,
+  packages={longtable},
+  atEnd={\preto\endlongtable{#1}},
+}
+\metatblRegisterEnv{xltabular}{%
+  isLong=true, hasWidth=true, isTabu=false, hasCaption=true,
+  canVAlign=false, canHAlign=true,
+  packages=xltabular,
+  atEnd={\preto\XLT@ii@TX@endtabularx{\toks@\expandafter{\the\toks@#1}}},
+}
+\metatblRegisterEnv{tabu}{%
+  isLong=false, hasWidth=true, isTabu=true, hasCaption=false,
+  canVAlign=true, canHAlign=false,
+  packages={tabu},
+%    \end{macrocode}
+% The following is not a mistake: |tabu| does
+% |\def\endtabu{\endtabular}| at the beginning of a |tabu| environment.
+%    \begin{macrocode}
+  atEnd={\preto\endtabular{#1}},
+}
+\metatblRegisterEnv{longtabu}{%
+  isLong=true, hasWidth=true, isTabu=true, hasCaption=true,
+  canVAlign=false, canHAlign=true,
+  packages={tabu,longtable},
+%    \end{macrocode}
+% The following is not a mistake: |tabu| does
+% |\def\endlongtabu{\endlongtable}| at the beginning of a |longtabu|
+% environment.
+%    \begin{macrocode}
+  atEnd={\preto\endlongtable{#1}},
+}
+%    \end{macrocode}
+%
+% \begin{macro}{\metatbl@ifhasXcolumns}
+% The |\metatbl@ifhasXcolumns|\marg{preamble}\marg{iftrue}\marg{iffalse}
+% takes a \meta{preamble} (the argument of a |tabular| environment that
+% specifies the columns of the table) and checks, whether this preamble
+% contains an "|X|" column. If such a column is contained, the macro
+% expands to \meta{iftrue}. Otherwise, it expands to \meta{iffalse}.
+%    \begin{macrocode}
+\newrobustcmd\metatbl@ifhasXcolumns[1]{%
+  \begingroup
+%    \end{macrocode}
+% The |\metatbl@@branch| macro is used at the end of the macro to select
+% \meta{iftrue} or \meta{iffalse} for expansion. Initially, the macro is
+% defined to select \meta{iffalse}.
+%    \begin{macrocode}
+  \def\metatbl@@branch{\@secondoftwo}%
+%    \end{macrocode}
+% The code uses the |\@mkpream| macro of the \pkgname{array} package to
+% create an |\halign| preamble from the |tabular| \meta{preamble}.
+% The result of |\@mkpream| is in |\@preamble| afterwards, but this
+% result is not used, but rather discarded at the |\endgroup| below.
+% Rather, we hook into |\@mkpream| via |\NC@rewrite@X|, which is used
+% when an |X| column was encountered in \meta{preamble}.\footnote{This
+% hooking into \cmd{\@mkpream} is inspired by how |tabularx| replaces |X|
+% columns by |p| columns as part of its measuring.}
+% When an |X| column is encountered, |\metatbl@@branch| is redefined to
+% expand to \meta{iftrue} in the end.
+%    \begin{macrocode}
+  \def\NC@rewrite@X{\def\metatbl@@branch{\@firstoftwo}\NC@find l}%
+  \@mkpream{#1}%
+  \expandafter\endgroup\metatbl@@branch}
+%    \end{macrocode}
+% \end{macro}
+%
+%
 % \subsubsection{Table Environment Code}
 %
 % \begin{macro}{\kvt@StartTabularlike}
@@ -2765,18 +3015,58 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\kvt@RegisterBackend}
+% \begin{macro}{\kvt@RegisterShape}
+% The |\kvt@RegisterBackend|\marg{env} macro registers the table
+% environment \meta{env} as a table backend for use by \thispackage.
+% The |\kvt@RegisterShape|\marg{name}\marg{nonX-env}\marg{X-env}
+% registers a shape with the given \meta{name} and associates it with
+% the environment \meta{nonX-env} when the shape is used for a table
+% without |X| columns and with environment \meta{X-env} otherwise.
+%    \begin{macrocode}
+\newcommand\kvt@RegisterBackend[1]{%
+  \ifinlist{#1}{\kvt@@tablebackends}
+    {\kvt@error{Backend '#1' already registered}
+       {Internal error. Check use of \string\kvt@RegisterBackend.}}
+    {\kvt@CheckMetatblEnv{#1}%
+     \listadd{\kvt@@tablebackends}{#1}%
+     \kvt@DefineStdTabEnv{#1}{#1}}}
+\newcommand\kvt@RegisterShape[3]{%
+  \ifinlist{#1}{\kvt@@tableshapes}
+    {\kvt@error{Shape '#1' already registered}
+       {Internal error. Check use of \string\kvt@RegisterShape.}}
+    {\kvt@CheckMetatblEnv{#2}\kvt@CheckMetatblEnv{#3}%
+    \listadd{\kvt@@tableshapes}{#1}%
+     \ifstrequal{#2}{#3}
+       {\kvt@DefineStdTabEnv{#1}{#2}}
+       {\kvt@DefineDualTabEnv{#1}{#2}{#3}}}}
+\newcommand\kvt@CheckMetatblEnv[1]{\metatblRegistered{#1}{}
+   {\kvt@error{Environment '#1' not supported by keyvaltable}
+      {Check \string\metatblRegisterEnv\space for how to make it
+       supported.}}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+% \begin{macro}{\kvt@RegisterBackend}
+% \begin{macro}{\kvt@RegisterShape}
+% The macros |\kvt@@tablebackends| and |\kvt@@tableshapes| hold
+% \pkgname{etoolbox} lists of registered names of table backends and
+% table shapes.
+%    \begin{macrocode}
+\newcommand\kvt@@tablebackends{}
+\newcommand\kvt@@tableshapes{}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
 % \begin{macro}{\kvt@DefineStdTabEnv}
-% The |\kvt@DefineStdTabEnv|\oarg{shape}\marg{env}
+% The |\kvt@DefineStdTabEnv|\marg{shape}\marg{env}
 % macro defines the macros needed for the given \meta{shape} value.
 % If \meta{shape} is omitted, \meta{env} (the name of the environment to
 % use for the shape) is used as \meta{shape} value.
-%
-% Note: In the future, the macro could automatically add \meta{option}
-% to the list of possible values for the |shape| option.
 %    \begin{macrocode}
-\newcommand\kvt@DefineStdTabEnv{\@dblarg\kvt@DefineStdTabEnv@i}
-\newcommand\kvt@DefineStdTabEnv@i[2][]{%
-  \expandafter\newcommand\csname kvt@StartTable@#1\endcsname[1]{%
+\newcommand\kvt@DefineStdTabEnv[2]{%
+  \csdef{kvt@StartTable@#1}##1{%
     \kvt@StartTabularlike{#2}{##1}}%
   \csedef{kvt@EndTable@#1}{%
     \expandafter\noexpand\csname end#2\endcsname}}
@@ -2816,249 +3106,16 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
-% The following lines define the macros for the various table shapes /
+% The following lines define the macros for the various table 
 % environments.
 %    \begin{macrocode}
-\kvt@DefineStdTabEnv{tabular}
-\kvt@DefineStdTabEnv{longtable}
-\kvt@DefineStdTabEnv{tabularx}
-\kvt@DefineStdTabEnv{xltabular}
-\kvt@DefineStdTabEnv{tabu}
-\kvt@DefineStdTabEnv{longtabu}
+\kvt@RegisterBackend{tabular}
+\kvt@RegisterBackend{longtable}
+\kvt@RegisterBackend{tabularx}
+\kvt@RegisterBackend{xltabular}
+\kvt@RegisterBackend{tabu}
+\kvt@RegisterBackend{longtabu}
 %    \end{macrocode}
-%
-% \subsubsection{Table Environment Properties}
-%
-% The following code maintains properties about known table
-% environments. This code does not depend on other code of the
-% \thispackage package but is only used by \thispackage.
-%
-% The following properties can be maintained about table environments.
-%    \begin{macrocode}
-\define@boolkey[metatbl]{EnvProp}{isLong}{\metatbl@boolprop{isLong}{#1}}
-\define@boolkey[metatbl]{EnvProp}{isTabu}{\metatbl@boolprop{isTabu}{#1}}
-\define@boolkey[metatbl]{EnvProp}{hasWidth}{%
-  \metatbl@boolprop{hasWidth}{#1}}
-\define@boolkey[metatbl]{EnvProp}{hasCaption}{%
-  \metatbl@boolprop{hasCaption}{#1}}
-\define@boolkey[metatbl]{EnvProp}{canVAlign}{%
-  \metatbl@boolprop{canVAlign}{#1}}
-\define@boolkey[metatbl]{EnvProp}{canHAlign}{%
-  \metatbl@boolprop{canHAlign}{#1}}
-\define@cmdkey[metatbl]{EnvProp}{packages}{\metatbl@setprop{pkg}{#1}}
-%    \end{macrocode}
-% The |atEnd| property shall be set to \hologo{TeX} code with one
-% argument (i.e., using the positional argument |#1|) that adds its
-% argument to the end of the active table environment's final content.
-% Finding such code is not obvious for table environments that collect
-% the content of the environment, like |tabularx| does, for instance.
-%    \begin{macrocode}
-\define@key[metatbl]{EnvProp}{atEnd}{\metatbl@setprop[1]{atEnd}{#1}}
-%    \end{macrocode}
-%
-% \begin{macro}{\metatblRegisterEnv}
-% The |\metatblRegisterEnv|\marg{env-name}\marg{properties} macro
-% registers a table environment with name \meta{env-name} and sets its
-% properties according to \meta{properties}, a comma-separated key-value
-% list.
-%    \begin{macrocode}
-\newrobustcmd\metatblRegisterEnv[2]{%
-  \edef\metatbl@@envname{#1}%
-  \setkeys[metatbl]{EnvProp}{#2}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\metatbl@setprop}
-% The |\metatbl@setprop|\oarg{n}\marg{key}\marg{value}
-% macro defines a macro with \meta{n} arguments ($0$ by default) for the
-% environment stored in |\metatbl@@envname| and the given
-% \meta{key}. This macro then expands to \meta{value}.
-%    \begin{macrocode}
-\newcommand\metatbl@setprop[3][0]{%
-  \expandafter\newcommand
-    \csname metatbl@EnvProp@#2@\metatbl@@envname\endcsname[#1]{#3}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\metatbl@boolprop}
-% The |\metatbl@boolprop|\marg{prop}\marg{value} macro stores the
-% Boolean value \meta{value} in a property \meta{prop} for the
-% environment stored in |\metatbl@@envname|.
-%    \begin{macrocode}
-\newcommand\metatbl@boolprop[2]{%
-  \providebool{metatbl@EnvProp@#1@\metatbl@@envname}%
-  \setbool{metatbl@EnvProp@#1@\metatbl@@envname}{#2}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\metatblIsLong}
-% \begin{macro}{\metatblIsTabu}
-% \begin{macro}{\metatblHasWidth}
-% \begin{macro}{\metatblHasCaption}
-% \begin{macro}{\metatblCanVAlign}
-% \begin{macro}{\metatblCanHAlign}
-% The macro
-% |\metatblIsLong|\marg{env-name}\marg{iftrue}\marg{iffalse}
-% expands to \meta{iftrue} if \meta{env-name} is a "long" table
-% environment, i.e., one that can span multiple pages. Otherwise, the
-% macro expands to \meta{iffalse}.
-% The macro
-% |\metatblIsTabu|\marg{env-name}\marg{iftrue}\marg{iffalse}
-% expands to \meta{iftrue} if \meta{env-name} is a table environment
-% that inherits from |tabu| and expands to \meta{iffalse} otherwise.
-% The macro
-% |\metatblHasWidth|\marg{env-name}\marg{iftrue}\marg{iffalse}
-% expands to \meta{iftrue} if \meta{env-name} is a table environment
-% that expects a width argument and expands to \meta{iffalse} otherwise.
-% |\metatblHasCaption|\marg{env-name}\marg{iftrue}\marg{iffalse}
-% expands to \meta{iftrue} if \meta{env-name} is a table environment
-% that supports a caption and expands to \meta{iffalse} otherwise.
-%    \begin{macrocode}
-\newcommand\metatblIsLong[1]{\ifbool{metatbl@EnvProp@isLong@#1}}
-\newcommand\metatblIsTabu[1]{\ifbool{metatbl@EnvProp@isTabu@#1}}
-\newcommand\metatblHasWidth[1]{\ifbool{metatbl@EnvProp@hasWidth@#1}}
-\newcommand\metatblHasCaption[1]{\ifbool{metatbl@EnvProp@hasCaption@#1}}
-\newcommand\metatblCanVAlign[1]{\ifbool{metatbl@EnvProp@canVAlign@#1}}
-\newcommand\metatblCanHAlign[1]{\ifbool{metatbl@EnvProp@canHAlign@#1}}
-%    \end{macrocode}
-% \end{macro}
-% \end{macro}
-% \end{macro}
-% \end{macro}
-% \end{macro}
-% \end{macro}
-%
-% \begin{macro}{\metatblUsePackage}
-% \begin{macro}{\metatblRequire}
-% Macros |\metatblUsePackage|\marg{env-names} and
-% |\metatblRequire|\marg{env-names} load the packages required
-% for typesetting |KeyValTable| tables based on the table environments
-% listed in \meta{env-names}.
-% The former aims more at normal document use, the second at use by
-% package developers.
-%    \begin{macrocode}
-\newcommand\metatblUsePackage[1]{%
-  \def\do##1{%
-    \metatbl@csnamearg\usepackage{metatbl@EnvProp@pkg@##1}}%
-  \docsvlist{#1}}
-\newcommand\metatblRequire[1]{%
-  \def\do##1{%
-    \metatbl@csnamearg\RequirePackage{metatbl@EnvProp@pkg@##1}}%
-  \docsvlist{#1}}
-%    \end{macrocode}
-% \end{macro}
-% \end{macro}
-%
-% \begin{macro}{\metatblAtEnd}
-% The |\metatblAtEnd|\marg{env-name}\marg{code} macro registers
-% \meta{code} for addition at the end of tables based on the
-% \meta{env-name} environment.
-%    \begin{macrocode}
-\newcommand\metatblAtEnd[2]{% #1=env-name, #2=code
-  \csname metatbl@EnvProp@atEnd@#1\endcsname{#2}}
-%    \end{macrocode}
-% \end{macro}
-%
-% \begin{macro}{\metatbl@csnamearg}
-% The auxiliary macro
-% |\metatbl@csnamearg|\marg{command}\marg{csname}
-% passes the expansion of the macro with name \meta{csname} as the first
-% argument to \meta{command}.
-%    \begin{macrocode}
-\newcommand\metatbl@csnamearg[2]{%
-  \expandafter\expandafter\expandafter#1%
-  \expandafter\expandafter\expandafter{\csname#2\endcsname}}
-%    \end{macrocode}
-% \end{macro}
-%
-% The following are the properties of some basic table environments.
-%    \begin{macrocode}
-\metatblRegisterEnv{tabular}{%
-  isLong=false, hasWidth=false, isTabu=false, hasCaption=false,
-  canVAlign=true, canHAlign=false,
-  packages={},
-  atEnd={\preto\endtabular{#1}},
-}
-\metatblRegisterEnv{tabularx}{%
-  isLong=false, hasWidth=true, isTabu=false, hasCaption=false,
-  canVAlign=true, canHAlign=false,
-  packages=tabularx,
-  atEnd={%
-%    \end{macrocode}
-% Of the following two lines, the latter is for the case that the
-% \pkgname{xltabular} package is loaded, and the former is for the case
-% that the package is not loaded.
-%    \begin{macrocode}
-    \preto\TX@endtabularx{\toks@\expandafter{\the\toks@#1}}%
-    \preto\XLT@i@TX@endtabularx{\toks@\expandafter{\the\toks@#1}}},
-}
-\metatblRegisterEnv{longtable}{%
-  isLong=true, hasWidth=false, isTabu=false, hasCaption=true,
-  canVAlign=false, canHAlign=true,
-  packages={longtable},
-  atEnd={\preto\endlongtable{#1}},
-}
-\metatblRegisterEnv{xltabular}{%
-  isLong=true, hasWidth=true, isTabu=false, hasCaption=true,
-  canVAlign=false, canHAlign=true,
-  packages=xltabular,
-  atEnd={\preto\XLT@ii@TX@endtabularx{\toks@\expandafter{\the\toks@#1}}},
-}
-\metatblRegisterEnv{tabu}{%
-  isLong=false, hasWidth=true, isTabu=true, hasCaption=false,
-  canVAlign=true, canHAlign=false,
-  packages={tabu},
-%    \end{macrocode}
-% The following is not a mistake: |tabu| does
-% |\def\endtabu{\endtabular}| at the beginning of a |tabu| environment.
-%    \begin{macrocode}
-  atEnd={\preto\endtabular{#1}},
-}
-\metatblRegisterEnv{longtabu}{%
-  isLong=true, hasWidth=true, isTabu=true, hasCaption=true,
-  canVAlign=false, canHAlign=true,
-  packages={tabu,longtable},
-%    \end{macrocode}
-% The following is not a mistake: |tabu| does
-% |\def\endlongtabu{\endlongtable}| at the beginning of a |longtabu|
-% environment.
-%    \begin{macrocode}
-  atEnd={\preto\endlongtable{#1}},
-}
-%    \end{macrocode}
-%
-% \begin{macro}{\metatbl@ifhasXcolumns}
-% The |\metatbl@ifhasXcolumns|\marg{preamble}\marg{iftrue}\marg{iffalse}
-% takes a \meta{preamble} (the argument of a |tabular| environment that
-% specifies the columns of the table) and checks, whether this preamble
-% contains an "|X|" column. If such a column is contained, the macro
-% expands to \meta{iftrue}. Otherwise, it expands to \meta{iffalse}.
-%    \begin{macrocode}
-\newrobustcmd\metatbl@ifhasXcolumns[1]{%
-  \begingroup
-%    \end{macrocode}
-% The |\metatbl@@branch| macro is used at the end of the macro to select
-% \meta{iftrue} or \meta{iffalse} for expansion. Initially, the macro is
-% defined to select \meta{iffalse}.
-%    \begin{macrocode}
-  \def\metatbl@@branch{\@secondoftwo}%
-%    \end{macrocode}
-% The code uses the |\@mkpream| macro of the \pkgname{array} package to
-% create an |\halign| preamble from the |tabular| \meta{preamble}.
-% The result of |\@mkpream| is in |\@preamble| afterwards, but this
-% result is not used, but rather discarded at the |\endgroup| below.
-% Rather, we hook into |\@mkpream| via |\NC@rewrite@X|, which is used
-% when an |X| column was encountered in \meta{preamble}.\footnote{This
-% hooking into \cmd{\@mkpream} is inspired by how |tabularx| replaces |X|
-% columns by |p| columns as part of its measuring.}
-% When an |X| column is encountered, |\metatbl@@branch| is redefined to
-% expand to \meta{iftrue} in the end.
-%    \begin{macrocode}
-  \def\NC@rewrite@X{\def\metatbl@@branch{\@firstoftwo}\NC@find l}%
-  \@mkpream{#1}%
-  \expandafter\endgroup\metatbl@@branch}
-%    \end{macrocode}
-% \end{macro}
 %
 %
 % \subsubsection{Environment-Independent Parts}
@@ -3899,12 +3956,12 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
 \kvt@IfVersion{<}{2.0}{%
   \metatblRequire{tabu,longtabu}
-  \kvt@DefineStdTabEnv[onepage]{tabu}
-  \kvt@DefineStdTabEnv[multipage]{longtabu}
+  \kvt@RegisterShape{onepage}{tabu}{tabu}
+  \kvt@RegisterShape{multipage}{longtabu}{longtabu}
 }{%
   \metatblRequire{tabularx,longtable,xltabular}
-  \kvt@DefineDualTabEnv{onepage}{tabular}{tabularx}
-  \kvt@DefineDualTabEnv{multipage}{longtable}{xltabular}
+  \kvt@RegisterShape{onepage}{tabular}{tabularx}
+  \kvt@RegisterShape{multipage}{longtable}{xltabular}
 }
 %    \end{macrocode}
 %
