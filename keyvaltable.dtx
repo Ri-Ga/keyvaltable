@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/03/02 v2.1e Package for filling tables using key-value lists]
+    [2020/03/05 v2.1f Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -1563,6 +1563,44 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \subsection{Auxiliary Code}
 %
+% \subsubsection{List Parsing}
+%
+% \begin{macro}{\kvt@DeclareTrimListParser}
+% The |\kvt@DeclareTrimListParser|(|*|)\marg{command}\marg{separator}
+% macro is equivalent to \pkgname{etoolbox}'s |\DeclareListParser|,
+% except that the \meta{command} is defined such that it will remove
+% trailing spaces from list elements before passing the list elements to
+% the processing macro (i.e., to |\do| or the user-provided macro).
+% Note: With |\DeclareListParser|, \meta{command} is defined to only
+% remove leading spaces but not trailing ones.
+% This implementation relies on the internals of
+% \pkgname{etoolbox} and works with v2.4 of the package, at least.
+%    \begin{macrocode}
+\newcommand\kvt@DeclareTrimListParser{%
+  \@ifstar{\kvt@DeclareTrimListParser@i{*}}
+          {\kvt@DeclareTrimListParser@i{}}}
+\newcommand\kvt@DeclareTrimListParser@i[3]{%
+  \DeclareListParser#1{#2}{#3}\expandafter
+  \patchcmd\csname etb@lst@\expandafter\@gobble\string#2\endcsname
+    {\etb@listitem}{\kvt@etb@listitem}{}
+    {\kvt@warn{Failed to patch a command defined by the etoolbox
+      package, possibly because etoolbox internals have changed.
+      You might encounter superfluous spaces.}}}
+%    \end{macrocode}
+% The cascade of |\expandafter| below ensures that first the trimming
+% macro is expanded and afterwards the outer |\unexpanded| of the
+% timming macro's expansion is expanded, which by definition of the
+% "noexp" trimming macro fully expands the macro's logic.
+% The auxiliary macro below is only for switching the two arguments such
+% that the expansion control can be applied to the second argument.
+%    \begin{macrocode}
+\newcommand\kvt@etb@listitem[2]{%
+  \expandafter\expandafter\expandafter\kvt@etb@listitem@i
+  \expandafter\expandafter\expandafter{\trim@post@space@noexp{#2}}{#1}}
+\newcommand\kvt@etb@listitem@i[2]{\etb@listitem{#2}{#1}}
+%    \end{macrocode}
+% \end{macro}
+%
 % \begin{macro}{\kvt@dossvlist}
 % The |\kvt@dossvlist|\marg{list} macro parses a semicolon-separated
 % list and runs |\do|\meta{item} for every element of the list.
@@ -1574,16 +1612,18 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{macro}{\kvt@forpsvlist}
 % The |\kvt@forpsvlist|\marg{handler}\marg{list} parses a `+'-separated list.
 %    \begin{macrocode}
-\DeclareListParser*{\kvt@forpsvlist}{+}
+\kvt@DeclareTrimListParser*{\kvt@forpsvlist}{+}
 %    \end{macrocode}
 % \end{macro}
 %
 % \begin{macro}{\kvt@dobrklist}
 % The |\kvt@dobrklist|\marg{list} parses a `|\\|'-separated list.
 %    \begin{macrocode}
-\DeclareListParser{\kvt@dobrklist}{\\}
+\kvt@DeclareTrimListParser{\kvt@dobrklist}{\\}
 %    \end{macrocode}
 % \end{macro}
+%
+% \subsubsection{Errors and Warnings}
 %
 % \begin{macro}{\kvt@error}
 % \begin{macro}{\kvt@warn}
@@ -1594,6 +1634,8 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 % \end{macro}
+%
+% \subsubsection{Setting Keys}
 %
 % \begin{macro}{\kvt@setkeys}
 % \begin{macro}{\kvt@setcmdkeys}
@@ -2378,8 +2420,7 @@ cherries,50g,cherries,heat up and add to bowl
 % header for the columns is added as header row.
 %    \begin{macrocode}
   \def\do##1{%
-    \def\kvt@@tmp{##1}\trim@post@space@in\kvt@@tmp%
-    \expandafter\ifstrequal\expandafter{\kvt@@tmp}{::}
+    \ifstrequal{##1}{::}
       {\appto\kvt@@parseheadrows{%
          \cseappto{kvt@@custheadrows@#2}{%
            \csexpandonce{kvt@headings@#2}}}}
@@ -2903,11 +2944,8 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
 \newcommand\kvt@StartTabularlike[2]{%
 %    \end{macrocode}
-% The |\kvt@@recenttable| allows the |\AfterEndEnvironment| hook for
-% |KeyValTable| to access the most recent table type.
 % \changes{v1.0}{2019/02/18}{Implemented \texttt{showrules} option}
 %    \begin{macrocode}
-  \gdef\kvt@@recenttable{#2}%
   \metatblAtEnd{#1}{\kvt@@endhook}\let\kvt@@endhook\relax%
   \ifbool{kvt@Table@showrules}
     {\def\kvt@@rule##1{\csuse{##1rule}}}
