@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/03/05 v2.1f Package for filling tables using key-value lists]
+    [2020/03/05 v2.1g Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -2489,7 +2489,7 @@ cherries,50g,cherries,heat up and add to bowl
 % for the column in |\kvt@@curhd|) and set |\kvt@@lasthd| to the
 % current one.
 %    \begin{macrocode}
-      {\ifnum\kvt@@span>\z@ \expandafter\kvt@concludecolumn\fi
+      {\ifnum\kvt@@span>\z@ \expandafter\kvt@concludehdcolumn\fi
        \ifdefvoid\kvt@@curhd{}{\ifcsdef{kvt@@hdcelldone@\kvt@@curhd}{%
          \kvt@error{Header cell `\kvt@@curhd' must consist of only
             consecutive columns, but it is not}%
@@ -2497,7 +2497,7 @@ cherries,50g,cherries,heat up and add to bowl
            specified in `\string\NewKeyValTable{#1}'}}{}}%
        \kvt@@span\@ne \let\kvt@@lasthd\kvt@@curhd}%
   }\dolistcsloop{kvt@displaycols@#1}%
-  \kvt@concludecolumn
+  \kvt@concludehdcolumn
 %    \end{macrocode}
 % Finally, conclude the whole header row and append the row to the
 % overall list of rows, stored in \cs{kvt@@custheadrows@\meta{tname}},
@@ -2528,18 +2528,19 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\kvt@concludecolumn}
-% The |\kvt@concludecolumn| macro appends a cell, potentially spanning
+% \begin{macro}{\kvt@concludehdcolumn}
+% The |\kvt@concludehdcolumn| macro appends a cell, potentially spanning
 % multiple columns, to the row under construction (which is in
 % |\kvt@@tmpgrphd|).
 %    \begin{macrocode}
-\newcommand\kvt@concludecolumn{%
+\newcommand\kvt@concludehdcolumn{%
   \kvt@@switchcol
   \ifdefvoid\kvt@@lasthd{}{%
     \eappto\kvt@@tmpgrphd{\noexpand\multicolumn
       {\the\kvt@@span}
       {\csexpandonce{kvt@@hdcell@align@\kvt@@lasthd}}
-      {\csexpandonce{kvt@@hdcell@head@\kvt@@lasthd}}}%
+      {\noexpand\cmdkvt@Table@headformat
+        {\csexpandonce{kvt@@hdcell@head@\kvt@@lasthd}}}}%
 %    \end{macrocode}
 % Mark the header cell as already used and concluded, such that another
 % use of the same header cell can be detected and raise an error.
