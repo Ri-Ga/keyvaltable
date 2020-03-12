@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/03/05 v2.1g Package for filling tables using key-value lists]
+    [2020/03/12 v2.1h Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -223,7 +223,10 @@ cherries,50g,cherries,heat up and add to bowl
 % \NiceDescribeKey{align}{vals={l,c,r,p,X,\ldots}, init=l}
 %   This property specifies the alignment of content in the
 %   column.  The \meta{value} can be set to any column alignment
-%   understood by table environments.
+%   understood by table environments.\footnote{More complex values, for
+%   instance using the notation of the \pkgname{array} package for
+%   inserting material before or after a column, are permitted but not
+%   further tested. Use at your own risk.}
 %
 % \NiceDescribeKey{default}{vals=\vmeta{content}, init=\vmeta{empty}}
 %   This property specifies the default \meta{content} of a cell in this
@@ -1203,10 +1206,9 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{LTXexample}
 %
 % The second way to add captions is through the |caption| option of
-% \pkgname{keyvaltable} tables. This is particularly suit for tables
-% that can span multiple pages, such as those produced through the
-% |multipage| shape or the backends |longtable|, |xltabular|, and
-% |longtabu| (see \cref{sec:AltTabEnv}).
+% \pkgname{keyvaltable} tables. This option is available for the
+% "multipage" shape and, respectively, the table backends |longtable|,
+% |xltabular|, and |longtabu| (see \cref{sec:AltTabEnv}).
 %
 % \NiceDescribeKeys{2}
 %    {caption}{vals=\vmeta{text}, init=\vmeta{none}}
@@ -2515,8 +2517,31 @@ cherries,50g,cherries,heat up and add to bowl
 % The |\kvt@rowcolorornot|\marg{color} expands to
 % |\rowcolor|\marg{color} if \meta{color} is nonempty and does have no
 % effect if \meta{color} is empty.
+% \begin{macro}{\kvt@rowcolorcmdornot}
+% The |\kvt@rowcolorcmdornot|\marg{cmd} expands to
+% |\rowcolor|\marg{color}, where \meta{color} is the (one-time)
+% expansion of \meta{cmd}, if \meta{cmd} is a defined macro whose
+% expansion is nonempty; its expansion is empty otherwise.
 %    \begin{macrocode}
 \newcommand\kvt@rowcolorornot[1]{\ifstrempty{#1}{}{\rowcolor{#1}}}
+\newcommand\kvt@rowcolorcmdornot[1]{\ifdefvoid{#1}{}{%
+  \expandafter\rowcolor\expandafter{#1}}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+% \begin{macro}{\kvt@@bodyrow}
+% The counter |\kvt@@bodyrow| is used internally in |KeyValTable|
+% environments for keeping track of rows for the background-coloring.
+% The difference between this counter and |\kvtRow| is that the former
+% also counts |uncounted| rows and is unaffected by the |resume| option.
+% The counter only counts rows produced by |\Row| and its corresponding
+% collecting counterparts. Header rows as well as manually inserted
+% rows, including those produced by macros like |\midrule| in a
+% |longtable| environment, are not counted (as opposed by the internal
+% counter of |\rowcolors|.
+%    \begin{macrocode}
+\newcount\kvt@@bodyrow
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2828,7 +2853,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \meta{code} for addition at the end of tables based on the
 % \meta{env-name} environment.
 %    \begin{macrocode}
-\newcommand\metatblAtEnd[2]{% #1=env-name, #2=code
+\newcommand\metatblAtEnd[2]{%
   \csname metatbl@EnvProp@atEnd@#1\endcsname{#2}}
 %    \end{macrocode}
 % \end{macro}
@@ -2992,10 +3017,15 @@ cherries,50g,cherries,heat up and add to bowl
 % Initializing the row counters. The global counter |kvtTotalRow| needs
 % no local initialization.
 %    \begin{macrocode}
+  \global\kvt@@bodyrow=0\relax
   \ifbool{kvt@TableEnv@resume}
     {\setcounter{kvtRow}{\csuse{kvt@@rowcountlast}}}
     {\setcounter{kvtRow}{0}}%
   \setcounter{kvtTypeRow}{\csuse{kvt@rowcount@#2}}%
+%    \end{macrocode}
+% Initialize the background colors for the body rows.
+%    \begin{macrocode}
+  \expandafter\kvt@setrowcolors\expandafter{\cmdkvt@Table@rowbg}%
 %    \end{macrocode}
 % In |\kvt@@do|, the start code for the environment, including the
 % header rows, is gathered, with expansion to fill in all the table
@@ -3005,11 +3035,6 @@ cherries,50g,cherries,heat up and add to bowl
 % \changes{v2.1}{2020/01/19}{Added \texttt{valign} and \texttt{halign} options}
 %    \begin{macrocode}
   \begingroup\edef\kvt@@do{\endgroup
-    \metatblIsTabu{#1}{}{\noexpand\kvt@dottedrowcolors
-      {\ifbool{kvt@Table@showhead}
-        {\the\numexpr\csuse{kvt@headrowcount@#2}+1\relax}
-        {1}}%
-      {\expandonce\cmdkvt@Table@rowbg}}%
     \expandafter\noexpand\csname #1\endcsname
 %    \end{macrocode}
 % As background on the positions of the parameters below, here is the
@@ -3043,46 +3068,37 @@ cherries,50g,cherries,heat up and add to bowl
     \ifbool{kvt@Table@showhead}
       {\csuse{kvt@headings@#2}\noexpand\kvt@@rule{mid}}
       {}%
-    \metatblIsTabu{#1}
-      {\noexpand\kvt@taburowcolors{\expandonce\cmdkvt@Table@rowbg}}{}%
     \metatblIsLong{#1}{\noexpand\endhead}{}%
   }\kvt@@do}
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\kvt@dottedrowcolors}
-% The |\kvt@dottedrowcolors|\marg{start-row}\marg{colors} sets up row
+% \begin{macro}{\kvt@setrowcolors}
+% The |\kvt@setrowcolors|\marg{colors} sets up row
 % colors using the |\rowcolors| macro of \pkgname{xcolor}.
 % The \marg{colors} parameter expects arguments of the form
 % "\meta{color1}|..|\meta{color2}" (the syntax used for the |rowbg|
 % option. The row colors then alternate between \meta{color1} and
-% \meta{color2}, starting with \meta{color1} in \meta{start-row}.
-% This macro substitutes |\taburowcolors| for non-\pkgname{tabu}
-% environments.
+% \meta{color2}, starting with \meta{color1} in the first row.
 % If \meta{colors} is empty, then no row colors are setup.
 %    \begin{macrocode}
-\newcommand\kvt@dottedrowcolors[2]{%
-  \ifstrempty{#2}{}{\kvt@dottedrowcolors@i{#1}#2\@nil}}
-\def\kvt@dottedrowcolors@i#1#2..#3\@nil{%
-%    \end{macrocode}
-% Since |\rowcolors| expects its color arguments to specify the odd and
-% even color, we swap arguments depending on the parity of
-% \meta{start-row} to ensure \meta{color1} is applied to
-% \meta{start-row}.
-%    \begin{macrocode}
-  \ifnumodd{#1}
-    {\rowcolors{#1}{#2}{#3}}
-    {\rowcolors{#1}{#3}{#2}}}
+\newcommand\kvt@setrowcolors[1]{%
+  \ifstrempty{#1}{}{\kvt@setrowcolors@i#1\@nil}}
+\def\kvt@setrowcolors@i#1..#2\@nil{%
+  \def\kvt@@bgcolor@odd{#1}%
+  \def\kvt@@bgcolor@even{#2}}
 %    \end{macrocode}
 % \end{macro}
 %
-% \begin{macro}{\kvt@taburowcolors}
-% The |\kvt@taburowcolors|\marg{colors} expands to
-% |\taburowcolors|\marg{colors} if \meta{colors} is nonempty and does
-% have no effect if \meta{color} is empty.
+% \begin{macro}{\kvt@userowcolors}
+% The |\kvt@userowcolors| macro macro expands to
+% |\rowcolor|\marg{color}, where \meta{color} is the background color
+% set via |\kvt@setrowcolors| for odd, respectively even rows, based on
+% |\kvt@@bodyrow|.
 %    \begin{macrocode}
-\newcommand\kvt@taburowcolors[1]{%
-  \ifstrempty{#1}{}{\taburowcolors{#1}}}
+\newcommand\kvt@userowcolors{\ifnumodd{\the\kvt@@bodyrow}
+  {\kvt@rowcolorcmdornot{\kvt@@bgcolor@odd}}
+  {\kvt@rowcolorcmdornot{\kvt@@bgcolor@even}}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -3245,10 +3261,12 @@ cherries,50g,cherries,heat up and add to bowl
   \ifdefvoid\cmdkvt@Row@above{}{%
     \eappto\kvt@@row{\noexpand\noalign{\noexpand\vspace{%
       \expandonce\cmdkvt@Row@above}}}}%
-  \ifdefvoid\cmdkvt@Row@bg{}{%
-    \eappto\kvt@@row{\noexpand\rowcolor{\expandonce\cmdkvt@Row@bg}}}%
+  \appto\kvt@@row{\noalign{\global\advance\kvt@@bodyrow\@ne}}%
   \ifbool{kvt@Row@uncounted}{}{%
     \appto\kvt@@row{\noalign{\kvt@stepcounters}}}%
+  \ifdefvoid\cmdkvt@Row@bg
+    {\appto\kvt@@row{\kvt@userowcolors}}
+    {\eappto\kvt@@row{\noexpand\rowcolor{\expandonce\cmdkvt@Row@bg}}}%
 %    \end{macrocode}
 % If a row alignment is specified, a default |\multicolumn| display is
 % enabled for the row's cells.
