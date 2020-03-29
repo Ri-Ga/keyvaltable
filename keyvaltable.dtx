@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/03/12 v2.1h Package for filling tables using key-value lists]
+    [2020/03/29 v2.1h Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -3022,13 +3022,6 @@ cherries,50g,cherries,heat up and add to bowl
     {\metatblHasCaption{#1}
        {\edef\kvt@@caption@main{%
          \noexpand\caption
-%    \end{macrocode}
-% Fixme: Due to a bug in xltabular
-% (\url{https://github.com/rolfn/xltabular/issues/9}),
-% the counter is increased with |\caption[]|\marg{caption} when
-% xltabular is loaded (i.e., always when \pkgname{keyvaltable} is
-% loaded).
-%    \begin{macrocode}
            \ifcsvoid{cmdkvt@TableEnv@caption/lot}{}
              {[{\csexpandonce{cmdkvt@TableEnv@caption/lot}}]}%
            {\expandonce\cmdkvt@TableEnv@caption
