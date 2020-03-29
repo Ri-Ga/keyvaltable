@@ -1210,15 +1210,33 @@ cherries,50g,cherries,heat up and add to bowl
 % "multipage" shape and, respectively, the table backends |longtable|,
 % |xltabular|, and |longtabu| (see \cref{sec:AltTabEnv}).
 %
-% \NiceDescribeKeys{2}
+% \NiceDescribeKeys{4}
 %    {caption}{vals=\vmeta{text}, init=\vmeta{none}}
+%    {caption/lot}{vals=\vmeta{text}, init=\vmeta{none}}
+%    {caption/alt}{vals=\vmeta{text}, init=\vmeta{none}}
 %    {label}{vals=\vmeta{name}, init=\vmeta{none}}
 % These options set the caption and, respectively, label of a table.
-% The caption is added to the end of the table.
+% Through the option |caption/lot|, the caption to be put into the list
+% of tables can be specified; if omitted, |caption| is used.
+% Through the option |caption/alt|, the alternative caption to be
+% displayed on those pages of multipage tables where the main caption is
+% not shown; if omitted, no caption is displayed on these pages.
+%
+% The position of the caption is determined by the following option.
+%
+% \NiceDescribeKey{captionpos}{vals={t,b}, init=b}
+% This option specifies the position of table captions. Value "|t|"
+% specifies that captions are at the top of (above) their tables; value
+% "|b|" specifies that captions are at the bottom of (below) their
+% tables.
+% Moreover, in case of "|t|" the main caption is on top of the
+% \emph{first} page of a table while in case of "|b|" the main caption
+% is at the bottom of the \emph{last} page of a table.
+%
 % The following example shows the options in action.
 %
-% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={caption,label,ref}]
-% \begin{KeyValTable}[shape=multipage,
+% \begin{LTXexample}[morepreset=\RecipePreset\setcounter{table}{0},morekeywords={caption,label,ref}]
+% \begin{KeyValTable}[captionpos=t,
 %   caption=Cherries++, label=Cherries2]{Recipe}
 % \Row{amount=150g, ingredient=ice cream,
 %   step=put into bowl}
@@ -1767,6 +1785,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \changes{v2.1}{2020/01/18}{Added ``valign'' and ``halign'' table options}
 % \changes{v2.2}{2020/02/24}{Added ``style'' table option}
 % \changes{v2.2}{2020/02/27}{added option "backend"}
+% \changes{v2.2}{2020/03/08}{added option "captionpos"}
 %    \begin{macrocode}
 \define@cmdkey[kvt]{Table}{rowbg}{}
 \define@cmdkey[kvt]{Table}{headbg}{}
@@ -1775,8 +1794,8 @@ cherries,50g,cherries,heat up and add to bowl
 \define@cmdkey[kvt]{Table}{width}{}
 \define@boolkey[kvt]{Table}{showhead}{}
 \define@boolkey[kvt]{Table}{showrules}{}
-\define@cmdkey[kvt]{Table}{caption}{}
-\define@cmdkey[kvt]{Table}{label}{}
+\define@choicekey[kvt]{Table}{captionpos}{t,b}
+  {\csdef{cmdkvt@Table@captionpos}{#1}}
 \define@choicekey[kvt]{Table}{valign}{t,c,b}
   {\csdef{cmdkvt@Table@valign}{#1}}
 \define@choicekey[kvt]{Table}{halign}{l,c,r}
@@ -1811,7 +1830,12 @@ cherries,50g,cherries,heat up and add to bowl
 % The following table options only apply to individual |KeyValTable|
 % environments and cannot be set with |\NewKeyValTable| or |\kvtSet|.
 % \changes{v2.2}{2020/02/23}{added table options "resume" and "resume*"}
+% \changes{v2.2}{2020/03/12}{added options "caption/lot" and "caption/alt"}
 %    \begin{macrocode}
+\define@cmdkey[kvt]{TableEnv}{caption}{}
+\define@cmdkey[kvt]{TableEnv}{caption/lot}{}
+\define@cmdkey[kvt]{TableEnv}{caption/alt}{}
+\define@cmdkey[kvt]{TableEnv}{label}{}
 \define@boolkey[kvt]{TableEnv}{resume}[true]{%
   \ifbool{#1}{\ifundef\kvt@@rowcountlast
     {\kvt@error{No previous table whose counter could be resumed.}
@@ -1968,7 +1992,7 @@ cherries,50g,cherries,heat up and add to bowl
   headalign=,
   shape=multipage,
   width=\linewidth,
-  caption={}, label={},
+  captionpos=b,
 %    \end{macrocode}
 % Column options
 %    \begin{macrocode}
@@ -2972,11 +2996,14 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \changes{v1.0}{2019/02/18}{Implemented \texttt{showrules} option}
 %    \begin{macrocode}
-  \metatblAtEnd{#1}{\kvt@@endhook}\let\kvt@@endhook\relax%
+  \metatblAtEnd{#1}{\kvt@@endhook}%
+  \let\kvt@@endhook\@empty
+  \let\kvt@@prehook\@empty
   \ifbool{kvt@Table@showrules}
     {\def\kvt@@rule##1{\csuse{##1rule}}}
     {\def\kvt@@rule##1{}}%
-  \appto\kvt@@endhook{\kvt@@rule{bottom}}
+  \appto\kvt@@prehook{\kvt@@rule{top}}%
+  \appto\kvt@@endhook{\kvt@@rule{bottom}}%
 %    \end{macrocode}
 % The following saves the row counter value for the table type globally,
 % such that subsequent tables of the same \meta{tname} can start counting
@@ -2987,18 +3014,44 @@ cherries,50g,cherries,heat up and add to bowl
     \csxdef{kvt@rowcount@#2}{\thekvtTypeRow}%
     \csxdef{kvt@@rowcountlast}{\thekvtRow}}}%
 %    \end{macrocode}
-% Adding caption and label, if given, to the end hook. This displays the
-% caption solely at the very end of the table.
+% Adding caption and label.
 %    \begin{macrocode}
-  \ifdefempty\cmdkvt@Table@caption{}{%
-    \metatblHasCaption{#1}
-      {\appto\kvt@@endhook{\rowcolor{white}%
-        \caption{\cmdkvt@Table@caption}}%
-       \ifdefempty\cmdkvt@Table@label{}{%
-         \appto\kvt@@endhook{\expandafter%
-           \label\expandafter{\cmdkvt@Table@label}}}}
-      {\kvt@warn{Caption lost, table environment '#1'
-                 does not support captions.}}}%
+  \ifdefvoid\cmdkvt@TableEnv@caption
+    {\let\kvt@@caption@main\@empty
+     \let\kvt@@caption@alt\@empty}
+    {\metatblHasCaption{#1}
+       {\edef\kvt@@caption@main{%
+         \noexpand\caption
+%    \end{macrocode}
+% Fixme: Due to a bug in xltabular
+% (\url{https://github.com/rolfn/xltabular/issues/9}),
+% the counter is increased with |\caption[]|\marg{caption} when
+% xltabular is loaded (i.e., always when \pkgname{keyvaltable} is
+% loaded).
+%    \begin{macrocode}
+           \ifcsvoid{cmdkvt@TableEnv@caption/lot}{}
+             {[{\csexpandonce{cmdkvt@TableEnv@caption/lot}}]}%
+           {\expandonce\cmdkvt@TableEnv@caption
+              \ifdefvoid\cmdkvt@TableEnv@label{}{%
+                \noexpand\label{\expandonce\cmdkvt@TableEnv@label}}}%
+         \noexpand\\}%
+        \ifcsvoid{cmdkvt@TableEnv@caption/alt}
+          {\def\kvt@@caption@alt{}}
+          {\edef\kvt@@caption@alt{%
+            \noexpand\caption[]{\csexpandonce{cmdkvt@TableEnv@caption/alt}}%
+            \noexpand\\}}%
+       }{\kvt@error
+         {Caption lost, table backend '#1' does not support captions}
+         {Consider placing the KeyValTable environment inside a 'table'
+          environment and use the \string\caption\space macro inside.}}}%
+  \ifdefstring{\cmdkvt@Table@captionpos}{t}
+    {\let\kvt@@caption@headmain\kvt@@caption@main\let\kvt@@caption@footmain\@empty
+     \let\kvt@@caption@headalt\kvt@@caption@alt  \let\kvt@@caption@footalt\@empty}
+    {\let\kvt@@caption@footmain\kvt@@caption@main\let\kvt@@caption@headmain\@empty
+     \let\kvt@@caption@footalt\kvt@@caption@alt  \let\kvt@@caption@headalt\@empty}%
+  \ifbool{kvt@Table@showhead}
+    {\eappto\kvt@@prehook{\csuse{kvt@headings@#2}\noexpand\kvt@@rule{mid}}}
+    {}%
 %    \end{macrocode}
 % The following lines perform some checks before the table environment
 % is started.
@@ -3062,13 +3115,20 @@ cherries,50g,cherries,heat up and add to bowl
       {\csexpandonce{kvt@alignments@#2}}%
 %    \end{macrocode}
 % The remainder below already starts the content of the table
-% environment.
+% environment. It also sets the header and footer for multipage tables.
 %    \begin{macrocode}
-    \noexpand\kvt@@rule{top}%
-    \ifbool{kvt@Table@showhead}
-      {\csuse{kvt@headings@#2}\noexpand\kvt@@rule{mid}}
-      {}%
-    \metatblIsLong{#1}{\noexpand\endhead}{}%
+    \expandonce\kvt@@caption@headmain
+    \expandonce\kvt@@prehook
+    \metatblIsLong{#1}{%
+      \noexpand\endfirsthead
+      \expandonce\kvt@@caption@headalt
+      \expandonce\kvt@@prehook
+      \noexpand\endhead}{}%
+    \expandonce\kvt@@caption@footmain
+    \metatblIsLong{#1}{%
+      \noexpand\endlastfoot
+      \expandonce\kvt@@caption@footalt
+      \noexpand\endfoot}{}%
   }\kvt@@do}
 %    \end{macrocode}
 % \end{macro}
