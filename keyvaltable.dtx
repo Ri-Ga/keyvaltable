@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/03/29 v2.1h Package for filling tables using key-value lists]
+    [2020/04/04 v2.1i Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -3021,7 +3021,7 @@ cherries,50g,cherries,heat up and add to bowl
      \let\kvt@@caption@alt\@empty}
     {\metatblHasCaption{#1}
        {\edef\kvt@@caption@main{%
-         \noexpand\caption
+         \csexpandonce{kvt@caption@\cmdkvt@Table@captionpos}%
            \ifcsvoid{cmdkvt@TableEnv@caption/lot}{}
              {[{\csexpandonce{cmdkvt@TableEnv@caption/lot}}]}%
            {\expandonce\cmdkvt@TableEnv@caption
@@ -3031,7 +3031,8 @@ cherries,50g,cherries,heat up and add to bowl
         \ifcsvoid{cmdkvt@TableEnv@caption/alt}
           {\def\kvt@@caption@alt{}}
           {\edef\kvt@@caption@alt{%
-            \noexpand\caption[]{\csexpandonce{cmdkvt@TableEnv@caption/alt}}%
+            \csexpandonce{kvt@caption@\cmdkvt@Table@captionpos}[]%
+              {\csexpandonce{cmdkvt@TableEnv@caption/alt}}%
             \noexpand\\}}%
        }{\kvt@error
          {Caption lost, table backend '#1' does not support captions}
@@ -3124,6 +3125,30 @@ cherries,50g,cherries,heat up and add to bowl
       \noexpand\endfoot}{}%
   }\kvt@@do}
 %    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@caption@b}
+% \begin{macro}{\kvt@caption@t}
+% The |\kvt@caption@b| and |\kvt@caption@t| macros behave like
+% |\caption| but add extra behavior depending on whether the caption is
+% displayed above (|\kvt@caption@t|) or below (|\kvt@caption@b|) the
+% table. Currently, |\kvt@caption@b| only fixes the spacing between the
+% table and the caption.
+%    \begin{macrocode}
+\newcommand\kvt@caption@t{\caption}
+\newcommand\kvt@caption@b{%
+%    \end{macrocode}
+% Fixme: The following |\baselineskip| before the caption compensates
+% that \pkgname{longtable} adds a |\baselineskip| below the caption (in
+% its macro |\LT@makecaption|) but not above. The \pkgname{ltcaption}
+% package replaces the hard-coded |\baselineskip| by |\LTcapskip| but
+% also only puts it below the caption. The code below could at least be
+% improved to use |\LTcapskip| if it is available.
+%    \begin{macrocode}
+  \noalign{\parbox{0pt}{\vskip\baselineskip}}%
+  \caption}
+%    \end{macrocode}
+% \end{macro}
 % \end{macro}
 %
 % \begin{macro}{\kvt@setrowcolors}
