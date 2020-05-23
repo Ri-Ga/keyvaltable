@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/06/13 v2.3 Package for filling tables using key-value lists]
+    [2020/07/30 v2.3 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -37,7 +37,7 @@
 \newcommand\thispackage{\pkgname{keyvaltable}\xspace}
 % the following packages are additional for the examples
 \usepackage{xintexpr}
-\usepackage{makecell}
+\usepackage{makecell,cellspace}
 \usepackage{gensymb}% for \degree
 \usepackage{tabularx,longtable,xltabular,tabu}
 \usepackage{filecontents}
@@ -234,12 +234,14 @@ cherries,50g,cherries,heat up and add to bowl
 %   the cell.  Initially (i.e., if unset for a column), this is an
 %   empty string.
 %
-% \NiceDescribeKey{format}{vals=\vmeta{single argument macro}, init=\cmd{\kvtStrutted}}
+% \NiceDescribeKey{format}{vals=\vmeta{single argument macro}, init=\vmeta{"identity"}}
 %   This property specifies a formatting macro for content of the cell.
 %   The macro can take one argument and is provided with the content of
 %   the cell as its argument. Initially, the format is defined to take
-%   the content as is but puts a \cmd{\strut} before and after the
-%   content (to yield a better vertical row spacing).
+%   the content as is.\footnote{Prior to version~2.3 of \thispackage,
+%   the initial format setting was to put \cmd{\strut} before and after
+%   the content to yield a better vertical row spacing in some
+%   situations. See also \cref{sec:VertSpacing}.}
 %
 % \NiceDescribeKey{head}{vals=\vmeta{content}, init=\vmeta{colname}}
 %   This property specifies the \meta{content} of the column's header
@@ -455,7 +457,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{LTXexample}[morekeywords={thekvtRow,thekvtTypeRow}]
 % \NewKeyValTable[headformat=\textbf]{Numbered}{
 %   line: align=r, head=\#,
-%         format=\kvtStrutted[\textbf],
+%         format=\textbf,
 %         default=\thekvtRow;
 %   text: align=l, head=Text}
 % \begin{KeyValTable}{Numbered}
@@ -491,7 +493,7 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \begin{LTXexample}[morekeywords={uncounted},
 %   morepreset={\NewKeyValTable[headformat=\textbf]{Numbered}{
-%     line: align=r,head=\#,format=\kvtStrutted[\textbf],default=\thekvtRow;
+%     line: align=r,head=\#,format=\textbf,default=\thekvtRow;
 %     text: align=l,head=Text}}]
 % \begin{KeyValTable}{Numbered}
 % \Row{text=First row}
@@ -807,17 +809,6 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % Column appearance is configured through the parameters |align|,
 % |head|, |format|, and |default| of columns in |\NewKeyValTable|.
-% For the |format|, the following macro exists to ensure proper height
-% and depth of rows even if the content itself is more narrow.
-%
-% \NiceDescribeMacro{\kvtStrutted}{\oarg{inner}\marg{arg}}
-% This macro places a |\strut| before \meta{arg} and a |\strut| after
-% \meta{arg}. This has the effect that the first and last row of
-% \meta{arg} obtain a "natural" height and depth even if their content
-% is smaller.
-% The second |\strut| is omitted when it would cause a new line to be
-% produced.
-% See \cref{sec:row-numbering} for an example.
 %
 %
 % \subsection{Row Appearance}\label{sec:RowOptions}
@@ -871,17 +862,6 @@ cherries,50g,cherries,heat up and add to bowl
 %   cells is then set to the values of the table's |headalign|,
 %   |headbg|, and |headformat| properties.
 %
-% \NiceDescribeKeys{3}
-%   {above}{vals=\vmeta{dimension}, init=\vmeta{empty}}
-%   {below}{vals=\vmeta{dimension}, init=\vmeta{empty}}
-%   {around}{vals=\vmeta{dimension}, init=\vmeta{empty}}
-%   These properties specify extra vertical space above and,
-%   respectively, below the row. The |around| property is a short-hand
-%   for setting both, |above| and |below|, to the same value.
-%     Note that the vertical space is currently not colored with the
-%     row's background color but with the page's background color.
-%     The argument, if provided, is directly passed to |\vspace|.
-%
 % \NiceNote{Initial values for all row options can be set with
 %   |\kvtSet{Row/|\meta{option}|=|\meta{value}|}| (see also
 %   \cref{sec:kvtSet}).}
@@ -899,6 +879,58 @@ cherries,50g,cherries,heat up and add to bowl
 %   step=serve with a smile}
 % \end{KeyValTable}
 % \end{LTXexample}
+%
+%
+% \subsubsection{Vertical Row Size \& Spacing}\label{sec:VertSpacing}
+%
+% When rows are narrow or appear to be narrow, extra spacing above and
+% below can be configured. There are (at least) three options for this.
+%
+% The first option is to use the following |\Row| options.
+% \NiceDescribeKeys{3}
+%   {above}{vals=\vmeta{dimension}, init=\vmeta{empty}}
+%   {below}{vals=\vmeta{dimension}, init=\vmeta{empty}}
+%   {around}{vals=\vmeta{dimension}, init=\vmeta{empty}}
+%   These properties specify extra vertical space above and,
+%   respectively, below the row. The |around| property is a short-hand
+%   for setting both, |above| and |below|, to the same value.
+%     Note that the vertical space is currently not colored with the
+%     row's background color but with the page's background color.
+%     The argument, if provided, is directly passed to |\vspace|.
+%
+% The second option is to use the row |format| or a column's |format|
+% property to insert |\strut| macros around cell content.
+% For the |format|, the following macro exists.
+%
+% \NiceDescribeMacro{\kvtStrutted}{\oarg{inner}\marg{arg}}
+% This macro places a |\strut| before \meta{arg} and a |\strut| after
+% \meta{arg}. This has the effect that the first and last row of
+% \meta{arg} obtain a "natural" height and depth even if their content
+% is smaller.
+% The second |\strut| is omitted when it would cause a new line to be
+% produced.
+% See \cref{sec:row-numbering} for an example.
+%
+% The third option is using the \pkgname{cellspace} package and its
+% column alignments (e.g., |Sl| instead of |l|) along with the configurable dimensions |\cellspacetoplimit| and |\cellspacebottomlimit|.
+% The following example shows the second and the third option.
+%
+% \begin{LTXexample}[morekeywords={cellspace,kvtStrutted,cellspacetoplimit}]
+% \usepackage{cellspace}
+% \setlength{\cellspacetoplimit}{3pt}
+% \NewKeyValTable{VertSpacing}{
+%   normal;
+%   struts: format=\kvtStrutted;
+%   cellspace: align=Sl;
+% }
+% \begin{KeyValTable}{VertSpacing}
+% \Row{normal=normal size}
+% \Row{normal=\large Large}
+% \Row{struts=\large Large}
+% \Row{cellspace=\large Large}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
 %
 % \subsubsection{Row Styles}
 %
@@ -1145,7 +1177,7 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \NiceDescribeKeys{2}
 %   {align}{vals={\vmeta{alignment-letter},\vmeta{empty}}, init=c}
-%   {format}{vals=\vmeta{single argument macro}, init=\cmd\kvtStrutted}
+%   {format}{vals=\vmeta{single argument macro}, init=\vmeta{"identity"}}
 % These properties are analogous to the respective properties of normal
 % columns. The only difference is that the initial column alignment of
 % column groups is "|c|" while the alignment of normal columns is "|l|".
@@ -1985,6 +2017,7 @@ cherries,50g,cherries,heat up and add to bowl
 % The following sets the default values for the options. This is done
 % only after the package is otherwise completely processed, to ensure
 % that all features are already defined/registered at that point.
+% \changes{v2.3}{2020/07/30}{Removed \cmd{\kvtStrutted} from default format}
 %    \begin{macrocode}
 \AtEndOfPackage{\kvtSet{%
   rowbg=white..black!10,
@@ -2000,7 +2033,7 @@ cherries,50g,cherries,heat up and add to bowl
 % Column options
 %    \begin{macrocode}
   default=,
-  format=\kvtStrutted,
+  format=\@firstofone,
   align=l,
   head=,
   hidden=false,
@@ -2012,7 +2045,7 @@ cherries,50g,cherries,heat up and add to bowl
   Row/expand=false,
   Row/expandonce=false,
   ColGroup/align=c,
-  ColGroup/format=\kvtStrutted,
+  ColGroup/format=\@firstofone,
   HeadCell/align=c,
 }}
 %    \end{macrocode}
@@ -3353,9 +3386,9 @@ cherries,50g,cherries,heat up and add to bowl
 % enabled for the row's cells.
 %    \begin{macrocode}
   \ifdefvoid\cmdkvt@Row@align
-    {\let\kvt@@rowmkmulticolumn\@empty}
+    {\def\kvt@@rowmkmulticolumn{\kvt@unicolumn}}
     {\edef\kvt@@rowmkmulticolumn{%
-       \noexpand\multicolumn{1}{\expandonce\cmdkvt@Row@align}}}%
+       \noexpand\kvt@multicolumn{1}{\expandonce\cmdkvt@Row@align}}}%
 %    \end{macrocode}
 % The following defines a macro
 % |\kvt@@cellfmtbuilder|\marg{cmd}\marg{csname}.
@@ -3443,7 +3476,7 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
        \ifcsvoid{kvt@@noformat@#2@##1}
          {\kvt@@cellfmtbuilder\kvt@@formatter{kvt@@curcolformat}}%
-         {\let\kvt@@formatter\@firstofone}%
+         {\let\kvt@@formatter\kvt@unicolumn}%
        \csundef{kvt@@noformat@#2@##1}%
        \edef\kvt@@fmtcell{\expandafter\expandonce\expandafter{%
          \expandafter\kvt@@formatter\expandafter{%
@@ -3600,8 +3633,24 @@ cherries,50g,cherries,heat up and add to bowl
 % cell formatting has been applied.
 %    \begin{macrocode}
   \def\kvt@@cell{#3}%
-  \def\kvt@@mkmulticolumn{\multicolumn{#2}{#1}}}
+  \def\kvt@@mkmulticolumn{\kvt@multicolumn{#2}{#1}}}
 %    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@unicolumn}
+% \begin{macro}{\kvt@multicolumn}
+% The |\kvt@unicolumn|\marg{content} macro is the central macro for
+% creating a "normal" (non-multicolumn) cell with \meta{content}.
+% Analogously, |\kvt@multicolumn|\marg{align}\marg{n}\marg{content} is
+% the central macro for creating a multi-column cell with
+% \meta{content}.
+% The two macros are only meant to improve code legibility and to
+% simplify certain future modifications.
+%    \begin{macrocode}
+\newcommand\kvt@unicolumn[1]{#1}
+\newcommand\kvt@multicolumn[3]{\multicolumn{#1}{#2}{#3}}
+%    \end{macrocode}
+% \end{macro}
 % \end{macro}
 %
 % \subsubsection{Table and Row Styles}
