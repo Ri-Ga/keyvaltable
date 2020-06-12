@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/04/05 v2.2 Package for filling tables using key-value lists]
+    [2020/06/13 v2.3 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -1573,11 +1573,14 @@ cherries,50g,cherries,heat up and add to bowl
 \RequirePackage{xkeyval}
 \RequirePackage{trimspaces}
 %    \end{macrocode}
-% We use \pkgname{booktabs} for nice horizontal lines and
-% \pkgname{xcolor} for row coloring.
+% We use \pkgname{booktabs} for nice horizontal lines,
+% \pkgname{colortbl} for row coloring, and \pkgname{xcolor} for color
+% names. To avoid package option clashes with \pkgname{xcolor}, we
+% load it at the end of the preamble..
+% \changes{v2.3}{2020/06/13}{Delayed loading of \pkgname{xcolor}}
 %    \begin{macrocode}
-\PassOptionsToPackage{table}{xcolor}
-\RequirePackage{xcolor}
+\RequirePackage{colortbl}
+\AtBeginDocument{\@ifpackageloaded{xcolor}{}{\RequirePackage{xcolor}}}
 \RequirePackage{booktabs}
 %    \end{macrocode}
 %
@@ -2563,7 +2566,7 @@ cherries,50g,cherries,heat up and add to bowl
 % collecting counterparts. Header rows as well as manually inserted
 % rows, including those produced by macros like |\midrule| in a
 % |longtable| environment, are not counted (as opposed by the internal
-% counter of |\rowcolors|.
+% counter of |\rowcolors|).
 %    \begin{macrocode}
 \newcount\kvt@@bodyrow
 %    \end{macrocode}
