@@ -3,7 +3,7 @@ The keyvaltable Package
 
 Copyright (C) 2016-2020 Richard Grewe
 
-Released under the [LaTeX Project Public License](http://www.latex-project.org/lppl/) version 1.2 or later
+Released under the [LaTeX Project Public License](http://www.latex-project.org/lppl/) version 1.3c or later
 
 ## Purpose
 
@@ -52,19 +52,15 @@ might be.
 
 To build the documentation of the `keyvaltable` package, you additionally
 need the following classes and packages (including their dependencies)
-* ltxdoc
-* idxlayout
-* xcolor
-* showexpl
-* enumitem
-* xkeyval
-* booktabs
-* longtable
-* tabu
-* etoolbox
-* hypdoc
+* rgltxdoc
+* etoc
+* amssymb, gensymb, fontawesome
+* xspace
 * xintexpr
-* makecell
+* makecell, cellspace
+* tabularx, longtable, xltabular, tabu
+* filecontents
+* datatool, csvsimple
 
 as well as
 * pdflatex
