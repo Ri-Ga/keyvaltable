@@ -2861,7 +2861,7 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{macro}{\metatblHasCaption}
 % \begin{macro}{\metatblCanVAlign}
 % \begin{macro}{\metatblCanHAlign}
-% All macros in the following block expect three arguments,
+% The following macros all expect the three arguments
 %   \marg{env-name}\marg{iftrue}\marg{iffalse}.
 % The macro
 % |\metatblRegistered|
@@ -3075,10 +3075,14 @@ cherries,50g,cherries,heat up and add to bowl
          {Consider placing the KeyValTable environment inside a 'table'
           environment and use the \string\caption\space macro inside.}}}%
   \ifdefstring{\cmdkvt@Table@captionpos}{t}
-    {\let\kvt@@caption@headmain\kvt@@caption@main\let\kvt@@caption@footmain\@empty
-     \let\kvt@@caption@headalt\kvt@@caption@alt  \let\kvt@@caption@footalt\@empty}
-    {\let\kvt@@caption@footmain\kvt@@caption@main\let\kvt@@caption@headmain\@empty
-     \let\kvt@@caption@footalt\kvt@@caption@alt  \let\kvt@@caption@headalt\@empty}%
+    {\let\kvt@@caption@headmain\kvt@@caption@main
+     \let\kvt@@caption@footmain\@empty
+     \let\kvt@@caption@headalt\kvt@@caption@alt
+     \let\kvt@@caption@footalt\@empty}
+    {\let\kvt@@caption@footmain\kvt@@caption@main
+     \let\kvt@@caption@headmain\@empty
+     \let\kvt@@caption@footalt\kvt@@caption@alt
+     \let\kvt@@caption@headalt\@empty}%
   \ifbool{kvt@Table@showhead}
     {\eappto\kvt@@prehook{\csuse{kvt@headings@#2}\noexpand\kvt@@rule{mid}}}
     {}%
@@ -3526,11 +3530,15 @@ cherries,50g,cherries,heat up and add to bowl
 % Note that the alternative of avoiding the conditional (|\ifdefequal|)
 % in the above code and using |\@firstofone| instead of |\@empty| for a
 % noop in \meta{cmd} does not work:
-% Using `|\expandonce|\marg{cmd}\marg{arg}' would expand to
-% `|\unexpanded\expandafter{\@firstofone}|' and produces the error
-% `Argument of |\@firstofone| has an extra |}|'.
-% Using `|\expandonce{|\meta{cmd}\marg{arg}|}|' would expand to
-% `|\unexpanded|\marg{arg}' and, thus, prevent expansion of \meta{arg}.
+% \begin{itemize}[nosep]
+% \item Using `|\expandonce|\marg{cmd}\marg{arg}' would, by definition
+%   of |\expandonce|, expand to
+%   `|\unexpanded\expandafter{\@firstofone}|' and produces the error
+%   `Argument of |\@firstofone| has an extra |}|'.
+% \item Using `|\expandonce{|\meta{cmd}\marg{arg}|}|' would expand to
+%   `|\unexpanded|\marg{arg}' and, thus, prevent expansion of
+%   \meta{arg}.
+% \end{itemize}
 % \end{macro}
 %
 % \begin{macro}{\kvt@stepcounters}
@@ -3640,9 +3648,11 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{macro}{\kvt@unicolumn}
 % \begin{macro}{\kvt@multicolumn}
 % The |\kvt@unicolumn|\marg{content} macro is the central macro for
-% creating a "normal" (non-multicolumn) cell with \meta{content}.
-% Analogously, |\kvt@multicolumn|\marg{align}\marg{n}\marg{content} is
-% the central macro for creating a multi-column cell with
+% creating a "normal" (non-multicolumn) cell holding the given
+% \meta{content}.
+% Analogously, the macro
+% |\kvt@multicolumn|\marg{align}\marg{n}\marg{content}
+% is the central macro for creating a multi-column cell with
 % \meta{content}.
 % The two macros are only meant to improve code legibility and to
 % simplify certain future modifications.
@@ -3666,10 +3676,12 @@ cherries,50g,cherries,heat up and add to bowl
 % specifying \meta{row-options} directly in the optional argument of
 % |\Row|. The macro fails if \meta{name} is already declared as a row
 % style.
+%    \begin{macrocode}
+\newcommand\kvtNewRowStyle{\kvt@NewStyle{row}{\kvtRenewRowStyle}}
+%    \end{macrocode}
 % The |\kvtRenewRowStyle|\marg{name}\marg{row-options} macro re-defines
 % an already existing row style with new \meta{row-options}.
 %    \begin{macrocode}
-\newcommand\kvtNewRowStyle{\kvt@NewStyle{row}{\kvtRenewRowStyle}}
 \newcommand\kvtRenewRowStyle{\kvt@RenewStyle{row}{\kvtNewRowStyle}}
 %    \end{macrocode}
 % \end{macro}
@@ -3684,10 +3696,12 @@ cherries,50g,cherries,heat up and add to bowl
 % specifying \meta{options} directly in the optional argument of
 % a |KeyValTable| environment or of a |\NewKeyValTable|. The macro fails
 % if \meta{name} is already declared as a table style.
+%    \begin{macrocode}
+\newcommand\kvtNewTableStyle{\kvt@NewStyle{table}{\kvtRenewTableStyle}}
+%    \end{macrocode}
 % The |\kvtRenewTableStyle|\marg{name}\marg{options} macro re-defines
 % an already existing table style with new \meta{options}.
 %    \begin{macrocode}
-\newcommand\kvtNewTableStyle{\kvt@NewStyle{table}{\kvtRenewTableStyle}}
 \newcommand\kvtRenewTableStyle{\kvt@RenewStyle{table}{\kvtNewTableStyle}}
 %    \end{macrocode}
 % \end{macro}
@@ -3830,8 +3844,8 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \begin{macro}{\CollectRow}
 % The |\CollectRow|\oarg{options}\marg{cname}\marg{content} writes a
-% |\kvt@RecordedRow| entry to the aux file. Fragile parts of
-% \meta{content} are protected through |\protected@write|.
+% |\kvt@RecordedRow| entry to the aux file, protecting fragile parts of
+% \meta{content} through |\protected@write|.
 % \changes{v2.0}{2019/04/09}{Added the macro}
 %    \begin{macrocode}
 \newcommand\CollectRow[3][]{%
