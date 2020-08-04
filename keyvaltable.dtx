@@ -57,11 +57,13 @@
 %
 \usepackage{fontawesome}
 \makeatletter
-\newcommand\NiceText[2]{%
+\newenvironment{NiceText}[2]{%
   \medskip\par\noindent
-  \rgltxdoc@inmargin{\smash{\textcolor{#1}{\Large#2}}}{\quad}}
-\newcommand\NiceNote{\NiceText{DarkBlue}{\faInfoCircle}}
-\newcommand\NiceTipp{\NiceText{Gold}{\faLightbulbO}}
+  \rgltxdoc@inmargin{\smash{\textcolor{#1}{\large#2}}}{\quad}%
+  \ignorespaces}{\medskip\par\noindent}
+\newenvironment{NiceNote}{\NiceText{DarkBlue}{\faInfoCircle}}{\endNiceText}
+\newenvironment{NiceTipp}{\NiceText{DarkBlue}{\faLightbulbO}}{\endNiceText}
+\newenvironment{NiceWarn}{\NiceText{DarkBlue}{\faWarning}}{\endNiceText}
 %    \end{macrocode}
 \makeatother
 %
@@ -186,10 +188,12 @@ cherries,50g,cherries,heat up and add to bowl
 % used in the general case and how its visual appearance can be
 % customized is subject of the remainder of this documentation.
 %
-% \NiceTipp{To quickly sketch a table type, one can even omit properties
-% of columns and just list their names, separated by semicolons, as the
-% following example shows. All columns then get the default alignment:
-% |l|.}
+% \begin{NiceTipp}
+%   To quickly sketch a table type, one can even omit properties
+%   of columns and just list their names, separated by semicolons, as the
+%   following example shows. All columns then get the default alignment:
+%   |l|.
+% \end{NiceTipp}
 % \begin{LTXexample}
 % \NewKeyValTable{Recipe}{amount;ingredient;step}
 % \begin{KeyValTable}{Recipe}
@@ -544,10 +548,12 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % \subsection{Referencing in Collected Rows}\label{sec:referencing}
 %
-% The example in \cref{sec:collected} illustrates well a situation in
-% which referencing the locations in the document at which rows are
-% collected. The following example augments the original example to
-% achieve exactly this.
+% The previous sections show examples of referencing row numbers.
+% In tables of collected rows, it may be desirable to reference the
+% point in the document at which a row was collected.
+% The example in \cref{sec:collected} illustrates such a situation.
+% In the following, we augment that example by references to section and
+% page numbers.
 %
 % \begin{LTXexample}[width=0.5\hsize,morekeywords={NewCollectedTable,CollectRow,ShowCollectedTable}]
 % \NewKeyValTable{Notes2}{
@@ -568,13 +574,34 @@ cherries,50g,cherries,heat up and add to bowl
 % Lorem ipsum dolor sit amet, \ldots
 % \end{LTXexample}
 %
-% The \thispackage package is carefully designed to take the values of
-% counters such as the page counter and the section counter from the
-% point in the document where |\CollectRow| is used.
-% At the same time, the table row counters are taken from the point
-% inside the respective table. This applies to |\thekvtRow| as well as
-% to |\arabic{kvtRow}| and other counter formats.
-% For customizing this behavior, the following three macros can be used.
+% The above example demonstrates that the correct section number is
+% referenced. Since the whole example is contained on a single page, the
+% example does not demonstrate that the page number (|\thepage|) in the
+% "where" column actually references the page in the document on which
+% the |\CollectRow| takes place. Note that the correct page will be
+% produced even when the |\CollectRow| is placed in a float, such as a
+% figure or table.
+% \begin{NiceWarn}
+%   \hologo{LaTeX} internally implements a special treatment of
+%   |\thepage| to make page references possible. For this reason, using
+%   something like |\arabic{page}| to produce the page number will
+%   presumably not work correctly.
+% \end{NiceWarn}
+%
+% The \thispackage package
+% \begin{itemize}[nosep]
+% \item takes the values of row counters (like |\thekvtRow|) from the
+%   position of \emph{the row in the table}
+%   but
+% \item takes the values of other counters such as the page counter and
+%   the section counter from the \emph{point in the document where
+%   \cmd{\CollectRow} is used}.
+% \end{itemize}
+% This takes into account that counter values can be obtained via
+% \cmd{\the\meta{ctrname}} (like |\thekvtRow| or |\thepage|) as well as
+% via macros like |\arabic|, |\roman| etc.
+% The following macros allow for declaring additional counters and
+% formatting macros to be taken into account by \thispackage.
 %
 % \NiceDescribeMacros{2}
 %   {\kvtDeclareTableMacros}{\marg{macro-list}}
@@ -785,11 +812,13 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{KeyValTable}
 % \end{LTXexample}
 %
-% \NiceNote{The \meta{options} in |\kvtNewTableStyle| can be left empty.
-% In this case, the table style does not have any effect on the appearance
-% of tables. However, the style can already be used for "tagging" tables
-% and table types, while the final options for the style can be
-% configured at a later point in time.}
+% \begin{NiceNote}
+%   The \meta{options} in |\kvtNewTableStyle| can be left
+%   empty.  In this case, the table style does not have any effect on the
+%   appearance of tables. However, the style can already be used for
+%   "tagging" tables and table types, while the final options for the
+%   style can be configured at a later point in time.
+% \end{NiceNote}
 %
 % Even without table styles, the appearance of the previous
 % |KeyValTable| can be used again through the following option.
@@ -862,9 +891,11 @@ cherries,50g,cherries,heat up and add to bowl
 %   cells is then set to the values of the table's |headalign|,
 %   |headbg|, and |headformat| properties.
 %
-% \NiceNote{Initial values for all row options can be set with
+% \begin{NiceNote}
+%   Initial values for all row options can be set with
 %   |\kvtSet{Row/|\meta{option}|=|\meta{value}|}| (see also
-%   \cref{sec:kvtSet}).}
+%   \cref{sec:kvtSet}).
+% \end{NiceNote}
 %
 % The following example demonstrates some of the options.
 % \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={hidden,above,bg,format}]
@@ -967,11 +998,13 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{KeyValTable}
 % \end{LTXexample}
 %
-% \NiceNote{The \meta{row-options} in |\kvtNewRowStyle| can be left empty.
-% In this case, the row style does not have any effect on the appearance
-% of rows. However, the style can already be used for "tagging" rows and
-% the final options for the style can be configured at a later point in
-% time.}
+% \begin{NiceNote}
+%   The \meta{row-options} in |\kvtNewRowStyle| can be left empty.
+%   In this case, the row style does not have any effect on the appearance
+%   of rows. However, the style can already be used for "tagging" rows and
+%   the final options for the style can be configured at a later point in
+%   time.
+% \end{NiceNote}
 %
 %
 % \subsubsection{Rules Between Rows}
@@ -1182,9 +1215,11 @@ cherries,50g,cherries,heat up and add to bowl
 % columns. The only difference is that the initial column alignment of
 % column groups is "|c|" while the alignment of normal columns is "|l|".
 %
-% \NiceNote{Initial values for all the |align| and |format| options can be
+% \begin{NiceNote}
+%   Initial values for all the |align| and |format| options can be
 %   set with |\kvtSet|, via the |ColGroup/align| and, respectively
-%   |ColGroup/format| keys (see also \cref{sec:kvtSet}).}
+%   |ColGroup/format| keys (see also \cref{sec:kvtSet}).
+% \end{NiceNote}
 %
 %
 % \subsubsection{Manual Column Spanning}
