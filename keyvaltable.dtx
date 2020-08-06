@@ -2137,6 +2137,7 @@ cherries,50g,cherries,heat up and add to bowl
   \csdef{kvt@alignments@#2}{}%
   \csdef{kvt@allcolumns@#2}{}%
   \csdef{kvt@displaycols@#2}{}%
+  \csdef{kvt@ndisplaycols@#2}{0}%
   \csdef{kvt@rowcount@#2}{0}%
   \csdef{kvt@rows@#2}{}%
   \csdef{kvt@headings@#2}{\kvt@defaultheader}%
@@ -2208,6 +2209,7 @@ cherries,50g,cherries,heat up and add to bowl
       {\csappto{kvt@headings@#1}{{#2}}}%
       {\cseappto{kvt@headings@#1}{{\csexpandonce{kvt@col@head@#1@#2}}}}%
     \listcsadd{kvt@displaycols@#1}{#2}%
+    \csedef{kvt@ndisplaycols@#1}{\the\numexpr\csuse{kvt@ndisplaycols@#1}+1\relax}%
   }%
 %    \end{macrocode}
 % The following creates the column key that can be used by the row
@@ -2772,6 +2774,185 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
+%
+% \subsection{Rules}
+%
+% This section exists because drawing rules with proper spacing and
+% proper consideration of row background colors requires some effort.
+%
+% \begin{macro}{\kvt@RuleTop}
+% The |\kvt@RuleTop| macro produces a |\kvtRuleTop| rule that fits with
+% the header background color or, if no headers are shown, the
+% alternating row background colors.
+%    \begin{macrocode}
+\newcommand\kvt@RuleTop{\noalign{%
+  \edef\kvt@@do{\noexpand\kvtRuleTop{\ifbool{kvt@Table@showhead}
+    {\expandonce\cmdkvt@Table@headbg}{\expandonce\kvt@@bgcolor@odd}}}%
+  \expandafter}\kvt@@do}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@RuleBottom}
+% The |\kvt@RuleBottom| macro produces a |\kvtRuleBottom| rule that fits
+% with the alternating row background colors.
+%    \begin{macrocode}
+\newcommand\kvt@RuleBottom{\noalign{%
+  \edef\kvt@@do{\noexpand\kvtRuleBottom{\ifnumodd{\the\kvt@@bodyrow}
+    {\expandonce\kvt@@bgcolor@odd}{\expandonce\kvt@@bgcolor@even}}}%
+  \expandafter}\kvt@@do}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@RuleMid}
+% The |\kvt@RuleMid| macro produces a |\kvtRuleMid| rule that fits with
+% the alternating row background colors.
+%    \begin{macrocode}
+\newcommand\kvt@RuleMid{\noalign{%
+  \edef\kvt@@do{\noexpand\kvtRuleMid\ifnumodd{\the\kvt@@bodyrow}
+    {{\expandonce\kvt@@bgcolor@odd}{\expandonce\kvt@@bgcolor@even}}
+    {{\expandonce\kvt@@bgcolor@even}{\expandonce\kvt@@bgcolor@odd}}}%
+  \expandafter}\kvt@@do}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvt@RuleSubHead}
+% The |\kvt@RuleSubHead| macro is very similar to |\kvt@RuleMid|.
+% The latter is to be placed between body rows of a table.
+% The former is to be placed between the header row(s) and the body
+% rows.
+%    \begin{macrocode}
+\newcommand\kvt@RuleSubHead{\noalign{%
+  \edef\kvt@@do{\noexpand\kvtRuleMid
+    {\expandonce\cmdkvt@Table@headbg}{\expandonce\kvt@@bgcolor@odd}}%
+  \expandafter}\kvt@@do}
+%    \end{macrocode}
+% \end{macro}
+%
+%
+% \paragraph{Candidate for separate package.}
+% The following macros are independent of the remaining \thispackage
+% macros and could be factored out into their own small macro package
+% (|kvtrule|?) as a solution to reoccurring questions about row colors
+% with \pkgname{booktabs} (e.g.,
+% \url{https://tex.stackexchange.com/questions/177202/booktabs-and-row-color}).
+%
+% The macros below act as alternatives to rule macros of the
+% \pkgname{booktabs} package.
+% The \pkgname{booktabs} rule macros draw horizontal rules with some
+% spacing above and below the rule. Their spacing does not take into
+% account row colors.
+% The replacement macro allow specifying the row color above
+% (\meta{c-above}) and below (\meta{c-below}) of rule.
+%
+% \begin{macro}{\kvtRuleTop}
+% The |\kvtRuleTop|\oarg{wd}\marg{c-below} macro acts as a replacement
+% macro for \pkgname{booktabs}'s |\toprule|\oarg{wd} macro.
+%    \begin{macrocode}
+\newcommand\kvtRuleTop{\noalign{\ifnum0=`}\fi
+  \@ifnextchar[{\kvtRuleTop@i}{\kvtRuleTop@i[\heavyrulewidth]}}
+\long\def\kvtRuleTop@i[#1]#2{\ifnum0=`{\fi}%
+  \specialrule{#1}{\abovetopsep}{0pt}%
+  \kvtRule@ColorRule{#2}{2\belowrulesep}{0pt}{-\belowrulesep}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtRuleBottom}
+% The |\kvtRuleBottom|\oarg{wd}\marg{c-above} macro acts as a
+% replacement for \pkgname{booktabs}'s |\bottomrule|\oarg{wd} macro.
+%    \begin{macrocode}
+\newcommand\kvtRuleBottom{\noalign{\ifnum0=`}\fi
+  \@ifnextchar[{\kvtRuleBottom@i}{\kvtRuleBottom@i[\heavyrulewidth]}}
+\long\def\kvtRuleBottom@i[#1]#2{\ifnum0=`{\fi}%
+  \kvtRule@ColorRule{#2}{\aboverulesep}{0pt}{0pt}%
+  \specialrule{#1}{0pt}{\belowbottomsep}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtRuleMid}
+% The |\kvtRuleMid|\oarg{wd}\marg{c-above}\marg{c-below} macro acts as a
+% replacement for \pkgname{booktabs}'s |\midrule|\oarg{wd} macro.
+%    \begin{macrocode}
+\newcommand\kvtRuleMid{\noalign{\ifnum0=`}\fi
+  \@ifnextchar[{\kvtRuleMid@i}{\kvtRuleMid@i[\lightrulewidth]}}
+\long\def\kvtRuleMid@i[#1]#2#3{\ifnum0=`{\fi}%
+  \kvtRule@ColorRule{#2}{\aboverulesep}{0pt}{0pt}%
+  \specialrule{#1}{0pt}{0pt}%
+%    \end{macrocode}
+% For some reason, without the doubling of |\belowrulesep| below,
+% there is a white space below the |\specialrule|. (FIXME?)
+%    \begin{macrocode}
+  \kvtRule@ColorRule{#3}{2\belowrulesep}{0pt}{-\belowrulesep}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtRuleCMid}
+% The
+% |\kvtRuleCMid|\oarg{wd}|(|\meta{trim}|)|\marg{a-b}\marg{c-above}\marg{c-below}
+% macro acts as a replacement for \pkgname{booktabs}'s
+% |\cmidrule|\oarg{wd}|(|\meta{trim}|)|\marg{a-b} macro.
+%    \begin{macrocode}
+\newcommand\kvtRuleCMid{\noalign{\ifnum0=`}\fi
+  \@ifnextchar[{\kvtRuleCMid@i}{\kvtRuleCMid@i[\cmidrulewidth]}}
+\long\def\kvtRuleCMid@i[#1]{%
+  \@ifnextchar({\kvtRuleCMid@ii{#1}}{\kvtRuleCMid@ii{#1}()}}
+\long\def\kvtRuleCMid@ii#1(#2)#3{\ifnum0=`{\fi}%
+  \kvtRule@cmid{#1}{#2}{#3}}
+%    \end{macrocode}
+% The
+% |\kvtRule@cmid|\marg{wd}\marg{trim}\marg{a-b}\marg{c-above}\marg{c-below}
+% macro does the actual work.
+%    \begin{macrocode}
+\newcommand\kvtRule@cmid[5]{%
+  \kvtRule@SaveRuleColor
+  \arrayrulecolor{#4}%
+  \specialrule{\the\dimexpr\aboverulesep+#1\relax}{0pt}{-#1}%
+  \kvtRule@RestoreRuleColor
+%    \end{macrocode}
+% The following three lines locally inject zero-ruleseps into
+% |\cmidrule|. The |\noalign| started below is ended within
+% |\@cmidrule|.
+%    \begin{macrocode}
+  \noalign{\ifnum0=`}\fi
+  \aboverulesep=0pt\belowrulesep=0pt\relax
+  \@cmidrule[#1](#2){#3}%
+  \kvtRule@SaveRuleColor
+  \arrayrulecolor{#5}%
+  \specialrule{2\belowrulesep}{-\belowrulesep}{0pt}%
+  \kvtRule@RestoreRuleColor}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtRule@ColorRule}
+% The |\kvtRule@ColorRule|\marg{color}\marg{wd}\marg{above}\marg{below}
+% macro draws a full-width horizontal table rule of width \meta{wd} in
+% color \meta{color} and spacing \meta{above} above and \meta{below}
+% below the rule.
+% If \meta{color} is empty, the current background color is used.
+%    \begin{macrocode}
+\newcommand\kvtRule@ColorRule[4]{%
+  \ifstrempty{#1}
+    {\noalign{\expandafter\vskip\the\dimexpr #2+#3+#4\relax}}
+    {\kvtRule@SaveRuleColor
+     \arrayrulecolor{#1}%
+     \specialrule{#2}{#3}{#4}%
+     \kvtRule@RestoreRuleColor}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtRule@SaveRuleColor}
+% \begin{macro}{\kvtRule@RestoreRuleColor}
+% These macros save and, respectively, restore the current rule color,
+% as provided by the \pkgname{colortbl} package in |\CT@arc@|.
+%    \begin{macrocode}
+\newcommand\kvtRule@SaveRuleColor{%
+  \noalign{\global\let\kvt@@ctarc\CT@arc@}}
+\newcommand\kvtRule@RestoreRuleColor{%
+  \noalign{\global\let\CT@arc@\kvt@@ctarc}}
+%    \end{macrocode}
+% \end{macro}
+% \end{macro}
+%
+%
 % \subsection{Key-Value Table Content}
 %
 % \begin{environment}{KeyValTable}
@@ -2787,6 +2968,7 @@ cherries,50g,cherries,heat up and add to bowl
 %    \begin{macrocode}
   \def\Row{\kvt@AddKeyValRow
     {\noalign\bgroup}{\expandafter\egroup\kvt@@row}{#2}}%
+  \def\MidRule{\kvt@RuleMid}%
 %    \end{macrocode}
 % \end{macro}
 %    \begin{macrocode}
@@ -3071,10 +3253,10 @@ cherries,50g,cherries,heat up and add to bowl
   \let\kvt@@endhook\@empty
   \let\kvt@@prehook\@empty
   \ifbool{kvt@Table@showrules}
-    {\def\kvt@@rule##1{\csuse{##1rule}}}
+    {\def\kvt@@rule##1{\csuse{kvt@Rule##1}}}
     {\def\kvt@@rule##1{}}%
-  \appto\kvt@@prehook{\kvt@@rule{top}}%
-  \appto\kvt@@endhook{\kvt@@rule{bottom}}%
+  \appto\kvt@@prehook{\kvt@@rule{Top}}%
+  \appto\kvt@@endhook{\kvt@@rule{Bottom}}%
 %    \end{macrocode}
 % The following saves the row counter value for the table type globally,
 % such that subsequent tables of the same \meta{tname} can start counting
@@ -3119,7 +3301,7 @@ cherries,50g,cherries,heat up and add to bowl
      \let\kvt@@caption@footalt\kvt@@caption@alt
      \let\kvt@@caption@headalt\@empty}%
   \ifbool{kvt@Table@showhead}
-    {\eappto\kvt@@prehook{\csuse{kvt@headings@#2}\noexpand\kvt@@rule{mid}}}
+    {\eappto\kvt@@prehook{\csuse{kvt@headings@#2}\noexpand\kvt@@rule{SubHead}}}
     {}%
 %    \end{macrocode}
 % The following lines perform some checks before the table environment
@@ -3236,8 +3418,11 @@ cherries,50g,cherries,heat up and add to bowl
 % If \meta{colors} is empty, then no row colors are setup.
 %    \begin{macrocode}
 \newcommand\kvt@setrowcolors[1]{%
-  \ifstrempty{#1}{}{\kvt@setrowcolors@i#1\@nil}}
+  \ifstrempty{#1}{\kvt@setrowcolors@ii{}{}}
+                 {\kvt@setrowcolors@i#1\@nil}}
 \def\kvt@setrowcolors@i#1..#2\@nil{%
+  \kvt@setrowcolors@ii{#1}{#2}}
+\newcommand\kvt@setrowcolors@ii[2]{%
   \def\kvt@@bgcolor@odd{#1}%
   \def\kvt@@bgcolor@even{#2}}
 %    \end{macrocode}
