@@ -22,7 +22,7 @@
 %<package>\NeedsTeXFormat{LaTeX2e}[1999/12/01]
 %<package>\ProvidesPackage{keyvaltable}
 %<*package>
-    [2020/07/30 v2.3 Package for filling tables using key-value lists]
+    [2020/08/09 v2.3 Package for filling tables using key-value lists]
 %</package>
 %
 %<*driver>
@@ -692,8 +692,9 @@ cherries,50g,cherries,heat up and add to bowl
 % value |true| hides the rules and the value |false| causes the rules to
 % be drawn.
 % Note that both properties only affect the rules that \thispackage
-% produces automatically; rules manually added, e.g., via |\hline| or
-% |\midrule| are not affected by the properties.
+% produces automatically; rules manually added, e.g., via |\hline|,
+% |\midrule|, or |\MidRule| (see Section~\ref{sec:rules}) are not
+% affected by the properties.
 %
 % \NiceDescribeKey{headalign}{vals={\vmeta{empty} or \vmeta{coltype}}, init=\vmeta{empty}}
 % This property specifies the alignment for header cells.  If left
@@ -1007,21 +1008,76 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{NiceNote}
 %
 %
-% \subsubsection{Rules Between Rows}
+% \subsubsection{Rules Between Rows}\label{sec:rules}
 %
-% Additional horizontal rules between rows can simply be added by
-% placing the respective rule command between |\Row| commands.
-% The following example demonstrates this possibility.
-% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={midrule}]
+% For placing additional horizontal rules between rows, the
+% \thispackage package provides the following two macros that are
+% available in |KeyValTable| environments.
+%
+% \NiceDescribeMacro{\MidRule}{\oarg{width}}
+% This macro puts a horizontal rule over the full width of the table,
+% with line width \meta{width}. The macro puts the same vertical
+% spacing above and below the rule, just like |\midrule| of the
+% \pkgname{booktabs} package. The difference to |\midrule| is that row
+% colors (as specified by the |rowbg| property) are respected.
+% The following example demonstrates the use of |\MidRule|.
+%
+% \begin{LTXexample}[morepreset=\RecipePreset,morekeywords={MidRule}]
 % \begin{KeyValTable}{Recipe}
 % \Row{amount=150g, ingredient=ice cream,
 %   step=put into bowl}
 % \Row{amount= 50g, ingredient=cherries,
 %   step=heat up and add to bowl}
-% \midrule
+% \MidRule
 % \Row{step=serve with a smile}
 % \end{KeyValTable}
 % \end{LTXexample}
+%
+% \NiceDescribeMacro{\CMidRule}{\oarg{width}\marg{columns}}
+% This macro puts horizontal rules below each of the columns in the
+% comma-separated list \meta{columns}. This comma-separated list can
+% also contain names of column groups. The rules all have line width
+% \meta{width}. The outcome is similar to what a set of |\cmidrule|'s
+% would produce, except that row colors are respected and that column
+% indexes need not be counted.
+% The following example demonstrates the use of |\CMidRule|.
+%
+% \begin{LTXexample}[morekeywords={CMidRule}]
+% \NewKeyValTable[headformat=\textbf]{Prices}{
+%   part; min: align=r; max: align=r}[
+%   headers={min+max: head=price},
+%   colgroups={price: span=min+max}]
+% \begin{KeyValTable}{Prices}
+% \Row{part=engine, min=2500\$, max=3000\$}
+% \Row{part=tires, min=500\$, max=700\$}
+% \CMidRule[2pt]{price}
+% \Row{part=$\Sigma$, min=3000\$, max=3700\$}
+% \end{KeyValTable}
+% \end{LTXexample}
+%
+% The following macros are provided for general use, in
+% normal table environments.
+% \newcommand\kvtparg[1]{\texttt{(}\meta{#1}\texttt{)}}%
+% \NiceDescribeMacros{4}
+%   {\kvtRuleTop}{\oarg{width}\marg{color2}}
+%   {\kvtRuleBottom}{\oarg{width}\marg{color1}}
+%   {\kvtRuleMid}{\oarg{width}\marg{color1}\marg{color2}}
+%   {\kvtRuleCMid}{\oarg{width}\kvtparg{trim}\marg{a-b}\marg{color1}\marg{color2}}
+% These macros are replacements for the macros |\toprule|,
+% |\bottomrule|, |\midrule|, and |\cmidrule| of the \pkgname{booktabs}
+% package, which do not integrate well with background colors of rows.
+% The arguments \meta{color1} and \meta{color2} take the background
+% color above and, respectively, below the rule.
+%
+% Note that while multiple |\cmidrule|s can follow each other and
+% produce rules at the same horizontal position, this is not possible
+% with |\kvtRuleCMid|. Instead, if multiple |\kvtRuleCMid|s are desired,
+% one can use the following macro:
+% \NiceDescribeMacro{\kvtRulesCMid}{\oarg{width}\marg{rlist}\marg{color1}\marg{color2}}
+% In this macro, \meta{rlist} is a comma-separated list of
+% "\kvtparg{trim}\marg{a-b}" pairs, where each \meta{trim} is optional.
+% Consider the \pkgname{booktabs} documentation for more information
+% about \meta{trim}.
 %
 %
 % \subsection{Cell Appearance}
@@ -1108,23 +1164,23 @@ cherries,50g,cherries,heat up and add to bowl
 % The second example shows how multiple header rows can be specified
 % and, particularly, how the normal column headers can be displayed
 % through the use of "|::|".
-% \begin{LTXexample}[width=0.475\hsize]
-% \NewKeyValTable{Headers2}{
-%   date:   align=r, head=\textbf{date};
-%   min/Berlin: align=r, head=min;
-%   max/Berlin: align=r, head=max;
-%   min/Paris:  align=r, head=min;
-%   max/Paris:  align=r, head=max;
-% }[headers={
-%   min/Berlin+max/Berlin+min/Paris+max/Paris:
-%     head=\textbf{temperature}\\
-%   min/Paris+max/Paris:   head=\textbf{Paris};
-%   min/Berlin+max/Berlin: head=\textbf{Berlin}\\
-%   ::}
-% ]
+% \begin{LTXexample}[width=0.5\hsize]
+% \NewKeyValTable[headformat=\textbf,headalign=c]
+%   {Headers2}{
+%     date: align=r, head=date;
+%     Berlin/min: align=r, head=min;
+%     Berlin/max: align=r, head=max;
+%     Paris/min:  align=r, head=min;
+%     Paris/max:  align=r, head=max;
+%   }[headers={
+%     Berlin/min+Berlin/max+Paris/min+Paris/max:
+%       head=temperature\\
+%     Paris/min+Paris/max: head=Paris, underline;
+%     Berlin/min+Berlin/max: head=Berlin, underline\\
+%     ::}]
 % \begin{KeyValTable}{Headers2}
 % \Row{date=01.01.1970,
-%      min/Berlin=0\degree C, max/Berlin=...}
+%      Berlin/min=0\degree C, Berlin/max=...}
 % \end{KeyValTable}
 % \end{LTXexample}
 %
@@ -1165,6 +1221,11 @@ cherries,50g,cherries,heat up and add to bowl
 %   The initial value for this property is the column specification,
 %   i.e., "\meta{col}|+|\ldots|+|\meta{col}".
 %
+% \NiceDescribeKey{underline}{vals={true,false}, init=false, def=true}
+%   This property specifies whether the header cell shall be underlined,
+%   to visually indicate that the columns in the header cell form a
+%   logical group.
+%
 %
 % \subsection{Column Spanning}
 %
@@ -1188,7 +1249,7 @@ cherries,50g,cherries,heat up and add to bowl
 %   step=put into bowl}
 % \Row{amount= 50g, ingredient=cherries,
 %   step=heat up and add to bowl}
-% \midrule
+% \MidRule
 % \Row{all=serve with a smile}
 % \end{KeyValTable}
 % \end{LTXexample}
@@ -1352,11 +1413,11 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{KeyValTable}{ShapeProps}
 % \Row{shape=onepage,   env=tabular/tabularx,    multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages=tabularx}
 % \Row{shape=multipage, env=longtable/xltabular, multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={longtable, xltabular}}
-% \midrule
+% \MidRule
 % \noalign{\footnotesize with package option |compat=1.0|:}
 % \Row{shape=onepage,   env=tabu,      multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages=tabu}
 % \Row{shape=multipage, env=longtabu,  multipage=yes, caption=yes, Xcols=yes, width=yes, align=h, packages={tabu, longtable}}
-% \midrule
+% \MidRule
 % \Row{                 env=tabular,   multipage=no,  caption=no,  Xcols=no,  width=no,  align=v}
 % \Row{                 env=tabularx,  multipage=no,  caption=no,  Xcols=yes, width=yes, align=v, packages={tabularx}}
 % \Row{                 env=longtable, multipage=yes, caption=yes, Xcols=no,  width=no,  align=h, packages={longtable}}
@@ -1606,9 +1667,8 @@ cherries,50g,cherries,heat up and add to bowl
 % \item support for different headers on the first page vs.\@ on
 %   subsequent pages of a multipage table; support configurable spacing
 %   between and above/below header rows
-% \item support for more flexibility with regards to captions position
-%   (top vs.\@ bottom) and distinct captions on first/middle/last page
-%   of the table.
+% \item support for more flexibility with regards to specifying
+%   distinct captions on first/middle/last page of the table.
 % \item improved row coloring that makes sure that the alternation
 %   re-starts on continued pages of a table that spans several pages
 % \item rerun detection for recorded rows (possibly via
@@ -1998,6 +2058,8 @@ cherries,50g,cherries,heat up and add to bowl
   \csdef{kvt@@hdcell@head@\kvt@@hdcell}{#1}}
 \define@key[kvt]{HeadCell}{align}{%
   \csdef{kvt@@hdcell@align@\kvt@@hdcell}{#1}}
+\define@boolkey[kvt]{HeadCell}{underline}[true]{%
+  \csdef{kvt@@hdcell@underline@\kvt@@hdcell}{#1}}
 \kvt@def@globalopts{HeadCell}{align}
 %    \end{macrocode}
 %
@@ -2209,7 +2271,8 @@ cherries,50g,cherries,heat up and add to bowl
       {\csappto{kvt@headings@#1}{{#2}}}%
       {\cseappto{kvt@headings@#1}{{\csexpandonce{kvt@col@head@#1@#2}}}}%
     \listcsadd{kvt@displaycols@#1}{#2}%
-    \csedef{kvt@ndisplaycols@#1}{\the\numexpr\csuse{kvt@ndisplaycols@#1}+1\relax}%
+    \csedef{kvt@ndisplaycols@#1}{%
+      \the\numexpr\csuse{kvt@ndisplaycols@#1}+1\relax}%
   }%
 %    \end{macrocode}
 % The following creates the column key that can be used by the row
@@ -2335,6 +2398,11 @@ cherries,50g,cherries,heat up and add to bowl
   \def\kvt@@colgrp{#2}%
   \kvt@setkeys{#3}{ColGroup}%
   \kvt@checkcolgroupcs{kvt@colgrp@span@#1@#2}{#1}{#2}%
+%    \end{macrocode}
+% Store the result of |\kvt@checkcolgroupcs| for later use.
+%    \begin{macrocode}
+  \csxdef{kvt@colgrp@first@#1@#2}{\kvt@@colgrp@first}%
+  \csxdef{kvt@colgrp@count@#1@#2}{\kvt@@colgrp@n}%
 %    \end{macrocode}
 % The following defines the |\Row| key for \meta{cgname}, as an
 % abbreviation for setting the value of the first displayed column of
@@ -2557,15 +2625,20 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % Initialize variables for the subsequent loop.
 % The |\kvt@@tmpgrphd| macro collects the code for the cells of the
-% current header row. The |\kvt@@span| counter specifies how many
-% columns the current cell shall span.
+% current header row.
+% The |\kvt@@tmpunderline| macro collects the rules (|\cmidrule|-like)
+% from header cells, in an \pkgname{etoolbox} list.
+% The |\kvt@@span| counter specifies how many columns the current cell
+% shall span.
 % Finally, |\kvt@@curhd| and |\kvt@@lasthd| hold the name of the
 % header cell in which the current column and, respectively, previous
 % column are in.  Each of the two macros is undefined if there is no
 % such header cell.
 %    \begin{macrocode}
   \let\kvt@@tmpgrphd\@empty
-  \kvt@@span\z@
+  \let\kvt@@tmpunderlines\@empty
+  \letcs\kvt@@tmpncols{kvt@ndisplaycols@#1}%
+  \kvt@@span\z@ \kvt@@coln\@ne
   \undef\kvt@@curhd \undef\kvt@@lasthd
   \kvt@def@atseconduse\kvt@@switchcol{\appto\kvt@@tmpgrphd{&}}%
 %    \end{macrocode}
@@ -2594,6 +2667,7 @@ cherries,50g,cherries,heat up and add to bowl
             consecutive columns, but it is not}%
            {Compare `\string\kvt@@curhd' to the column ordering as
            specified in `\string\NewKeyValTable{#1}'}}{}}%
+       \advance\kvt@@coln\kvt@@span\relax
        \kvt@@span\@ne \let\kvt@@lasthd\kvt@@curhd}%
   }\dolistcsloop{kvt@displaycols@#1}%
   \kvt@concludehdcolumn
@@ -2603,6 +2677,12 @@ cherries,50g,cherries,heat up and add to bowl
 % while ending the current \hologo{TeX} group.
 %    \begin{macrocode}
   \appto\kvt@@tmpgrphd{\tabularnewline}%
+  \ifdefempty\kvt@@tmpunderlines{}{%
+    \eappto\kvt@@tmpgrphd{%
+      \noexpand\kvtRule@cmid{\noexpand\cmidrulewidth}
+        {\expandonce\kvt@@tmpunderlines}
+        {\expandonce\cmdkvt@Table@headbg}
+        {\expandonce\cmdkvt@Table@headbg}}}%
   \edef\do{\noexpand\csappto{kvt@@custheadrows@#1}{%
     \unexpanded{\noexpand\kvt@rowcolorornot{\cmdkvt@Table@headbg}}%
     \noexpand\unexpanded{\expandonce{\kvt@@tmpgrphd}}}}%
@@ -2645,8 +2725,11 @@ cherries,50g,cherries,heat up and add to bowl
 % \begin{macro}{\kvt@@span}
 % The counter |\kvt@@span| is used temporarily in macros for counting
 % how many columns are spanned by column groups.
+% The counter |\kvt@@coln| is used temporarily in macros for counting
+% column indexes.
 %    \begin{macrocode}
 \newcount\kvt@@span
+\newcount\kvt@@coln
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2663,6 +2746,18 @@ cherries,50g,cherries,heat up and add to bowl
       {\csexpandonce{kvt@@hdcell@align@\kvt@@lasthd}}
       {\noexpand\cmdkvt@Table@headformat
         {\csexpandonce{kvt@@hdcell@head@\kvt@@lasthd}}}}%
+%    \end{macrocode}
+% The following adds a pair of trim and spanned columns to
+% |\kvt@@tmpunderlines| for later drawing all the horizontal rules that
+% underline column groups.
+% A rule is trimmed left if it's not the first column and
+% a rule is trimmed right if it's not the last column.
+%    \begin{macrocode}
+    \ifcsstring{kvt@@hdcell@underline@\kvt@@lasthd}{true}
+      {\listeadd\kvt@@tmpunderlines{%
+        {\ifnumgreater{\kvt@@coln}{1}{l}{}%
+          \ifnumless{\kvt@@coln+\kvt@@span-1}{\kvt@@tmpncols}{r}{}}%
+        {\the\kvt@@coln-\the\numexpr\kvt@@coln+\kvt@@span-1\relax}}}{}%
 %    \end{macrocode}
 % Mark the header cell as already used and concluded, such that another
 % use of the same header cell can be detected and raise an error.
@@ -2779,6 +2874,7 @@ cherries,50g,cherries,heat up and add to bowl
 %
 % This section exists because drawing rules with proper spacing and
 % proper consideration of row background colors requires some effort.
+% \changes{v2.3}{2020/08/09}{Made rules aware of row background colors}
 %
 % \begin{macro}{\kvt@RuleTop}
 % The |\kvt@RuleTop| macro produces a |\kvtRuleTop| rule that fits with
@@ -2804,14 +2900,17 @@ cherries,50g,cherries,heat up and add to bowl
 % \end{macro}
 %
 % \begin{macro}{\kvt@RuleMid}
-% The |\kvt@RuleMid| macro produces a |\kvtRuleMid| rule that fits with
-% the alternating row background colors.
+% The |\kvt@RuleMid|\oarg{wd} macro produces a |\kvtRuleMid| rule that
+% fits with the alternating row background colors.
 %    \begin{macrocode}
-\newcommand\kvt@RuleMid{\noalign{%
-  \edef\kvt@@do{\noexpand\kvtRuleMid\ifnumodd{\the\kvt@@bodyrow}
+\newcommand\kvt@RuleMid{\noalign{\ifnum0=`}\fi
+  \@ifnextchar[{\kvt@RuleMid@i}{\kvt@RuleMid@i[\lightrulewidth]}}
+\long\def\kvt@RuleMid@i[#1]{%
+  \edef\kvt@@do{\unexpanded{\ifnum0=`{\fi}\kvtRuleMid[{#1}]}%
+    \ifnumodd{\the\kvt@@bodyrow}
     {{\expandonce\kvt@@bgcolor@odd}{\expandonce\kvt@@bgcolor@even}}
     {{\expandonce\kvt@@bgcolor@even}{\expandonce\kvt@@bgcolor@odd}}}%
-  \expandafter}\kvt@@do}
+  \kvt@@do}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2828,6 +2927,83 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
+% \begin{macro}{\kvt@RuleCMid}
+% The |\kvt@RuleCMid|\marg{tname}\oarg{wd}\marg{cglist} macro draws a
+% set of horizontal rules for a given comma-separated list of names of
+% columns and/or column groups, \meta{cglist}.
+%    \begin{macrocode}
+\newcommand\kvt@RuleCMid[1]{\noalign{\ifnum0=`}\fi
+  \@ifnextchar[{\kvt@RuleCMid@i{#1}}
+               {\kvt@RuleCMid@i{#1}[\cmidrulewidth]}}
+\long\def\kvt@RuleCMid@i#1[#2]#3{%
+  \let\kvt@@rules\@empty
+  \def\kvt@@do##1{%
+    \ifcsdef{kvt@colgrp@first@#1@##1}
+      {\kvt@RuleCMid@cg{#1}{##1}}
+      {\kvt@RuleCMid@cc{#1}{##1}{1}}}%
+  \forcsvlist\kvt@@do{#3}%
+%    \end{macrocode}
+% The above collected the second argument of |\kvtRule@cmid| in
+% |\kvt@@rules|. The remaining lines now add the remaining arguments.
+%    \begin{macrocode}
+  \edef\kvt@@rules{\unexpanded{\ifnum0=`{\fi}\kvtRule@cmid}%
+    {\unexpanded{#2}}%
+    {\expandonce\kvt@@rules}
+    \ifnumodd{\the\kvt@@bodyrow}
+      {{\expandonce\kvt@@bgcolor@odd}{\expandonce\kvt@@bgcolor@even}}
+      {{\expandonce\kvt@@bgcolor@even}{\expandonce\kvt@@bgcolor@odd}}}%
+  \kvt@@rules}
+%    \end{macrocode}
+% The |\kvt@RuleCMid@cg|\marg{tname}\marg{colgrp} macro
+% takes the first column of \meta{colgrp} and column count of this
+% column group and passes them on to |\kvt@RuleCMid@c|.
+%    \begin{macrocode}
+\newcommand\kvt@RuleCMid@cg[2]{\bgroup%
+  \edef\kvt@@do{\egroup
+    \unexpanded{\kvt@RuleCMid@c{#1}}%
+      {\csuse{kvt@colgrp@first@#1@#2}}
+      {\csuse{kvt@colgrp@count@#1@#2}}}%
+  \kvt@@do}
+%    \end{macrocode}
+% The |\kvt@RuleCMid@c|\marg{tname}\marg{cname}\marg{count}
+% macro determines the index $a$ of column \meta{cname} and adds a rule
+% from this column to $a+\meta{count}-1$.
+% The |\kvt@RuleCMid@cc| macro takes the same arguments but additionally
+% checks whether \meta{cname} is a valid column name.
+%    \begin{macrocode}
+\newcommand\kvt@RuleCMid@cc[3]{%
+  \ifinlistcs{#2}{kvt@allcolumns@#1}
+    {\ifinlistcs{#2}{kvt@displaycols@#1}
+      {\kvt@RuleCMid@c{#1}{#2}{#3}}
+%    \end{macrocode}
+% Rules below known but hidden columns are silently skipped by the below
+% line.
+%    \begin{macrocode}
+      {}}
+    {\kvt@error
+      {Column or column group `#2' for `\string\CMidRule'
+       not known in table type `#1'}
+      {Check the \string\NewKeyValTable{#1} for
+       the names of known columns and check `#2' for a typo.}}}
+\newcommand\kvt@RuleCMid@c[3]{%
+%    \end{macrocode}
+% Find index of column \meta{cname} and store it in |\@tempcnta|.
+% Fixme: Column indexes could also be precomputed.
+%    \begin{macrocode}
+  \@tempcnta\z@
+  \def\do##1{\advance\@tempcnta\@ne
+    \ifstrequal{#2}{##1}{\listbreak}{}}%
+  \dolistcsloop{kvt@displaycols@#1}%
+%    \end{macrocode}
+% Now add new rule pair (trim and columns) to the list stored in
+% |\kvt@@rules|.
+%    \begin{macrocode}
+  \listeadd\kvt@@rules{%
+    {\ifnumgreater{\@tempcnta}{1}{l}{}%
+     \ifnumless{\@tempcnta+#3-1}{\csuse{kvt@ndisplaycols@#1}}{r}{}}%
+    {\the\@tempcnta-\the\numexpr\@tempcnta+#3-1\relax}}}
+%    \end{macrocode}
+% \end{macro}
 %
 % \paragraph{Candidate for separate package.}
 % The following macros are independent of the remaining \thispackage
@@ -2879,7 +3055,7 @@ cherries,50g,cherries,heat up and add to bowl
   \specialrule{#1}{0pt}{0pt}%
 %    \end{macrocode}
 % For some reason, without the doubling of |\belowrulesep| below,
-% there is a white space below the |\specialrule|. (FIXME?)
+% there is a white space below the |\specialrule|. (Fixme?)
 %    \begin{macrocode}
   \kvtRule@ColorRule{#3}{2\belowrulesep}{0pt}{-\belowrulesep}}
 %    \end{macrocode}
@@ -2896,29 +3072,93 @@ cherries,50g,cherries,heat up and add to bowl
 \long\def\kvtRuleCMid@i[#1]{%
   \@ifnextchar({\kvtRuleCMid@ii{#1}}{\kvtRuleCMid@ii{#1}()}}
 \long\def\kvtRuleCMid@ii#1(#2)#3{\ifnum0=`{\fi}%
-  \kvtRule@cmid{#1}{#2}{#3}}
+  \kvtRule@cmid{#1}{{#2}{#3}}}
 %    \end{macrocode}
 % The
-% |\kvtRule@cmid|\marg{wd}\marg{trim}\marg{a-b}\marg{c-above}\marg{c-below}
+% |\kvtRule@cmid|\marg{wd}\marg{r-list}\marg{c-above}\marg{c-below}
 % macro does the actual work.
+% The \meta{r-list} parameter is a \pkgname{etoolbox} list of pairs
+% "\marg{trim}\marg{a-b}".
 %    \begin{macrocode}
-\newcommand\kvtRule@cmid[5]{%
-  \kvtRule@SaveRuleColor
-  \arrayrulecolor{#4}%
-  \specialrule{\the\dimexpr\aboverulesep+#1\relax}{0pt}{-#1}%
-  \kvtRule@RestoreRuleColor
+\newcommand\kvtRule@cmid[4]{%
 %    \end{macrocode}
-% The following three lines locally inject zero-ruleseps into
-% |\cmidrule|. The |\noalign| started below is ended within
-% |\@cmidrule|.
+% The "\meta{wd}/2" (i.e., |#1/2|) occurring twice below "splits" the
+% later rule vertically into the upper half (on \meta{c-above}
+% background) and the lower half (on \meta{c-below} background).
+%    \begin{macrocode}
+  \kvtRule@ColorRule{#3}
+    {\the\dimexpr\aboverulesep+#1/2\relax}
+    {0pt}
+    {\the\dimexpr-#1/2\relax}%
+%    \end{macrocode}
+% Draw the "below" color already here such that the rule can be drawn in
+% the middle on top of the "above" and "below" color.
+%    \begin{macrocode}
+  \kvtRule@ColorRule{#4}
+    {\the\dimexpr\belowrulesep+#1/2\relax}{0pt}
+    {\the\dimexpr-\belowrulesep-#1\relax}%
+%    \end{macrocode}
+% Now collect the rules to be drawn in a single macro |\kvt@@rules|.
+%    \begin{macrocode}
+  \noalign{%
+    \let\kvt@@rules\@empty%
+    \def\kvt@@do##1{\appto\kvt@@rules{\kvtRule@cmid@i{#1}##1}}%
+    \forlistloop\kvt@@do{#2}%
+    \expandafter}%
+  \kvt@@rules
+%    \end{macrocode}
+% In the spacing below, cancel out the negative spacing from
+% |\kvtRule@cmid@i|.
+%    \begin{macrocode}
+  \noalign{\vskip\dimexpr\belowrulesep+#1\relax}}
+%    \end{macrocode}
+%
+% The |\kvtRule@cmid@i|\marg{wd}\marg{trim}\marg{a-b} macro produces a
+% single |\cmidrule|-like rule from a set of such rules. The arguments
+% are the same as for |\cmidrule|.
+%    \begin{macrocode}
+\newcommand\kvtRule@cmid@i[3]{%
+%    \end{macrocode}
+% The following three lines locally inject zero |\aboverulesep| into
+% |\cmidrule|. Due to grouping within |\@cmidrule|, this is not possible
+% for |\belowrulesep|; hence, we have to fix |\belowrulesep| in the
+% |\vskip| later in this macro.
+% Note that the |\noalign| started below is ended within |\@cmidrule|.
 %    \begin{macrocode}
   \noalign{\ifnum0=`}\fi
-  \aboverulesep=0pt\belowrulesep=0pt\relax
-  \@cmidrule[#1](#2){#3}%
-  \kvtRule@SaveRuleColor
-  \arrayrulecolor{#5}%
-  \specialrule{2\belowrulesep}{-\belowrulesep}{0pt}%
-  \kvtRule@RestoreRuleColor}
+    \aboverulesep=0pt\relax
+    \@cmidrule[#1](#2){#3}%
+%    \end{macrocode}
+% The imitates the code from |\xcmidrule| for when further |\cmidrule|s
+% follow. It additionally cancels out the superfluous |\belowrulesep| as
+% described before.
+%    \begin{macrocode}
+  \noalign{%
+    \vskip-\dimexpr #1+\belowrulesep\relax
+    \global\@lastruleclass\@ne}}
+%    \end{macrocode}
+% \end{macro}
+%
+% \begin{macro}{\kvtRulesCMid}
+% The |\kvtRulesCMid|\oarg{width}\marg{r-list}\marg{color1}\marg{color2}
+% macro is the user interface for |\kvtRule@cmid| with multiple rules.
+% Here, \meta{r-list} is a comma-separated list of optional trim (in
+% parentheses) and column range -- and the code below essentially just
+% transforms this syntax into the syntax expected by |\kvtRule@cmid|.
+%    \begin{macrocode}
+\newcommand\kvtRulesCMid{\noalign{\ifnum0=`}\fi
+  \@ifnextchar[{\kvtRulesCMid@i}{\kvtRulesCMid@i[\cmidrulewidth]}}
+\long\def\kvtRulesCMid@i[#1]#2#3#4{%
+  \let\kvt@@rules\@empty
+  \forcsvlist\kvtRulesCMid@ii{#2}%
+  \ifnum0=`{\fi\expandafter}\expandafter
+  \kvtRulesCMid@v\expandafter{\kvt@@rules}{#1}{#3}{#4}}
+\newcommand\kvtRulesCMid@ii[1]{\kvtRulesCMid@iii#1\@undefined}
+\newcommand\kvtRulesCMid@iii{%
+  \@ifnextchar({\kvtRulesCMid@iv}{\kvtRulesCMid@iv()}}
+\long\def\kvtRulesCMid@iv(#1)#2\@undefined{%
+  \listadd\kvt@@rules{{#1}{#2}}}
+\newcommand\kvtRulesCMid@v[4]{\kvtRule@cmid{#2}{#1}{#3}{#4}}
 %    \end{macrocode}
 % \end{macro}
 %
@@ -2969,6 +3209,7 @@ cherries,50g,cherries,heat up and add to bowl
   \def\Row{\kvt@AddKeyValRow
     {\noalign\bgroup}{\expandafter\egroup\kvt@@row}{#2}}%
   \def\MidRule{\kvt@RuleMid}%
+  \def\CMidRule{\kvt@RuleCMid{#2}}%
 %    \end{macrocode}
 % \end{macro}
 %    \begin{macrocode}
@@ -3301,7 +3542,8 @@ cherries,50g,cherries,heat up and add to bowl
      \let\kvt@@caption@footalt\kvt@@caption@alt
      \let\kvt@@caption@headalt\@empty}%
   \ifbool{kvt@Table@showhead}
-    {\eappto\kvt@@prehook{\csuse{kvt@headings@#2}\noexpand\kvt@@rule{SubHead}}}
+    {\eappto\kvt@@prehook{\csuse{kvt@headings@#2}%
+      \noexpand\kvt@@rule{SubHead}}}
     {}%
 %    \end{macrocode}
 % The following lines perform some checks before the table environment
@@ -3531,7 +3773,7 @@ cherries,50g,cherries,heat up and add to bowl
 %    \end{macrocode}
 % \end{macro}
 %
-% The following lines define the macros for the various table 
+% The following lines define the macros for the various table
 % environments.
 %    \begin{macrocode}
 \kvt@RegisterBackend{tabular}
@@ -3621,7 +3863,7 @@ cherries,50g,cherries,heat up and add to bowl
 % row formatting options.
 % Through this "builder" macro, the row format options need only be
 % considered once and the column format options can then be included
-% when the displayed columns are iterated over. 
+% when the displayed columns are iterated over.
 %    \begin{macrocode}
   \ifcsvoid{cmdkvt@Row@format!}
     {\edef\kvt@@cellfmtbuilder##1##2{%
